@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.Json;
 using SharedKernel;
 using SharedKernel.Persistence;
 using Identity.Modules.Extensions;
+using SharedKernel.Caching;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,9 @@ builder.Services.AddCors(options =>
 
 // Identity Auth registration (lives in Identity module)
 builder.Services.AddIdentityAuth(builder.Configuration);
+
+// Central caching registration (L1 IMemoryCache by default; L2 if configured)
+builder.Services.AddCentralCaching(builder.Configuration);
 
 var app = builder.Build();
 

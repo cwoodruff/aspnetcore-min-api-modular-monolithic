@@ -89,6 +89,40 @@ Then browse http://localhost:8080/swagger
 
 ## Notes
 
+### New: Music Albums Endpoint (GET /api/music/albums/{id})
+- Path: GET /api/music/albums/{id}
+- Module: Music
+- Authorization: Requires a valid JWT with the permission claim "music.read".
+- Caching: Uses the central cache facade (ICacheFacade) with a namespaced key composed by CacheKeyComposer.
+  - Key shape example: {env}:{app}:music:album:v1::::by-id:{id}
+  - Default TTL: 20 minutes (with jitter to avoid stampede). Adjust via Caching:* configuration if needed.
+- Data source: SQLite (chinook.db) via AppDbContext; includes Artist info.
+
+How it works
+- On request, the endpoint composes a cache key (module=music, entity=album, version=v1, discriminator=by-id:{id}).
+- It calls cache.GetOrAddAsync(key, factory) where factory queries the database if the cache is missed.
+- Non-existent IDs return 404 (not cached). Existing albums are cached for faster subsequent reads.
+- The endpoint is protected; include Authorization: Bearer <token> header. Obtain a token via POST /api/identity/login with demo credentials: {"username":"demo","password":"demo123!"}.
+
+Example
+1) Get token
+```
+curl -s -X POST http://localhost:5043/api/identity/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"demo","password":"demo123!"}'
+```
+Response contains access_token.
+
+2) Fetch album 1 using token
+```
+TOKEN="<paste-access-token>"
+curl -H "Authorization: Bearer $TOKEN" http://localhost:5043/api/music/albums/1
+```
+
+Notes
+- To change caching behavior globally or per environment, use appsettings or environment variables under the Caching:* section. The cache is L1-only by default; you can enable L2 (e.g., Redis) later without code changes.
+- If you later add write endpoints that mutate album data, evict the corresponding cache key(s) or bump the version prefix (v1→v2) to ensure readers don’t see stale data.
+
 - Swagger is enabled with tags per module.
 - CORS policy named "Default" allows common localhost dev origins.
 - ProblemDetails middleware is enabled via UseExceptionHandler and AddProblemDetails.

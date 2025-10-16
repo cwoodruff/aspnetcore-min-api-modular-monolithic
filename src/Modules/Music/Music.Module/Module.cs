@@ -24,6 +24,9 @@ public static class MusicModule
             // Delegate to endpoint classes
             group.MapMusicHealthEndpoints();
             group.MapMusicDataHealthEndpoints();
+
+            // Albums endpoints
+            Music.Modules.Endpoints.AlbumEndpoints.MapAlbumEndpoints(group);
         }
     }
 }
