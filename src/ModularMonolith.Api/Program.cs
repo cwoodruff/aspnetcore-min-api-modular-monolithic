@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Http.Json;
 using SharedKernel;
 using SharedKernel.Persistence;
+using Identity.Modules.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +40,9 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
+// Identity Auth registration (lives in Identity module)
+builder.Services.AddIdentityAuth(builder.Configuration);
+
 var app = builder.Build();
 
 // Middleware
@@ -52,16 +56,12 @@ app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors("Default");
 
+// AuthN/AuthZ middleware from Identity module
+app.UseIdentityAuth();
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Ensure database is created in Development
-if (app.Environment.IsDevelopment())
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
-}
 
 // Root endpoint with service metadata
 app.MapGet("/", (IConfiguration cfg, IWebHostEnvironment env) =>

@@ -27,8 +27,6 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<Track> Tracks { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlite("DataSource=chinook.db");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
