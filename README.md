@@ -89,6 +89,14 @@ Then browse http://localhost:8080/swagger
 
 ## Notes
 
+### Using Swagger & OpenAPI
+- Swagger UI is enabled by default at /swagger when you run the API host.
+- The OpenAPI document is generated with title "Modular Monolith API" (v1).
+- JWT Bearer auth is integrated into Swagger:
+  - Click the "Authorize" button in Swagger UI and paste a token as: `Bearer <your-jwt>`.
+  - Obtain a demo token via `POST /api/identity/login` with `{ "username": "demo", "password": "demo123!" }`.
+- Once authorized, protected endpoints (e.g., Music Albums) can be executed directly from Swagger UI.
+
 ### New: Music Albums Endpoint (GET /api/music/albums/{id})
 - Path: GET /api/music/albums/{id}
 - Module: Music
@@ -309,3 +317,12 @@ Notes and conventions
 - Modules should not reference each other; only the host references modules and SharedKernel.
 - Persistence is centralized in SharedKernel.Persistence; modules depend on its abstractions (IAppDbContext) but not on EF Core specifics where possible.
 - For EF Core details and migration commands, see docs/EFCore-Plan.md.
+
+
+## Auto-launching Swagger when starting the API
+- The launch profile for ModularMonolith.Api is configured to open the browser directly to /swagger on start.
+- This is controlled by src/ModularMonolith.Api/Properties/launchSettings.json with:
+  - "launchBrowser": true
+  - "launchUrl": "swagger"
+- IDEs like Rider/Visual Studio honor this and will open Swagger UI automatically when you run/debug the ModularMonolith.Api profile.
+- When using the command line (dotnet run), the browser does not auto-open; navigate to the printed URL and append /swagger (e.g., http://localhost:5043/swagger).
