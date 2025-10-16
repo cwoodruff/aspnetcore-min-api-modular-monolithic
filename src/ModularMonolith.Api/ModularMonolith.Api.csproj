@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\SharedKernel\SharedKernel.csproj" />
+    <ProjectReference Include="..\Shared\SharedKernel.Persistence\SharedKernel.Persistence.csproj" />
+    <ProjectReference Include="..\Modules\Music\Music.Module\Music.Module.csproj" />
+    <ProjectReference Include="..\Modules\Orders\Orders.Module\Orders.Module.csproj" />
+    <ProjectReference Include="..\Modules\Administration\Admin.Module\Admin.Module.csproj" />
+    <ProjectReference Include="..\Modules\Reporting\Reporting.Module\Reporting.Module.csproj" />
+    <ProjectReference Include="..\Modules\Identity\Identity.Module\Identity.Module.csproj" />
+  </ItemGroup>
+
+</Project>
