@@ -34,7 +34,7 @@ public static class PersistenceRegistration
             {
                 sqlite.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
             });
-        });
+        }, poolSize: 128);
 
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
