@@ -61,13 +61,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("Default", policy =>
         policy
-            .WithOrigins(
-                "http://localhost:3000",
-                "http://localhost:4200",
-                "http://localhost:5173",
-                "https://localhost:3000",
-                "https://localhost:4200",
-                "https://localhost:5173")
+            .WithOrigins(GetAllowedOrigins())
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -146,6 +140,13 @@ static IReadOnlyList<IModule> GetModules()
         new Reporting.Modules.ReportingModule.Modules()
     ];
 }
+
+static string[] GetAllowedOrigins() =>
+[
+    "http://localhost:3000", "http://localhost:4200", "http://localhost:5173",
+    "https://localhost:3000", "https://localhost:4200", "https://localhost:5173"
+];
+
 
 // For WebApplicationFactory
 #pragma warning disable ASP0027 // Using partial Program to expose entry point for tests; acceptable in this project
