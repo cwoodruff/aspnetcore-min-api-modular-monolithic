@@ -49,12 +49,35 @@ builder.Services.AddSwaggerGen(c =>
 });
 builder.Services.AddProblemDetails();
 
-// EF Core persistence registration (single SQLite file at /data/chinook.db)
-var dataPath = Path.Combine(builder.Environment.ContentRootPath, "data", "chinook.db");
-Directory.CreateDirectory(Path.GetDirectoryName(dataPath)!);
-var connString = $"Data Source={dataPath}";
+// EF Core persistence registration
+// Resolve SQLite path for AppDbContext if not provided via configuration/environment.
+var existing = builder.Configuration.GetConnectionString("AppDatabase")
+              ?? builder.Configuration["ConnectionStrings:AppDatabase"]
+              ?? Environment.GetEnvironmentVariable("ConnectionStrings__AppDatabase");
+if (string.IsNullOrWhiteSpace(existing))
+{
+    static string? TryFindDb(string contentRoot)
+    {
+        // 1) Prefer host content root /data/chinook.db (this repo ships the seeded DB under the API project)
+        var contentDb = Path.Combine(contentRoot, "data", "chinook.db");
+        if (File.Exists(contentDb)) return contentDb;
+        // 2) Fallback to repo-root /data/chinook.db if present
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current is not null && !Directory.Exists(Path.Combine(current.FullName, "data")))
+        {
+            current = current.Parent;
+        }
+        var root = current?.FullName;
+        var rootDb = root is not null ? Path.Combine(root, "data", "chinook.db") : null;
+        return rootDb is not null && File.Exists(rootDb) ? rootDb : null;
+    }
+    var dbPath = TryFindDb(builder.Environment.ContentRootPath);
+    if (!string.IsNullOrWhiteSpace(dbPath))
+    {
+        builder.Configuration["ConnectionStrings:AppDatabase"] = $"Data Source={dbPath}";
+    }
+}
 
-builder.Configuration["ConnectionStrings:AppDatabase"] = connString;
 builder.Services.AddKernelPersistence(builder.Configuration);
 
 builder.Services.AddCors(options =>

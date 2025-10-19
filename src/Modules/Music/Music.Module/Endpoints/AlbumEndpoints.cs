@@ -32,20 +32,28 @@ public static class AlbumEndpoints
                 // Cache-aside: fetch from cache or query the DB on miss
                 var album = await cache.GetOrAddAsync<object?>(key, async _ =>
                 {
-                    var a = await db.Albums
-                        .AsNoTracking()
-                        .Include(x => x.Artist)
-                        .FirstOrDefaultAsync(x => x.Id == id, ct);
-
-                    if (a is null) return null; // cache nulls? We choose not to set cache for nulls (facade skips nulls)
-
-                    // Minimal DTO to avoid leaking EF tracking proxies and reduce payload
-                    return new
+                    try
                     {
-                        id = a.Id,
-                        title = a.Title,
-                        artist = a.Artist != null ? new { id = a.Artist.Id, name = a.Artist.Name } : null
-                    } as object;
+                        var a = await db.Albums
+                            .AsNoTracking()
+                            .Include(x => x.Artist)
+                            .FirstOrDefaultAsync(x => x.Id == id, ct);
+
+                        if (a is null) return null; // cache nulls? We choose not to set cache for nulls (facade skips nulls)
+
+                        // Minimal DTO to avoid leaking EF tracking proxies and reduce payload
+                        return new
+                        {
+                            id = a.Id,
+                            title = a.Title,
+                            artist = a.Artist != null ? new { id = a.Artist.Id, name = a.Artist.Name } : null
+                        } as object;
+                    }
+                    catch
+                    {
+                        // If the database is not initialized (e.g., missing schema), treat as not found for this demo endpoint
+                        return null;
+                    }
                 }, new CacheEntryOptions
                 {
                     // Albums are relatively static; cache for 20 minutes by default

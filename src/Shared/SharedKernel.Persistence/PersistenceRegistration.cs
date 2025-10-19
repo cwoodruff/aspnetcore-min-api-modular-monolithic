@@ -37,7 +37,7 @@ public static class PersistenceRegistration
         }, poolSize: 128);
 
         // services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
-        services.AddScoped<IAppDbContext, AppDbContext>();
+        services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
         return services;
     }
