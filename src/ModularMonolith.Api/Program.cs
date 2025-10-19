@@ -118,17 +118,8 @@ app.MapGet("/", (IConfiguration cfg, IWebHostEnvironment env) =>
 .Produces(200)
 .WithTags("Root");
 
-// Discover and compose modules
-// Force-load module assemblies so reflection-based discovery works reliably in all hosting contexts
-_ = new[]
-{
-    typeof(Music.Modules.MusicModule).Assembly,
-    typeof(Orders.Modules.OrdersModule).Assembly,
-    typeof(Administration.Modules.AdministrationModule).Assembly,
-    typeof(Reporting.Modules.ReportingModule).Assembly,
-    typeof(Identity.Modules.IdentityModule).Assembly,
-};
-var modules = DiscoverModules();
+// Register and compose modules
+var modules = GetModules();
 
 foreach (var module in modules)
 {
@@ -144,49 +135,16 @@ foreach (var module in modules)
 
 app.Run();
 
-static IReadOnlyList<IModule> DiscoverModules()
+static IReadOnlyList<IModule> GetModules()
 {
-    var result = new List<IModule>();
-
-    // Load all referenced assemblies to ensure modules are discovered
-    var entry = Assembly.GetEntryAssembly();
-    if (entry is not null)
-    {
-        foreach (var name in entry.GetReferencedAssemblies())
-        {
-            try { _ = Assembly.Load(name); } catch { /* ignore */ }
-        }
-    }
-
-    // Also include already loaded assemblies
-    var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-    foreach (var asm in assemblies)
-    {
-        try
-        {
-            var moduleTypes = asm.GetTypes()
-                .Where(t => typeof(IModule).IsAssignableFrom(t) && !t.IsAbstract && t.IsClass)
-                .ToArray();
-
-            foreach (var type in moduleTypes)
-            {
-                if (Activator.CreateInstance(type) is IModule instance)
-                {
-                    result.Add(instance);
-                }
-            }
-        }
-        catch
-        {
-            // ignore any type load exceptions
-        }
-    }
-
-    // Ensure deterministic order by name
-    return result
-        .OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase)
-        .ToList();
+    return
+    [
+        new Administration.Modules.AdministrationModule.Modules(),
+        new Identity.Modules.IdentityModule.Modules(),
+        new Music.Modules.MusicModule.Modules(),
+        new Orders.Modules.OrdersModule.Modules(),
+        new Reporting.Modules.ReportingModule.Modules()
+    ];
 }
 
 // For WebApplicationFactory
