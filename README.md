@@ -93,9 +93,45 @@ Then browse http://localhost:8080/swagger
 - Swagger UI is enabled by default at /swagger when you run the API host.
 - The OpenAPI document is generated with title "Modular Monolith API" (v1).
 - JWT Bearer auth is integrated into Swagger:
-  - Click the "Authorize" button in Swagger UI and paste a token as: `Bearer <your-jwt>`.
-  - Obtain a demo token via `POST /api/identity/login` with `{ "username": "demo", "password": "demo123!" }`.
+  - Click the "Authorize" button in Swagger UI and paste the access token only (do NOT include the `Bearer ` prefix). Swagger will add it automatically.
+  - Obtain a token via `POST /api/identity/login` with one of the demo users below.
 - Once authorized, protected endpoints (e.g., Music Albums) can be executed directly from Swagger UI.
+
+#### Demo users and module access
+Use these credentials with `POST /api/identity/login` to receive an access_token:
+
+- demo / demo123! — Music module only
+  - permissions: [music.read]
+  - roles: [User]
+  - tenant: tenant-1
+- usermo / usermo123! — Music and Orders modules
+  - permissions: [music.read, orders.read]
+  - roles: [User]
+  - tenant: tenant-1
+- report / report123! — Reporting module only
+  - permissions: [report.view]
+  - roles: [User]
+  - tenant: tenant-1
+- admin / admin123! — All modules (administrator)
+  - permissions: [music.read, music.write, orders.read, orders.write, admin.users.manage, report.view]
+  - roles: [Admin]
+  - tenant: tenant-1
+
+#### JWT for Music endpoints
+- Where JWT is processed in code:
+  - Global authentication/authorization is configured in `src/Modules/Identity/Identity.Module/Extensions/IdentityAuthExtensions.cs`.
+  - Music endpoints opt-in to authorization using `.RequireAuthorization(...)` in each endpoint mapping.
+  - Example: `GET /api/music/albums/{id}` is protected by `music.read` and `tenant.scoped` policies in `src/Modules/Music/Music.Module/Endpoints/AlbumEndpoints.cs`.
+- How to use JWT in Swagger for Music endpoints:
+  1) Call `POST /api/identity/login` to receive an `access_token`.
+  2) In Swagger UI, click the Authorize button and enter: `<access_token>`.
+  3) For tenant-scoped endpoints, optionally set a tenant hint:
+     - Route value: e.g., `/api/music/{tenant}/albums/{id}` if such route is defined, or
+     - Header: `X-Tenant-Id: <your-tenant>`.
+  4) Invoke Music endpoints. You will see:
+     - 200 OK when the token includes `permissions: ["music.read"]` and tenant scope matches.
+     - 403 Forbidden if missing permission or tenant mismatch.
+     - 401 Unauthorized if no/invalid token is provided.
 
 ### New: Music Albums Endpoint (GET /api/music/albums/{id})
 - Path: GET /api/music/albums/{id}

@@ -1,6 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -16,6 +15,8 @@ namespace Identity.Modules.Extensions;
 
 public static class IdentityAuthExtensions
 {
+    private static readonly string[] ValidTokenTypes = new[] { "at+jwt", "JWT" };
+
     public static IServiceCollection AddIdentityAuth(this IServiceCollection services, IConfiguration configuration)
     {
         // Bind options
@@ -28,6 +29,11 @@ public static class IdentityAuthExtensions
         services.AddSingleton<ITokenService, TokenService>();
         services.AddSingleton<IRefreshTokenStore, InMemoryRefreshTokenStore>();
         services.AddSingleton<IUserStore, InMemoryUserStore>();
+
+        // HttpContext + tenant resolution + authorization handlers
+        services.AddHttpContextAccessor();
+        services.AddSingleton<ITenantResolutionService, HttpContextTenantResolutionService>();
+        services.AddSingleton<IAuthorizationHandler, TenantAuthorizationHandler>();
 
         // Authorization policies (by permissions)
         services.AddAuthorization(options =>
@@ -62,6 +68,7 @@ public static class IdentityAuthExtensions
                     IssuerSigningKeys = keys.GetValidationKeys(),
                     NameClaimType = ClaimTypes.Name,
                     RoleClaimType = ClaimTypes.Role,
+                    ValidTypes = ValidTokenTypes
                 };
 
                 // Map inbound claims without remapping to legacy Microsoft claim types
@@ -69,8 +76,42 @@ public static class IdentityAuthExtensions
 
                 options.Events = new JwtBearerEvents
                 {
-                    OnMessageReceived = ctx => Task.CompletedTask,
-                    OnTokenValidated = ctx => Task.CompletedTask,
+                    OnMessageReceived = ctx =>
+                    {
+                        // Normalize Authorization header in case Swagger/UI or clients send 'Bearer Bearer <token>'
+                        // We tolerate a duplicated scheme prefix by trimming one extra occurrence.
+                        var authHeader = ctx.Request.Headers.Authorization.ToString();
+                        if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var token = authHeader.Substring("Bearer ".Length).Trim();
+                            if (token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                            {
+                                token = token.Substring("Bearer ".Length).Trim();
+                            }
+                            ctx.Token = token;
+                        }
+                        return Task.CompletedTask;
+                    },
+                    OnTokenValidated = ctx =>
+                    {
+                        var principal = ctx.Principal;
+                        if (principal is null)
+                        {
+                            ctx.Fail("No principal after token validation");
+                            return Task.CompletedTask;
+                        }
+
+                        var sub = principal.FindFirst("sub")?.Value ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                        if (string.IsNullOrWhiteSpace(sub))
+                        {
+                            ctx.Fail("Missing required 'sub' claim");
+                            return Task.CompletedTask;
+                        }
+
+                        // Tenant claim recommended for multi-tenant modules; do not fail if absent to allow public endpoints
+                        // var tenant = principal.FindFirst("tenant")?.Value; // informational for handlers
+                        return Task.CompletedTask;
+                    },
                     OnAuthenticationFailed = ctx => Task.CompletedTask,
                     OnChallenge = ctx => Task.CompletedTask,
                 };

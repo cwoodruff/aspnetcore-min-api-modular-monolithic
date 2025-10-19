@@ -1,5 +1,3 @@
-using System.Security.Claims;
-
 namespace Identity.Modules.Services;
 
 public interface IUserStore

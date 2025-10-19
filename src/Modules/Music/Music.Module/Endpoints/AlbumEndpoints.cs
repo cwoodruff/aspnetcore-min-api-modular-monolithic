@@ -10,7 +10,7 @@ namespace Music.Modules.Endpoints;
 
 public static class AlbumEndpoints
 {
-    private static readonly string[] AlbumTags = new[] { "music:album", "music:album:by-id" };
+    private static readonly string[] AlbumTags = ["music:album", "music:album:by-id"];
 
     public static void MapAlbumEndpoints(this IEndpointRouteBuilder group)
     {
@@ -55,7 +55,7 @@ public static class AlbumEndpoints
 
                 return album is not null ? Results.Json(album) : Results.NotFound();
             })
-            .RequireAuthorization("music.read")
+            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
             .WithName("MusicGetAlbumById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)

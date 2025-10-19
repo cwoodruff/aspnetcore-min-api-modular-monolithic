@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Options;
-
 namespace SharedKernel.Caching;
 
 public sealed class CacheOptions

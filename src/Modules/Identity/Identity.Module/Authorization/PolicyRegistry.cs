@@ -4,6 +4,9 @@ namespace Identity.Modules.Authorization;
 
 public static class PolicyRegistry
 {
+    public const string AdminPolicy = "role.admin";
+    public const string TenantScopedPolicy = "tenant.scoped";
+
     public static void Register(AuthorizationOptions options)
     {
         // Do not set a global fallback policy; endpoints remain anonymous unless marked with RequireAuthorization.
@@ -14,6 +17,20 @@ public static class PolicyRegistry
         AddPermissionPolicy(options, Permissions.OrdersWrite);
         AddPermissionPolicy(options, Permissions.AdminUsersManage);
         AddPermissionPolicy(options, Permissions.ReportView);
+
+        // Role-based convenience policies
+        options.AddPolicy(AdminPolicy, policy =>
+        {
+            policy.RequireAuthenticatedUser();
+            policy.RequireRole("Admin");
+        });
+
+        // Tenant scoped policy
+        options.AddPolicy(TenantScopedPolicy, policy =>
+        {
+            policy.RequireAuthenticatedUser();
+            policy.AddRequirements(TenantRequirement.Instance);
+        });
     }
 
     private static void AddPermissionPolicy(AuthorizationOptions options, string permission)

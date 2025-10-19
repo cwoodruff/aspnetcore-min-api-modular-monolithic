@@ -3,7 +3,6 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Globalization;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using Identity.Modules.Extensions;
 using Identity.Modules.KeyManagement;
 
