@@ -1,10 +1,11 @@
+using Admin.Modules.Endpoints;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SharedKernel;
 
-namespace Administration.Modules;
+namespace Admin.Modules;
 
 public static class AdministrationModule
 {

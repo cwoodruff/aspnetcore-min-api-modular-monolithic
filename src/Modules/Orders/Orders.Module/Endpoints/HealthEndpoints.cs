@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using SharedKernel;
 
-namespace Orders.Modules;
+namespace Orders.Modules.Endpoints;
 
 public static class OrdersHealthEndpoints
 {

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using SharedKernel;
 
-namespace Administration.Modules;
+namespace Admin.Modules.Endpoints;
 
 public static class AdministrationHealthEndpoints
 {

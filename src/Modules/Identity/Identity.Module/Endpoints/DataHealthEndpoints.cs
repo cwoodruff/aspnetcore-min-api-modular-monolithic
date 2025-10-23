@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 using SharedKernel;
 using SharedKernel.Persistence;
 
-namespace Identity.Modules;
+namespace Identity.Modules.Endpoints;
 
 public static class IdentityDataHealthEndpoints
 {

@@ -2,8 +2,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Identity.Modules.Services;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ModularMonolith.Api.Tests;

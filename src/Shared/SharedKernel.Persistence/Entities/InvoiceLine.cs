@@ -1,4 +1,6 @@
-﻿namespace SharedKernel.Persistence.Entities;
+﻿using SharedKernel.Persistence.ApiModels;
+
+namespace SharedKernel.Persistence.Entities;
 
 public partial class InvoiceLine
 {
@@ -15,4 +17,14 @@ public partial class InvoiceLine
     public virtual Invoice? Invoice { get; set; }
 
     public virtual Track? Track { get; set; }
+
+    public InvoiceLineApiModel Convert() =>
+        new()
+        {
+            Id = Id,
+            InvoiceId = InvoiceId,
+            TrackId = TrackId,
+            UnitPrice = UnitPrice,
+            Quantity = Quantity
+        };
 }

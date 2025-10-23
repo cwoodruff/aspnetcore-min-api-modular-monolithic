@@ -1,10 +1,10 @@
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Globalization;
-using Microsoft.Extensions.Options;
-using Identity.Modules.Extensions;
 using Identity.Modules.KeyManagement;
+using Identity.Modules.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Identity.Modules.Services;
 

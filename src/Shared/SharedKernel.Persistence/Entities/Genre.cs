@@ -1,4 +1,6 @@
-﻿namespace SharedKernel.Persistence.Entities;
+﻿using SharedKernel.Persistence.ApiModels;
+
+namespace SharedKernel.Persistence.Entities;
 
 public partial class Genre
 {
@@ -7,4 +9,11 @@ public partial class Genre
     public string? Name { get; set; }
 
     public virtual ICollection<Track> Tracks { get; set; } = new List<Track>();
+
+    public GenreApiModel Convert() =>
+        new()
+        {
+            Id = Id,
+            Name = Name
+        };
 }

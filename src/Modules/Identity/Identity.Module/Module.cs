@@ -1,3 +1,4 @@
+using Identity.Modules.Endpoints;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
@@ -24,7 +25,7 @@ public static class IdentityModule
             // Delegate to endpoint classes
             group.MapIdentityHealthEndpoints();
             group.MapIdentityDataHealthEndpoints();
-            Identity.Modules.Endpoints.AuthEndpoints.MapIdentityAuthEndpoints(group);
+            AuthEndpoints.MapIdentityAuthEndpoints(group);
         }
     }
 }

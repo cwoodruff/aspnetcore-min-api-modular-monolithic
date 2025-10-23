@@ -1,4 +1,6 @@
-﻿namespace SharedKernel.Persistence.Entities;
+﻿using SharedKernel.Persistence.ApiModels;
+
+namespace SharedKernel.Persistence.Entities;
 
 public partial class Track
 {
@@ -27,4 +29,20 @@ public partial class Track
     public virtual ICollection<InvoiceLine> InvoiceLines { get; set; } = new List<InvoiceLine>();
 
     public virtual MediaType? MediaType { get; set; }
+
+    public virtual ICollection<Playlist> Playlists { get; set; } = new List<Playlist>();
+
+    public TrackApiModel Convert() =>
+        new()
+        {
+            Id = Id,
+            Name = Name,
+            AlbumId = AlbumId,
+            MediaTypeId = MediaTypeId,
+            GenreId = GenreId,
+            Composer = Composer,
+            Milliseconds = Milliseconds,
+            Bytes = Bytes,
+            UnitPrice = UnitPrice
+        };
 }

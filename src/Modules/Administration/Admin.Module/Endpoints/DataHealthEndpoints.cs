@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 using SharedKernel;
 using SharedKernel.Persistence;
 
-namespace Administration.Modules;
+namespace Admin.Modules.Endpoints;
 
 public static class AdministrationDataHealthEndpoints
 {

@@ -1,5 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Identity.Modules.Authorization;
+using Identity.Modules.KeyManagement;
+using Identity.Modules.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -7,9 +10,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Identity.Modules.KeyManagement;
-using Identity.Modules.Services;
-using Identity.Modules.Authorization;
 
 namespace Identity.Modules.Extensions;
 

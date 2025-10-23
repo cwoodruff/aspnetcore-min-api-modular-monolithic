@@ -1,4 +1,6 @@
-﻿namespace SharedKernel.Persistence.Entities;
+﻿using SharedKernel.Persistence.ApiModels;
+
+namespace SharedKernel.Persistence.Entities;
 
 public partial class Artist
 {
@@ -7,4 +9,11 @@ public partial class Artist
     public string? Name { get; set; }
 
     public virtual ICollection<Album> Albums { get; set; } = new List<Album>();
+
+    public ArtistApiModel Convert() =>
+        new()
+        {
+            Id = Id,
+            Name = Name
+        };
 }

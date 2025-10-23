@@ -1,4 +1,6 @@
-﻿namespace SharedKernel.Persistence.Entities;
+﻿using SharedKernel.Persistence.ApiModels;
+
+namespace SharedKernel.Persistence.Entities;
 
 public partial class Employee
 {
@@ -12,9 +14,9 @@ public partial class Employee
 
     public int? ReportsTo { get; set; }
 
-    public string? BirthDate { get; set; }
+    public DateTime? BirthDate { get; set; }
 
-    public string? HireDate { get; set; }
+    public DateTime? HireDate { get; set; }
 
     public string? Address { get; set; }
 
@@ -35,4 +37,24 @@ public partial class Employee
     public virtual ICollection<Employee> InverseReportsToNavigation { get; set; } = new List<Employee>();
 
     public virtual Employee? ReportsToNavigation { get; set; }
+
+    public EmployeeApiModel Convert() =>
+        new()
+        {
+            Id = Id,
+            LastName = LastName,
+            FirstName = FirstName,
+            Title = Title,
+            ReportsTo = ReportsTo,
+            BirthDate = BirthDate,
+            HireDate = HireDate,
+            Address = Address,
+            City = City,
+            State = State,
+            Country = Country,
+            PostalCode = PostalCode,
+            Phone = Phone,
+            Fax = Fax,
+            Email = Email
+        };
 }

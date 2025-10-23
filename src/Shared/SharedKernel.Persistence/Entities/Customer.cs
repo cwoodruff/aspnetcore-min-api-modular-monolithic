@@ -1,4 +1,6 @@
-﻿namespace SharedKernel.Persistence.Entities;
+﻿using SharedKernel.Persistence.ApiModels;
+
+namespace SharedKernel.Persistence.Entities;
 
 public partial class Customer
 {
@@ -33,4 +35,22 @@ public partial class Customer
     public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 
     public virtual Customer? SupportRep { get; set; }
+
+    public CustomerApiModel Convert() =>
+        new()
+        {
+            Id = Id,
+            FirstName = FirstName,
+            LastName = LastName,
+            Company = Company,
+            Address = Address,
+            City = City,
+            State = State,
+            Country = Country,
+            PostalCode = PostalCode,
+            Phone = Phone,
+            Fax = Fax,
+            Email = Email,
+            SupportRepId = SupportRepId
+        };
 }

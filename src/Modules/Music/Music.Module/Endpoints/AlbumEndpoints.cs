@@ -34,10 +34,7 @@ public static class AlbumEndpoints
                 {
                     try
                     {
-                        var a = await db.Albums
-                            .AsNoTracking()
-                            .Include(x => x.Artist)
-                            .FirstOrDefaultAsync(x => x.Id == id, ct);
+                        var a = await db.GetAlbum(id);
 
                         if (a is null) return null; // cache nulls? We choose not to set cache for nulls (facade skips nulls)
 

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Music.Modules.Endpoints;
 using SharedKernel;
 
 namespace Music.Modules;
@@ -26,7 +27,7 @@ public static class MusicModule
             group.MapMusicDataHealthEndpoints();
 
             // Albums endpoints
-            Music.Modules.Endpoints.AlbumEndpoints.MapAlbumEndpoints(group);
+            AlbumEndpoints.MapAlbumEndpoints(group);
         }
     }
 }

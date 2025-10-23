@@ -1,10 +1,15 @@
 using System.Reflection;
-using Microsoft.AspNetCore.Http.Json;
-using SharedKernel;
-using SharedKernel.Persistence;
+using Admin.Modules;
+using Identity.Modules;
 using Identity.Modules.Extensions;
-using SharedKernel.Caching;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.OpenApi.Models;
+using Music.Modules;
+using Orders.Modules;
+using Reporting.Modules;
+using SharedKernel;
+using SharedKernel.Caching;
+using SharedKernel.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -156,11 +161,11 @@ static IReadOnlyList<IModule> GetModules()
 {
     return
     [
-        new Administration.Modules.AdministrationModule.Modules(),
-        new Identity.Modules.IdentityModule.Modules(),
-        new Music.Modules.MusicModule.Modules(),
-        new Orders.Modules.OrdersModule.Modules(),
-        new Reporting.Modules.ReportingModule.Modules()
+        new AdministrationModule.Modules(),
+        new IdentityModule.Modules(),
+        new MusicModule.Modules(),
+        new OrdersModule.Modules(),
+        new ReportingModule.Modules()
     ];
 }
 
@@ -173,5 +178,8 @@ static string[] GetAllowedOrigins() =>
 
 // For WebApplicationFactory
 #pragma warning disable ASP0027 // Using partial Program to expose entry point for tests; acceptable in this project
-public partial class Program { }
+namespace ModularMonolith.Api
+{
+    public partial class Program { }
+}
 #pragma warning restore ASP0027

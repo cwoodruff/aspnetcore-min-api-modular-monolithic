@@ -1,10 +1,10 @@
 using System.Security.Claims;
+using Identity.Modules.KeyManagement;
+using Identity.Modules.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Identity.Modules.Services;
-using Identity.Modules.KeyManagement;
 
 namespace Identity.Modules.Endpoints;
 

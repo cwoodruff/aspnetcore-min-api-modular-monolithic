@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Identity.Modules.Authorization;
 
 namespace Identity.Modules.Services;
 
@@ -53,16 +54,16 @@ public sealed class InMemoryUserStore : IUserStore
     private static readonly string[] RolesUser = ["User"]; // reused immutable array
     private static readonly string[] RolesAdmin = ["Admin"]; // reused immutable array
 
-    private static readonly string[] PermsMusicRead = [Identity.Modules.Authorization.Permissions.MusicRead];
-    private static readonly string[] PermsMusicOrdersRead = [Identity.Modules.Authorization.Permissions.MusicRead, Identity.Modules.Authorization.Permissions.OrdersRead];
-    private static readonly string[] PermsReportOnly = [Identity.Modules.Authorization.Permissions.ReportView];
+    private static readonly string[] PermsMusicRead = [Permissions.MusicRead];
+    private static readonly string[] PermsMusicOrdersRead = [Permissions.MusicRead, Permissions.OrdersRead];
+    private static readonly string[] PermsReportOnly = [Permissions.ReportView];
     private static readonly string[] PermsAdminAll = [
-        Identity.Modules.Authorization.Permissions.MusicRead,
-        Identity.Modules.Authorization.Permissions.MusicWrite,
-        Identity.Modules.Authorization.Permissions.OrdersRead,
-        Identity.Modules.Authorization.Permissions.OrdersWrite,
-        Identity.Modules.Authorization.Permissions.AdminUsersManage,
-        Identity.Modules.Authorization.Permissions.ReportView
+        Permissions.MusicRead,
+        Permissions.MusicWrite,
+        Permissions.OrdersRead,
+        Permissions.OrdersWrite,
+        Permissions.AdminUsersManage,
+        Permissions.ReportView
     ];
 
     private static readonly Dictionary<string, UserRecord> Users = new(StringComparer.OrdinalIgnoreCase)

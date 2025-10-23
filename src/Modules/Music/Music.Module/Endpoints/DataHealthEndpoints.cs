@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 using SharedKernel;
 using SharedKernel.Persistence;
 
-namespace Music.Modules;
+namespace Music.Modules.Endpoints;
 
 public static class MusicDataHealthEndpoints
 {

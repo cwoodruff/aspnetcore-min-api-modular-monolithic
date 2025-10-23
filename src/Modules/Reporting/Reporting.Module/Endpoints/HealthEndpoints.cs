@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using SharedKernel;
 
-namespace Reporting.Modules;
+namespace Reporting.Modules.Endpoints;
 
 public static class ReportingHealthEndpoints
 {

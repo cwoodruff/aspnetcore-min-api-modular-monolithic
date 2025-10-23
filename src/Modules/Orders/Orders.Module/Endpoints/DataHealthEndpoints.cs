@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 using SharedKernel;
 using SharedKernel.Persistence;
 
-namespace Orders.Modules;
+namespace Orders.Modules.Endpoints;
 
 public static class OrdersDataHealthEndpoints
 {
