@@ -19,6 +19,9 @@ public partial class Album
         {
             Id = Id,
             ArtistId = ArtistId,
-            Title = Title
+            Title = Title,
+            ArtistName = Artist?.Name,
+            Artist = Artist?.Convert(),
+            Tracks = Tracks.Select(t => t.Convert()).ToList()
         };
 }

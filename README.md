@@ -2,6 +2,8 @@
 
 Production-ready modular monolith starter using ASP.NET Core 9 (net9.0) and Minimal APIs. It demonstrates module composition via a simple IModule contract, clear boundaries, and integration tests.
 
+Looking to recreate this solution from scratch? See the step-by-step guide in docs/Walkthrough.md.
+
 ## Solution layout
 
 ```

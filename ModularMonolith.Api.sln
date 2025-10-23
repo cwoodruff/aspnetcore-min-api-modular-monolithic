@@ -49,6 +49,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{F8C887DB-8
 		docs\https-enforcement-plan.md = docs\https-enforcement-plan.md
 		docs\rate-limiting-plan.md = docs\rate-limiting-plan.md
 		docs\owasp-top-threats-and-mitigations.md = docs\owasp-top-threats-and-mitigations.md
+		docs\Walkthrough.md = docs\Walkthrough.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{C82539F3-3484-4BB1-80DA-906793C55F4C}"

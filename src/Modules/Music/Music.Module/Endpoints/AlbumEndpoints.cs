@@ -38,13 +38,8 @@ public static class AlbumEndpoints
 
                         if (a is null) return null; // cache nulls? We choose not to set cache for nulls (facade skips nulls)
 
-                        // Minimal DTO to avoid leaking EF tracking proxies and reduce payload
-                        return new
-                        {
-                            id = a.Id,
-                            title = a.Title,
-                            artist = a.Artist != null ? new { id = a.Artist.Id, name = a.Artist.Name } : null
-                        } as object;
+                        // ApiModel to avoid leaking EF tracking proxies and reduce payload
+                        return a.Convert();
                     }
                     catch
                     {

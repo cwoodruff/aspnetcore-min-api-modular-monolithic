@@ -35,6 +35,8 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.Property(e => e.Title).HasColumnType("nvarchar(160)");
 
             entity.HasOne(d => d.Artist).WithMany(p => p.Albums).HasForeignKey(d => d.ArtistId);
+
+            entity.HasMany(e => e.Tracks).WithOne(p => p.Album).HasForeignKey(p => p.AlbumId);
         });
 
         modelBuilder.Entity<Artist>(entity =>
@@ -244,10 +246,15 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
         EF.CompileAsyncQuery((AppDbContext db, int id) => db.Albums.Any(a => a.Id == id));
 
     private static readonly Func<AppDbContext, IAsyncEnumerable<Album>> _queryGetAllAlbums =
-        EF.CompileAsyncQuery((AppDbContext db) => db.Albums);
+        EF.CompileAsyncQuery((AppDbContext db) => db.Albums
+        .Include(a => a.Artist));
 
     private static readonly Func<AppDbContext, int, Task<Album?>> _queryGetAlbum =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Albums.FirstOrDefault(a => a.Id == id));
+        EF.CompileAsyncQuery((AppDbContext db, int id) =>
+            db.Albums
+                .Include(a => a.Artist)
+                .Include(a => a.Tracks)
+                .FirstOrDefault(a => a.Id == id));
 
     private static readonly Func<AppDbContext, int, IAsyncEnumerable<Album>> _queryGetAlbumsByArtistId =
         EF.CompileAsyncQuery((AppDbContext db, int id) => db.Albums.Where(a => a.ArtistId == id));
