@@ -16,6 +16,7 @@ Looking to recreate this solution from scratch? See the step-by-step guide in do
     /Reporting/Reporting.Module       (Class Library)
     /Identity/Identity.Module         (Class Library)
   /Shared/SharedKernel                (Class Library for cross-cutting primitives only)
+  /Shared/SharedKernel.Persistence    (Class Library for EF Core + AppDbContext and persistence helpers)
 /tests
   /ModularMonolith.Api.Tests          (xUnit integration tests using WebApplicationFactory)
 ```
@@ -33,17 +34,22 @@ public interface IModule
 }
 ```
 
-Each module exposes a public static <ModuleName>Module with a nested public sealed class Module : IModule that registers services and maps endpoints. Only the IModule is public outside the module; all other types should remain internal by default.
+Each module exposes a public static <ModuleName>Module with a nested public sealed class Modules : IModule that registers services and maps endpoints (note the plural “Modules”, e.g., MusicModule.Modules). Only the IModule is public outside the module; all other types should remain internal by default.
 
 ## Endpoints
 
 The host discovers all modules and composes their endpoints under conventional groups:
 
 - GET /api/music/health
+- GET /api/music/data-health
 - GET /api/orders/health
+- GET /api/orders/data-health
 - GET /api/administration/health
+- GET /api/administration/data-health
 - GET /api/reporting/health
+- GET /api/reporting/data-health
 - GET /api/identity/health
+- GET /api/identity/data-health
 
 Each returns HTTP 200 with JSON:
 
@@ -66,6 +72,8 @@ A root endpoint GET / returns similar metadata with module: "root".
 - Run: `dotnet run --project src/ModularMonolith.Api`
 - Swagger UI: http://localhost:5043/swagger (or the https port from launch settings)
 - Tests: `dotnet test ModularMonolith.Api.sln`
+  - Test coverage examples include root health, per-module health endpoints, and authenticated flows (e.g., obtaining a JWT and calling protected Music endpoints).
+  - The host exposes a public partial Program class to support Microsoft.AspNetCore.Mvc.Testing’s WebApplicationFactory.
 
 ### Example curl commands
 
@@ -87,11 +95,26 @@ docker build -t modular-monolith-api .
 docker run -p 8080:8080 modular-monolith-api
 ```
 
+- Dev ports vs Docker ports: When running locally via launchSettings.json the app listens on http://localhost:5043 and https://localhost:7043. In the container, ASPNETCORE_URLS is set to http://+:8080, so expose/browse http://localhost:8080.
+
 Then browse http://localhost:8080/swagger
 
 ## Notes
 
+### Rate limiting
+- Scaffolding for rate limiting policies exists under src/Shared/SharedKernel/TrafficControl, but the host does not currently call UseRateLimiter(). A future update can wire it with minimal changes.
+
+### Logging and observability
+- Uses built-in ASP.NET Core logging by default. No Serilog or OpenTelemetry is wired out-of-the-box; you can add them later according to your needs.
+
 ### Using Swagger & OpenAPI
+
+#### Identity endpoints summary
+- POST /api/identity/login — Issues an access token and refresh token for valid credentials. AllowAnonymous.
+- POST /api/identity/refresh — Exchanges a valid refresh token for a new access token. AllowAnonymous.
+- POST /api/identity/logout — Revokes a refresh token for the current user. Requires Authorization.
+- GET /api/identity/userinfo — Returns basic claims (sub, name, email, roles, permissions). Requires Authorization.
+- GET /api/identity/.well-known/jwks.json — Exposes the JWKS document for the signing key. AllowAnonymous.
 - Swagger UI is enabled by default at /swagger when you run the API host.
 - The OpenAPI document is generated with title "Modular Monolith API" (v1).
 - JWT Bearer auth is integrated into Swagger:
@@ -127,9 +150,9 @@ Use these credentials with `POST /api/identity/login` to receive an access_token
 - How to use JWT in Swagger for Music endpoints:
   1) Call `POST /api/identity/login` to receive an `access_token`.
   2) In Swagger UI, click the Authorize button and enter: `<access_token>`.
-  3) For tenant-scoped endpoints, optionally set a tenant hint:
-     - Route value: e.g., `/api/music/{tenant}/albums/{id}` if such route is defined, or
-     - Header: `X-Tenant-Id: <your-tenant>`.
+  3) For tenant-scoped endpoints, set a tenant hint (current routes do not include a {tenant} segment by default):
+     - Preferred: Header `X-Tenant-Id: <your-tenant>`.
+     - Optional: A route value may be used if a module defines such a template in the future (e.g., `/api/music/{tenant}/albums/{id}` — hypothetical, not defined by default).
   4) Invoke Music endpoints. You will see:
      - 200 OK when the token includes `permissions: ["music.read"]` and tenant scope matches.
      - 403 Forbidden if missing permission or tenant mismatch.
@@ -170,16 +193,38 @@ Notes
 - If you later add write endpoints that mutate album data, evict the corresponding cache key(s) or bump the version prefix (v1→v2) to ensure readers don’t see stale data.
 
 - Swagger is enabled with tags per module.
-- CORS policy named "Default" allows common localhost dev origins.
+- CORS policy named "Default" allows common localhost dev origins: http(s)://localhost:3000, 4200, 5173.
 - ProblemDetails middleware is enabled via UseExceptionHandler and AddProblemDetails.
 - No cross-module references; only the host references the modules and SharedKernel.
 
 ## Data and persistence
 
 - EF Core plan (single SQLite DbContext shared by all modules): see docs/EFCore-Plan.md
-- The database file is expected at /data/chinook.db (solution root). The plan explains registration and connection string handling.
+- Database file location: The app prefers src/ModularMonolith.Api/data/chinook.db (under the host content root) and falls back to repo-root /data/chinook.db if not found. At startup, Program.cs auto-detects the file and populates ConnectionStrings:AppDatabase when not provided.
+
+### Compiled queries and DbContext pooling
+
+#### Connection string configuration
+- You can set the SQLite connection via appsettings (ConnectionStrings:AppDatabase), environment variables (ConnectionStrings__AppDatabase), or rely on auto-discovery in Program.cs which sets the key at runtime when not provided.
+
+### Caching configuration
+- Tier: Caching:Tier can be "L1" (default, in-memory only) or "L1L2" (adds an optional distributed cache if available/configured).
+- Provider: Caching:Provider can be "InMemory" by default; use your own registration for Redis/others and the facade will detect IDistributedCache.
+- Defaults: CacheEntryOptions support AbsoluteExpirationRelativeToNow, SlidingExpiration, Jitter (±10% by default) to avoid stampedes.
+- Cache key composition: Keys include environment and service name components, derived from configuration keys ASPNETCORE_ENVIRONMENT/DOTNET_ENVIRONMENT and ServiceName (defaults to "mmapi"). See SharedKernel/Caching/CacheKeyComposer.cs.
+
+This solution uses EF Core compiled queries that are defined on the AppDbContext type and DbContext pooling for high throughput:
+
+- Where the compiled queries live: inside AppDbContext as private static delegates created with EF.CompileAsyncQuery, exposed via small instance methods like GetAlbum(id), GetAllAlbums(), etc.
+  - See: src/Shared/SharedKernel.Persistence/AppDbContext.cs (search for "Compiled Queries").
+- How the DbContext is registered: AddDbContextPool<AppDbContext>(..., poolSize: 128) in src/Shared/SharedKernel.Persistence/PersistenceRegistration.cs.
+- Why this matters: compiled queries are JIT-compiled once per process for the DbContext type. With pooling enabled, the 128 AppDbContext instances resolved from DI reuse the same compiled delegates, so there is no per-request re-compilation. This reduces allocations and CPU and keeps query hot paths consistently fast.
+- Adding a new hot query: define a new private static readonly delegate using EF.CompileAsyncQuery and a corresponding public instance method that invokes it. Prefer shapes that match your endpoint needs to minimize extra LINQ.
+- How modules consume them: inject AppDbContext or IAppDbContext and call the provided methods instead of re-authoring LINQ in every endpoint/service.
 
 ### How modules access the DbContext
+
+Note: Modules that need EF abstractions should reference the SharedKernel.Persistence project to access IAppDbContext and AppDbContext types.
 
 All modules share a single DbContext registered by the host via AddKernelPersistence. Modules can access it through ASP.NET Core DI:
 
