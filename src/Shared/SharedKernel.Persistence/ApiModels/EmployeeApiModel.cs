@@ -38,7 +38,7 @@ public sealed class EmployeeApiModel : BaseApiModel, IConvertModel<Employee>
     public ICollection<EmployeeApiModel> InverseReportsToNavigation { get; set; } =
         new List<EmployeeApiModel>();
 
-    public EmployeeApiModel? ReportsToNavigation { get; set; }
+    public string? ReportsToNavigation { get; set; }
 
     public Employee Convert() =>
         new()

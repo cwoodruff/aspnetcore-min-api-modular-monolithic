@@ -14,6 +14,7 @@ public partial class Genre
         new()
         {
             Id = Id,
-            Name = Name
+            Name = Name,
+            Tracks = Tracks.Select(t => t.Convert()).ToList()
         };
 }

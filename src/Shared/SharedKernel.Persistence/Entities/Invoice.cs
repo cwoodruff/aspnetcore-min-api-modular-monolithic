@@ -37,6 +37,8 @@ public partial class Invoice
             BillingState = BillingState,
             BillingCountry = BillingCountry,
             BillingPostalCode = BillingPostalCode,
-            Total = Total
+            Total = Total,
+            Customer = Customer?.Convert(),
+            InvoiceLines = InvoiceLines.Select(il => il.Convert()).ToList()
         };
 }

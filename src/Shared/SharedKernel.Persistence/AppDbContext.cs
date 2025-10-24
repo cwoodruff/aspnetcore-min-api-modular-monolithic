@@ -62,7 +62,8 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.Property(e => e.PostalCode).HasColumnType("nvarchar(10)");
             entity.Property(e => e.State).HasColumnType("nvarchar(40)");
 
-            entity.HasOne(d => d.SupportRep).WithMany(p => p.InverseSupportRep).HasForeignKey(d => d.SupportRepId);
+            entity.HasOne(d => d.SupportRep).WithMany(p => p.Customers)
+                .HasForeignKey(d => d.SupportRepId);
         });
 
         modelBuilder.Entity<Employee>(entity =>

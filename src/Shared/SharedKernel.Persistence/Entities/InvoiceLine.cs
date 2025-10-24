@@ -25,6 +25,8 @@ public partial class InvoiceLine
             InvoiceId = InvoiceId,
             TrackId = TrackId,
             UnitPrice = UnitPrice,
-            Quantity = Quantity
+            Quantity = Quantity,
+            Invoice = Invoice?.Convert()!,
+            Track = Track?.Convert()!
         };
 }

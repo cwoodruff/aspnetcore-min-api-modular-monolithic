@@ -14,6 +14,7 @@ public partial class Artist
         new()
         {
             Id = Id,
-            Name = Name
+            Name = Name,
+            Albums = Albums.Select(t => t.Convert()).ToList()
         };
 }

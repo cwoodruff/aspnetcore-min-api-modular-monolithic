@@ -34,6 +34,8 @@ public partial class Employee
 
     public string? Email { get; set; }
 
+    public virtual ICollection<Customer> Customers { get; set; } = new List<Customer>();
+
     public virtual ICollection<Employee> InverseReportsToNavigation { get; set; } = new List<Employee>();
 
     public virtual Employee? ReportsToNavigation { get; set; }
@@ -55,6 +57,9 @@ public partial class Employee
             PostalCode = PostalCode,
             Phone = Phone,
             Fax = Fax,
-            Email = Email
+            Email = Email,
+            ReportsToNavigation = ReportsToNavigation != null ? $"{ReportsToNavigation.FirstName} {ReportsToNavigation.LastName}" : null,
+            InverseReportsToNavigation = InverseReportsToNavigation.Select(e => e.Convert()).ToList(),
+            Customers = Customers.Select(c => c.Convert()).ToList()
         };
 }

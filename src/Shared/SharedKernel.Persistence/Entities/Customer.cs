@@ -34,7 +34,7 @@ public partial class Customer
 
     public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 
-    public virtual Customer? SupportRep { get; set; }
+    public virtual Employee? SupportRep { get; set; }
 
     public CustomerApiModel Convert() =>
         new()
@@ -51,6 +51,9 @@ public partial class Customer
             Phone = Phone,
             Fax = Fax,
             Email = Email,
-            SupportRepId = SupportRepId
+            SupportRepId = SupportRepId,
+            SupportRepName = SupportRep != null ? $"{SupportRep.FirstName} {SupportRep.LastName}" : null,
+            SupportRep = SupportRep?.Convert(),
+            Invoices = Invoices.Select(i => i.Convert()).ToList(),
         };
 }

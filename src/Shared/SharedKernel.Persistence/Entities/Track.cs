@@ -43,6 +43,11 @@ public partial class Track
             Composer = Composer,
             Milliseconds = Milliseconds,
             Bytes = Bytes,
-            UnitPrice = UnitPrice
+            UnitPrice = UnitPrice,
+            InvoiceLines = InvoiceLines.Select(i => i.Convert()).ToList(),
+            Album = Album?.Convert(),
+            Genre = Genre?.Convert(),
+            MediaType = MediaType?.Convert(),
+            Playlists = Playlists.Select(p => p.Convert()).ToList()
         };
 }

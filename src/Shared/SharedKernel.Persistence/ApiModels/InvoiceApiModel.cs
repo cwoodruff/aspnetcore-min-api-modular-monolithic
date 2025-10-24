@@ -21,7 +21,7 @@ public sealed class InvoiceApiModel : BaseApiModel, IConvertModel<Invoice>
 
     public decimal Total { get; set; }
 
-    public CustomerApiModel Customer { get; set; } = null!;
+    public CustomerApiModel? Customer { get; set; } = null!;
 
     public ICollection<InvoiceLineApiModel> InvoiceLines { get; set; } = new List<InvoiceLineApiModel>();
 
