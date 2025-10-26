@@ -84,7 +84,8 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.Property(e => e.State).HasColumnType("nvarchar(40)");
             entity.Property(e => e.Title).HasColumnType("nvarchar(30)");
 
-            entity.HasOne(d => d.ReportsToNavigation).WithMany(p => p.InverseReportsToNavigation).HasForeignKey(d => d.ReportsTo);
+            entity.HasOne(d => d.ReportsToNavigation).WithMany(p => p.InverseReportsToNavigation)
+                .HasForeignKey(d => d.ReportsTo);
         });
 
         modelBuilder.Entity<Genre>(entity =>
@@ -142,10 +143,7 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
                     l => l.HasOne<Playlist>().WithMany()
                         .HasForeignKey("PlaylistId")
                         .OnDelete(DeleteBehavior.ClientSetNull),
-                    j =>
-                    {
-                        j.ToTable("PlaylistTrack");
-                    });
+                    j => { j.ToTable("PlaylistTrack"); });
         });
 
         modelBuilder.Entity<Track>(entity =>
@@ -243,121 +241,268 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
 
     // Delegates
 
+    // Album Queries
     private static readonly Func<AppDbContext, int, Task<bool>> _queryAlbumExists =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Albums.Any(a => a.Id == id));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Albums
+            .AsNoTracking()
+            .Any(a => a.Id == id));
 
     private static readonly Func<AppDbContext, IAsyncEnumerable<Album>> _queryGetAllAlbums =
         EF.CompileAsyncQuery((AppDbContext db) => db.Albums
-        .Include(a => a.Artist));
+            .AsNoTracking()
+            .Include(a => a.Artist));
 
     private static readonly Func<AppDbContext, int, Task<Album?>> _queryGetAlbum =
-        EF.CompileAsyncQuery((AppDbContext db, int id) =>
-            db.Albums
-                .Include(a => a.Artist)
-                .Include(a => a.Tracks)
-                .FirstOrDefault(a => a.Id == id));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Albums
+            .Include(a => a.Artist)
+            .Include(a => a.Tracks)
+            .AsNoTracking()
+            .FirstOrDefault(a => a.Id == id));
 
     private static readonly Func<AppDbContext, int, IAsyncEnumerable<Album>> _queryGetAlbumsByArtistId =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Albums.Where(a => a.ArtistId == id));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Albums.Where(a => a.ArtistId == id)
+            .Include(a => a.Artist)
+            .Include(a => a.Tracks)
+            .AsNoTracking());
+
+    // Artist Queries
+    private static readonly Func<AppDbContext, int, Task<bool>> _queryArtistExists =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Artists
+            .AsNoTracking()
+            .Any(a => a.Id == id));
 
     private static readonly Func<AppDbContext, IAsyncEnumerable<Artist>> _queryGetAllArtists =
-        EF.CompileAsyncQuery((AppDbContext db) => db.Artists);
+        EF.CompileAsyncQuery((AppDbContext db) => db.Artists.AsNoTracking());
 
     private static readonly Func<AppDbContext, int, Task<Artist?>> _queryGetArtist =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Artists.FirstOrDefault(a => a.Id == id));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Artists
+            .Include(a => a.Albums)
+            .ThenInclude(a => a.Tracks)
+            .AsNoTracking()
+            .FirstOrDefault(a => a.Id == id));
+
+    // Customer Queries
+    private static readonly Func<AppDbContext, int, Task<bool>> _queryCustomerExists =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Customers
+            .AsNoTracking()
+            .Any(c => c.Id == id));
 
     private static readonly Func<AppDbContext, IAsyncEnumerable<Customer>> _queryGetAllCustomers =
-        EF.CompileAsyncQuery((AppDbContext db) => db.Customers);
+        EF.CompileAsyncQuery((AppDbContext db) => db.Customers.AsNoTracking());
 
     private static readonly Func<AppDbContext, int, Task<Customer?>> _queryGetCustomer =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Customers.FirstOrDefault(c => c.Id == id));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Customers
+            .Include(c => c.InverseSupportRep)
+            .Include(c => c.Invoices)
+            .ThenInclude(i => i.InvoiceLines)
+            .Include(c => c.SupportRep)
+            .AsNoTracking()
+            .FirstOrDefault(c => c.Id == id));
 
     private static readonly Func<AppDbContext, int, IAsyncEnumerable<Customer>> _queryGetCustomerBySupportRepId =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Customers.Where(a => a.SupportRepId == id));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Customers
+            .Include(c => c.InverseSupportRep)
+            .Include(c => c.Invoices)
+            .ThenInclude(i => i.InvoiceLines)
+            .Include(c => c.SupportRep)
+            .AsNoTracking()
+            .Where(a => a.SupportRepId == id));
+
+    // Employee Queries
+    private static readonly Func<AppDbContext, int, Task<bool>> _queryEmployeeExists =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Employees
+            .AsNoTracking()
+            .Any(c => c.Id == id));
 
     private static readonly Func<AppDbContext, IAsyncEnumerable<Employee>> _queryGetAllEmployees =
-        EF.CompileAsyncQuery((AppDbContext db) => db.Employees);
+        EF.CompileAsyncQuery((AppDbContext db) => db.Employees.AsNoTracking());
 
     private static readonly Func<AppDbContext, int, Task<Employee?>> _queryGetEmployee =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Employees.FirstOrDefault(e => e.Id == id));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Employees
+            .Include(e => e.Customers)
+            .Include(e => e.InverseReportsToNavigation)
+            .Include(e => e.ReportsToNavigation)
+            .AsNoTracking()
+            .FirstOrDefault(e => e.Id == id));
 
     private static readonly Func<AppDbContext, int, IAsyncEnumerable<Employee>> _queryGetDirectReports =
-        EF.CompileAsyncQuery((AppDbContext db, int id) =>
-            db.Employees.Where(e => e.ReportsTo == id));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Employees
+            .Include(e => e.Customers)
+            .Include(e => e.InverseReportsToNavigation)
+            .Include(e => e.ReportsToNavigation)
+            .AsNoTracking()
+            .Where(e => e.ReportsTo == id));
 
     private static readonly Func<AppDbContext, int, Task<Employee>> _queryGetReportsTo =
-        EF.CompileAsyncQuery((AppDbContext db, int id) =>
-            db.Employees.First(e => e.ReportsTo == id));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Employees
+            .Include(e => e.Customers)
+            .AsNoTracking()
+            .First(e => e.ReportsTo == id));
+
+    // Genre Queries
+    private static readonly Func<AppDbContext, int, Task<bool>> _queryGenreExists =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Genres
+            .AsNoTracking()
+            .Any(c => c.Id == id));
 
     private static readonly Func<AppDbContext, IAsyncEnumerable<Genre>> _queryGetAllGenres =
-        EF.CompileAsyncQuery((AppDbContext db) => db.Genres);
+        EF.CompileAsyncQuery((AppDbContext db) => db.Genres
+            .AsNoTracking());
 
     private static readonly Func<AppDbContext, int, Task<Genre?>> _queryGetGenre =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Genres.FirstOrDefault(g => g.Id == id));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Genres
+            .Include(g => g.Tracks)
+            .AsNoTracking()
+            .FirstOrDefault(g => g.Id == id));
+
+    // InvoiceLine Queries
+    private static readonly Func<AppDbContext, int, Task<bool>> _queryInvoiceLineExists =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.InvoiceLines
+            .AsNoTracking()
+            .Any(c => c.Id == id));
 
     private static readonly Func<AppDbContext, IAsyncEnumerable<InvoiceLine>> _queryGetAllInvoiceLines =
-        EF.CompileAsyncQuery((AppDbContext db) => db.InvoiceLines);
+        EF.CompileAsyncQuery((AppDbContext db) => db.InvoiceLines
+            .AsNoTracking());
 
     private static readonly Func<AppDbContext, int, Task<InvoiceLine?>> _queryGetInvoiceLine =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.InvoiceLines.FirstOrDefault(i => i.Id == id));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.InvoiceLines
+            .Include(i => i.Track)
+            .AsNoTracking()
+            .FirstOrDefault(i => i.Id == id));
 
     private static readonly Func<AppDbContext, int, IAsyncEnumerable<InvoiceLine>> _queryGetInvoiceLinesByInvoiceId
-        = EF.CompileAsyncQuery((AppDbContext db, int id) =>
-            db.InvoiceLines.Where(a => a.InvoiceId == id));
+        = EF.CompileAsyncQuery((AppDbContext db, int id) => db.InvoiceLines
+            .Include(i => i.Track)
+            .AsNoTracking()
+            .Where(a => a.InvoiceId == id));
 
     private static readonly Func<AppDbContext, int, IAsyncEnumerable<InvoiceLine>> _queryGetInvoiceLinesByTrackId =
-        EF.CompileAsyncQuery((AppDbContext db, int id) =>
-            db.InvoiceLines.Where(a => a.TrackId == id));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.InvoiceLines
+            .AsNoTracking()
+            .Where(a => a.TrackId == id));
+
+    // Invoice Queries
+    private static readonly Func<AppDbContext, int, Task<bool>> _queryInvoiceExists =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Invoices
+            .AsNoTracking()
+            .Any(c => c.Id == id));
 
     private static readonly Func<AppDbContext, IAsyncEnumerable<Invoice>> _queryGetAllInvoices =
-        EF.CompileAsyncQuery((AppDbContext db) => db.Invoices);
+        EF.CompileAsyncQuery((AppDbContext db) => db.Invoices
+            .AsNoTracking());
 
     private static readonly Func<AppDbContext, int, Task<Invoice?>> _queryGetInvoice =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Invoices.FirstOrDefault(i => i.Id == id));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Invoices
+            .Include(i => i.Customer)
+            .ThenInclude(i => i!.SupportRep)
+            .Include(i => i.InvoiceLines)
+            .ThenInclude(il => il.Track)
+            .AsNoTracking()
+            .FirstOrDefault(i => i.Id == id));
 
     private static readonly Func<AppDbContext, int, IAsyncEnumerable<Invoice>> _queryGetInvoicesByCustomerId =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Invoices.Where(a => a.CustomerId == id));
-
-    private static readonly Func<AppDbContext, IAsyncEnumerable<MediaType>> _queryGetAllMediaTypes =
-        EF.CompileAsyncQuery((AppDbContext db) => db.MediaTypes);
-
-    private static readonly Func<AppDbContext, int, Task<MediaType?>> _queryGetMediaType =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.MediaTypes.FirstOrDefault(m => m.Id == id));
-
-    private static readonly Func<AppDbContext, IAsyncEnumerable<Playlist>> _queryGetAllPlaylists =
-        EF.CompileAsyncQuery((AppDbContext db) => db.Playlists);
-
-    private static readonly Func<AppDbContext, int, Task<Playlist?>> _queryGetPlaylist =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Playlists.FirstOrDefault(p => p.Id == id));
-
-    private static readonly Func<AppDbContext, IAsyncEnumerable<Track>> _queryGetAllTracks =
-        EF.CompileAsyncQuery((AppDbContext db) => db.Tracks);
-
-    private static readonly Func<AppDbContext, int, Task<Track?>> _queryGetTrack =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Tracks.FirstOrDefault(t => t.Id == id));
-
-    private static readonly Func<AppDbContext, int, IAsyncEnumerable<Track>> _queryGetTracksByAlbumId =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Tracks.Where(a => a.AlbumId == id));
-
-    private static readonly Func<AppDbContext, int, IAsyncEnumerable<Track>> _queryGetTracksByGenreId =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Tracks.Where(a => a.GenreId == id));
-
-    private static readonly Func<AppDbContext, int, IAsyncEnumerable<Track>> _queryGetTracksByMediaTypeId =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Tracks.Where(a => a.MediaTypeId == id));
-
-    private static readonly Func<AppDbContext, int, IAsyncEnumerable<Track>> _queryGetTracksByArtistId =
-        EF.CompileAsyncQuery((AppDbContext db, int id) =>
-            db.Albums.Where(a => a.ArtistId == id).SelectMany(t => t.Tracks));
-
-    private static readonly Func<AppDbContext, int, IAsyncEnumerable<Track>> _queryGetTracksByInvoiceId =
-        EF.CompileAsyncQuery((AppDbContext db, int id) =>
-            db.Tracks.Where(c => c.InvoiceLines.Any(o => o.InvoiceId == id)));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Invoices
+            .Include(i => i.Customer)
+            .Include(i => i.InvoiceLines)
+            .ThenInclude(il => il.Track)
+            .AsNoTracking()
+            .Where(a => a.CustomerId == id));
 
     private static readonly Func<AppDbContext, int, IAsyncEnumerable<Invoice>> _queryGetInvoicesByEmployeeId =
-        EF.CompileAsyncQuery((AppDbContext db, int id) =>
-            db.Customers.Where(a => a.SupportRepId == id).SelectMany(t => t.Invoices));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Customers
+            .Where(a => a.SupportRepId == id)
+            .SelectMany(t => t.Invoices)
+            .Include(i => i.InvoiceLines)
+            .ThenInclude(il => il.Track)
+            .AsNoTracking());
+
+    // MediaType Queries
+    private static readonly Func<AppDbContext, int, Task<bool>> _queryMediaTypeExists =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.MediaTypes
+            .AsNoTracking()
+            .Any(c => c.Id == id));
+
+    private static readonly Func<AppDbContext, IAsyncEnumerable<MediaType>> _queryGetAllMediaTypes =
+        EF.CompileAsyncQuery((AppDbContext db) => db.MediaTypes
+            .AsNoTracking());
+
+    private static readonly Func<AppDbContext, int, Task<MediaType?>> _queryGetMediaType =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.MediaTypes
+            .Include(m => m.Tracks)
+            .AsNoTracking()
+            .FirstOrDefault(m => m.Id == id));
+
+    // Playlist Queries
+    private static readonly Func<AppDbContext, int, Task<bool>> _queryPlaylistExists =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Playlists
+            .AsNoTracking()
+            .Any(c => c.Id == id));
+
+    private static readonly Func<AppDbContext, IAsyncEnumerable<Playlist>> _queryGetAllPlaylists =
+        EF.CompileAsyncQuery((AppDbContext db) => db.Playlists
+            .AsNoTracking());
+
+    private static readonly Func<AppDbContext, int, Task<Playlist?>> _queryGetPlaylist =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Playlists
+            .Include(p => p.Tracks)
+            .AsNoTracking()
+            .FirstOrDefault(p => p.Id == id));
+
+    // Track Queries
+    private static readonly Func<AppDbContext, int, Task<bool>> _queryTrackExists =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Tracks.AsNoTracking().Any(c => c.Id == id));
+
+    private static readonly Func<AppDbContext, IAsyncEnumerable<Track>> _queryGetAllTracks =
+        EF.CompileAsyncQuery((AppDbContext db) => db.Tracks
+            .AsNoTracking());
+
+    private static readonly Func<AppDbContext, int, Task<Track?>> _queryGetTrack =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Tracks
+            .Include(t => t.Album)
+            .Include(t => t.Genre)
+            .Include(t => t.MediaType)
+            .AsNoTracking()
+            .FirstOrDefault(t => t.Id == id));
+
+    private static readonly Func<AppDbContext, int, IAsyncEnumerable<Track>> _queryGetTracksByAlbumId =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Tracks
+            .Include(t => t.Genre)
+            .Include(t => t.MediaType)
+            .AsNoTracking()
+            .Where(a => a.AlbumId == id));
+
+    private static readonly Func<AppDbContext, int, IAsyncEnumerable<Track>> _queryGetTracksByGenreId =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Tracks
+            .Include(t => t.Album)
+            .Include(t => t.MediaType)
+            .AsNoTracking()
+            .Where(a => a.GenreId == id));
+
+    private static readonly Func<AppDbContext, int, IAsyncEnumerable<Track>> _queryGetTracksByMediaTypeId =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Tracks
+            .Include(t => t.Album)
+            .Include(t => t.Genre)
+            .AsNoTracking()
+            .Where(a => a.MediaTypeId == id));
+
+    private static readonly Func<AppDbContext, int, IAsyncEnumerable<Track>> _queryGetTracksByArtistId =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Albums
+            .Where(a => a.ArtistId == id)
+            .SelectMany(t => t.Tracks)
+            .Include(t => t.Album)
+            .AsNoTracking());
+
+    private static readonly Func<AppDbContext, int, IAsyncEnumerable<Track>> _queryGetTracksByInvoiceId =
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Tracks
+            .Where(c => c.InvoiceLines.Any(o => o.InvoiceId == id))
+            .Include(t => t.Album)
+            .AsNoTracking());
 
     private static readonly Func<AppDbContext, int, IAsyncEnumerable<Track>> _queryGetTracksByPlaylistId =
-        EF.CompileAsyncQuery((AppDbContext db, int id) =>
-            db.Playlists.Where(a => a.Id == id).SelectMany(t => t.Tracks));
+        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Playlists
+            .Where(a => a.Id == id)
+            .SelectMany(t => t.Tracks)
+            .Include(t => t.Album)
+            .AsNoTracking());
 }
