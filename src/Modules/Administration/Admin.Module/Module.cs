@@ -25,6 +25,10 @@ public static class AdministrationModule
             // Delegate to endpoint classes
             group.MapAdministrationHealthEndpoints();
             group.MapAdministrationDataHealthEndpoints();
+            group.MapCustomerEndpoints();
+            group.MapEmployeeEndpoints();
+            group.MapGenreEndpoints();
+            group.MapMediaTypeEndpoints();
         }
     }
 }

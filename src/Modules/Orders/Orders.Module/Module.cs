@@ -25,6 +25,8 @@ public static class OrdersModule
             // Delegate to endpoint classes
             group.MapOrdersHealthEndpoints();
             group.MapOrdersDataHealthEndpoints();
+            group.MapInvoiceEndpoints();
+            group.MapInvoiceLineEndpoints();
         }
     }
 }
