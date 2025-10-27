@@ -168,36 +168,40 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
 
     // Compiled Queries
 
-    public Task<bool> AlbumExists(int id) => _queryAlbumExists(this, id);
-
-    public IAsyncEnumerable<Album> GetAllAlbums() => _queryGetAllAlbums(this);
+    // Album Methods
+    public Task<IAsyncEnumerable<Album>> GetAllAlbums() => Task.FromResult(_queryGetAllAlbums(this));
 
     public Task<Album?> GetAlbum(int id) => _queryGetAlbum(this, id);
 
-    public IAsyncEnumerable<Album> GetAlbumsByArtistId(int id) => _queryGetAlbumsByArtistId(this, id);
+    public Task<IAsyncEnumerable<Album>> GetAlbumsByArtistId(int id) => Task.FromResult(_queryGetAlbumsByArtistId(this, id));
 
-    public IAsyncEnumerable<Artist> GetAllArtists() => _queryGetAllArtists(this);
+    // Artist Methods
+    public Task<IAsyncEnumerable<Artist>> GetAllArtists() => Task.FromResult(_queryGetAllArtists(this));
 
     public Task<Artist?> GetArtist(int id) => _queryGetArtist(this, id);
 
-    public IAsyncEnumerable<Customer> GetAllCustomers() => _queryGetAllCustomers(this);
+    // Customer Methods
+    public Task<IAsyncEnumerable<Customer>> GetAllCustomers() => Task.FromResult(_queryGetAllCustomers(this));
 
     public Task<Customer?> GetCustomer(int id) => _queryGetCustomer(this, id);
 
-    public IAsyncEnumerable<Customer> GetCustomerBySupportRepId(int id) => _queryGetCustomerBySupportRepId(this, id);
+    public Task<IAsyncEnumerable<Customer>> GetCustomerBySupportRepId(int id) => Task.FromResult(_queryGetCustomerBySupportRepId(this, id));
 
-    public IAsyncEnumerable<Employee> GetAllEmployees() => _queryGetAllEmployees(this);
+    // Employee Methods
+    public Task<IAsyncEnumerable<Employee>> GetAllEmployees() => Task.FromResult(_queryGetAllEmployees(this));
 
     public Task<Employee?> GetEmployee(int id) => _queryGetEmployee(this, id);
 
-    public IAsyncEnumerable<Employee> GetEmployeeDirectReports(int id) => _queryGetDirectReports(this, id);
+    public Task<IAsyncEnumerable<Employee>> GetEmployeeDirectReports(int id) => Task.FromResult(_queryGetDirectReports(this, id));
 
     public Task<Employee> GetEmployeeGetReportsTo(int id) => _queryGetReportsTo(this, id);
 
+    // Genre Methods
     public IAsyncEnumerable<Genre> GetAllGenres() => _queryGetAllGenres(this);
 
     public Task<Genre?> GetGenre(int id) => _queryGetGenre(this, id);
 
+    // InvoiceLine Methods
     public IAsyncEnumerable<InvoiceLine> GetAllInvoiceLines() => _queryGetAllInvoiceLines(this);
 
     public Task<InvoiceLine?> GetInvoiceLine(int id) => _queryGetInvoiceLine(this, id);
@@ -207,19 +211,25 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public IAsyncEnumerable<InvoiceLine> GetInvoiceLinesByTrackId(int id) => _queryGetInvoiceLinesByTrackId(this, id);
 
+    // Invoice Methods
     public IAsyncEnumerable<Invoice> GetAllInvoices() => _queryGetAllInvoices(this);
 
     public Task<Invoice?> GetInvoice(int id) => _queryGetInvoice(this, id);
 
+    public IAsyncEnumerable<Invoice> GetInvoicesByEmployeeId(int id) => _queryGetInvoicesByEmployeeId(this, id);
+
     public IAsyncEnumerable<Invoice> GetInvoicesByCustomerId(int id) => _queryGetInvoicesByCustomerId(this, id);
 
+    // MediaType Methods
     public IAsyncEnumerable<MediaType> GetAllMediaTypes() => _queryGetAllMediaTypes(this);
 
     public Task<MediaType?> GetMediaType(int id) => _queryGetMediaType(this, id);
 
+    // Playlist Methods
     public IAsyncEnumerable<Playlist> GetAllPlaylists() => _queryGetAllPlaylists(this);
 
     public Task<Playlist?> GetPlaylist(int id) => _queryGetPlaylist(this, id);
+
 
     public IAsyncEnumerable<Track> GetAllTracks() => _queryGetAllTracks(this);
 
@@ -235,18 +245,11 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public IAsyncEnumerable<Track> GetTracksByInvoiceId(int id) => _queryGetTracksByInvoiceId(this, id);
 
-    public IAsyncEnumerable<Invoice> GetInvoicesByEmployeeId(int id) => _queryGetInvoicesByEmployeeId(this, id);
-
     public IAsyncEnumerable<Track> GetTracksByPlaylistId(int id) => _queryGetTracksByPlaylistId(this, id);
 
     // Delegates
 
     // Album Queries
-    private static readonly Func<AppDbContext, int, Task<bool>> _queryAlbumExists =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Albums
-            .AsNoTracking()
-            .Any(a => a.Id == id));
-
     private static readonly Func<AppDbContext, IAsyncEnumerable<Album>> _queryGetAllAlbums =
         EF.CompileAsyncQuery((AppDbContext db) => db.Albums
             .AsNoTracking()
@@ -266,11 +269,6 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
             .AsNoTracking());
 
     // Artist Queries
-    private static readonly Func<AppDbContext, int, Task<bool>> _queryArtistExists =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Artists
-            .AsNoTracking()
-            .Any(a => a.Id == id));
-
     private static readonly Func<AppDbContext, IAsyncEnumerable<Artist>> _queryGetAllArtists =
         EF.CompileAsyncQuery((AppDbContext db) => db.Artists.AsNoTracking());
 
@@ -282,11 +280,6 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
             .FirstOrDefault(a => a.Id == id));
 
     // Customer Queries
-    private static readonly Func<AppDbContext, int, Task<bool>> _queryCustomerExists =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Customers
-            .AsNoTracking()
-            .Any(c => c.Id == id));
-
     private static readonly Func<AppDbContext, IAsyncEnumerable<Customer>> _queryGetAllCustomers =
         EF.CompileAsyncQuery((AppDbContext db) => db.Customers.AsNoTracking());
 
@@ -309,11 +302,6 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
             .Where(a => a.SupportRepId == id));
 
     // Employee Queries
-    private static readonly Func<AppDbContext, int, Task<bool>> _queryEmployeeExists =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Employees
-            .AsNoTracking()
-            .Any(c => c.Id == id));
-
     private static readonly Func<AppDbContext, IAsyncEnumerable<Employee>> _queryGetAllEmployees =
         EF.CompileAsyncQuery((AppDbContext db) => db.Employees.AsNoTracking());
 
@@ -340,11 +328,6 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
             .First(e => e.ReportsTo == id));
 
     // Genre Queries
-    private static readonly Func<AppDbContext, int, Task<bool>> _queryGenreExists =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Genres
-            .AsNoTracking()
-            .Any(c => c.Id == id));
-
     private static readonly Func<AppDbContext, IAsyncEnumerable<Genre>> _queryGetAllGenres =
         EF.CompileAsyncQuery((AppDbContext db) => db.Genres
             .AsNoTracking());
@@ -356,11 +339,6 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
             .FirstOrDefault(g => g.Id == id));
 
     // InvoiceLine Queries
-    private static readonly Func<AppDbContext, int, Task<bool>> _queryInvoiceLineExists =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.InvoiceLines
-            .AsNoTracking()
-            .Any(c => c.Id == id));
-
     private static readonly Func<AppDbContext, IAsyncEnumerable<InvoiceLine>> _queryGetAllInvoiceLines =
         EF.CompileAsyncQuery((AppDbContext db) => db.InvoiceLines
             .AsNoTracking());
@@ -383,11 +361,6 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
             .Where(a => a.TrackId == id));
 
     // Invoice Queries
-    private static readonly Func<AppDbContext, int, Task<bool>> _queryInvoiceExists =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Invoices
-            .AsNoTracking()
-            .Any(c => c.Id == id));
-
     private static readonly Func<AppDbContext, IAsyncEnumerable<Invoice>> _queryGetAllInvoices =
         EF.CompileAsyncQuery((AppDbContext db) => db.Invoices
             .AsNoTracking());
@@ -418,11 +391,6 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
             .AsNoTracking());
 
     // MediaType Queries
-    private static readonly Func<AppDbContext, int, Task<bool>> _queryMediaTypeExists =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.MediaTypes
-            .AsNoTracking()
-            .Any(c => c.Id == id));
-
     private static readonly Func<AppDbContext, IAsyncEnumerable<MediaType>> _queryGetAllMediaTypes =
         EF.CompileAsyncQuery((AppDbContext db) => db.MediaTypes
             .AsNoTracking());
@@ -434,11 +402,6 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
             .FirstOrDefault(m => m.Id == id));
 
     // Playlist Queries
-    private static readonly Func<AppDbContext, int, Task<bool>> _queryPlaylistExists =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Playlists
-            .AsNoTracking()
-            .Any(c => c.Id == id));
-
     private static readonly Func<AppDbContext, IAsyncEnumerable<Playlist>> _queryGetAllPlaylists =
         EF.CompileAsyncQuery((AppDbContext db) => db.Playlists
             .AsNoTracking());
@@ -450,9 +413,6 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
             .FirstOrDefault(p => p.Id == id));
 
     // Track Queries
-    private static readonly Func<AppDbContext, int, Task<bool>> _queryTrackExists =
-        EF.CompileAsyncQuery((AppDbContext db, int id) => db.Tracks.AsNoTracking().Any(c => c.Id == id));
-
     private static readonly Func<AppDbContext, IAsyncEnumerable<Track>> _queryGetAllTracks =
         EF.CompileAsyncQuery((AppDbContext db) => db.Tracks
             .AsNoTracking());
