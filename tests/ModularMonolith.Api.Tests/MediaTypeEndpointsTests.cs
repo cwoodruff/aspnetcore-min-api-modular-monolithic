@@ -1,0 +1,54 @@
+using System.Text.Json;
+using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.Testing;
+
+namespace ModularMonolith.Api.Tests;
+
+public class MediaTypeEndpointsTests(WebApplicationFactory<Program> factory)
+    : IClassFixture<WebApplicationFactory<Program>>
+{
+    private readonly WebApplicationFactory<Program> _factory = factory.WithWebHostBuilder(_ => { });
+
+    [Fact]
+    public async Task GetMediaTypeById_ShouldReturn401_WhenNoToken()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync("/api/admin/media-types/1");
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetMediaTypeById_ShouldReturn200Shape_WhenAuthorized()
+    {
+        var tenantFactory = _factory.WithTenantUser();
+        var client = tenantFactory.CreateClient();
+        var token = await TestAuthHelpers.GetAccessTokenAsync(client);
+        client.UseBearer(token);
+
+        var response = await client.GetAsync("/api/admin/media-types/1");
+        response.StatusCode.Should().NotBe(System.Net.HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().NotBe(System.Net.HttpStatusCode.Forbidden);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.OK)
+        {
+            await using var stream = await response.Content.ReadAsStreamAsync();
+            using var doc = await JsonDocument.ParseAsync(stream);
+            var root = doc.RootElement;
+            root.TryGetProperty("id", out var idProp).Should().BeTrue();
+            idProp.GetInt32().Should().BeGreaterThan(0);
+            root.TryGetProperty("name", out var nameProp).Should().BeTrue();
+            nameProp.GetString().Should().NotBeNullOrWhiteSpace();
+        }
+    }
+
+    [Fact]
+    public async Task GetMediaTypes_ShouldReturn200_WhenAuthorized()
+    {
+        var tenantFactory = _factory.WithTenantUser();
+        var client = tenantFactory.CreateClient();
+        var token = await TestAuthHelpers.GetAccessTokenAsync(client);
+        client.UseBearer(token);
+        var response = await client.GetAsync("/api/admin/media-types/");
+        response.StatusCode.Should().NotBe(System.Net.HttpStatusCode.Unauthorized);
+    }
+}

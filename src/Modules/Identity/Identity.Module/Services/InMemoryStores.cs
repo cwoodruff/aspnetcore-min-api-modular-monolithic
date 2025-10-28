@@ -63,6 +63,8 @@ public sealed class InMemoryUserStore : IUserStore
         Permissions.OrdersRead,
         Permissions.OrdersWrite,
         Permissions.AdminUsersManage,
+        Permissions.AdministrationRead,
+        Permissions.AdministrationWrite,
         Permissions.ReportView
     ];
 

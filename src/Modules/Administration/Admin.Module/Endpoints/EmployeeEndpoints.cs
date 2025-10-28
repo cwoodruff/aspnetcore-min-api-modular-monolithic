@@ -14,7 +14,7 @@ public static class EmployeeEndpoints
 
     public static void MapEmployeeEndpoints(this IEndpointRouteBuilder group)
     {
-        // GET /api/administration/employees/{id}
+        // GET /api/admin/employees/{id}
         group.MapGet("/employees/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
@@ -56,7 +56,7 @@ public static class EmployeeEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration");
 
-        // GET /api/administration/employees
+        // GET /api/admin/employees
         group.MapGet("employees/", [Authorize] async (
                 AppDbContext db,
                 ICacheFacade cache,
@@ -96,7 +96,7 @@ public static class EmployeeEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration");
 
-        // GET /api/administration/employees/{id}/direct-reports
+        // GET /api/admin/employees/{id}/direct-reports
         group.MapGet("employees/{id:int}/direct-reports", [Authorize] async (
                 int id,
                 AppDbContext db,
@@ -137,7 +137,7 @@ public static class EmployeeEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration");
 
-        // GET /api/administration/employees/{id}/reports-to
+        // GET /api/admin/employees/{id}/reports-to
         group.MapGet("employees/{id:int}/reports-to", [Authorize] async (
                 int id,
                 AppDbContext db,

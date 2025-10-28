@@ -14,7 +14,7 @@ public static class GenreEndpoints
 
     public static void MapGenreEndpoints(this IEndpointRouteBuilder group)
     {
-        // GET /api/administration/genres/{id}
+        // GET /api/admin/genres/{id}
         group.MapGet("/genres/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
@@ -56,7 +56,7 @@ public static class GenreEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration");
 
-        // GET /api/administration/genres
+        // GET /api/admin/genres
         group.MapGet("genres/", [Authorize] async (
                 AppDbContext db,
                 ICacheFacade cache,

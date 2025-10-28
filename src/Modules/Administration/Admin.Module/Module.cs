@@ -20,7 +20,7 @@ public static class AdministrationModule
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)
         {
-            var group = endpoints.MapGroup("/api/administration");
+            var group = endpoints.MapGroup("/api/admin");
 
             // Delegate to endpoint classes
             group.MapAdministrationHealthEndpoints();

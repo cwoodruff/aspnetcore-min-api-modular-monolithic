@@ -13,7 +13,7 @@ public class HealthEndpointsTests(WebApplicationFactory<Program> factory)
     [InlineData("/", "root")]
     [InlineData("/api/music/health", "Music")]
     [InlineData("/api/orders/health", "Orders")]
-    [InlineData("/api/administration/health", "Administration")]
+    [InlineData("/api/admin/health", "Administration")]
     [InlineData("/api/reporting/health", "Reporting")]
     [InlineData("/api/identity/health", "Identity")]
     public async Task EndpointsShouldReturnHealthyAndModuleName(string url, string expectedModule)

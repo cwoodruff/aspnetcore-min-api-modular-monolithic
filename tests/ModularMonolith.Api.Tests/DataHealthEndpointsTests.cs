@@ -12,7 +12,7 @@ public class DataHealthEndpointsTests(WebApplicationFactory<Program> factory)
     [Theory]
     [InlineData("/api/music/data-health", "Music")]
     [InlineData("/api/orders/data-health", "Orders")]
-    [InlineData("/api/administration/data-health", "Administration")]
+    [InlineData("/api/admin/data-health", "Administration")]
     [InlineData("/api/reporting/data-health", "Reporting")]
     [InlineData("/api/identity/data-health", "Identity")]
     public async Task EndpointsShouldReturnDataHealthyAndModuleName(string url, string expectedModule)

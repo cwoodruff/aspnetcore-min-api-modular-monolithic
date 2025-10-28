@@ -14,7 +14,7 @@ public static class MediaTypeEndpoints
 
     public static void MapMediaTypeEndpoints(this IEndpointRouteBuilder group)
     {
-        // GET /api/administration/media-types/{id}
+        // GET /api/admin/media-types/{id}
         group.MapGet("/media-types/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
@@ -56,7 +56,7 @@ public static class MediaTypeEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration");
 
-        // GET /api/administration/media-types
+        // GET /api/admin/media-types
         group.MapGet("media-types/", [Authorize] async (
                 AppDbContext db,
                 ICacheFacade cache,

@@ -14,7 +14,7 @@ public static class CustomerEndpoints
 
     public static void MapCustomerEndpoints(this IEndpointRouteBuilder group)
     {
-        // GET /api/administration/customers/{id}
+        // GET /api/admin/customers/{id}
         group.MapGet("/customers/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
@@ -56,7 +56,7 @@ public static class CustomerEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration");
 
-        // GET /api/administration/customers
+        // GET /api/admin/customers
         group.MapGet("customers/", [Authorize] async (
                 AppDbContext db,
                 ICacheFacade cache,
@@ -96,7 +96,7 @@ public static class CustomerEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration");
 
-        // GET /api/administration/customers/support-rep/{id}
+        // GET /api/admin/customers/support-rep/{id}
         group.MapGet("customers/support-rep/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,

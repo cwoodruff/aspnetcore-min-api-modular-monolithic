@@ -16,6 +16,8 @@ public static class PolicyRegistry
         AddPermissionPolicy(options, Permissions.OrdersRead);
         AddPermissionPolicy(options, Permissions.OrdersWrite);
         AddPermissionPolicy(options, Permissions.AdminUsersManage);
+        AddPermissionPolicy(options, Permissions.AdministrationRead);
+        AddPermissionPolicy(options, Permissions.AdministrationWrite);
         AddPermissionPolicy(options, Permissions.ReportView);
 
         // Role-based convenience policies
