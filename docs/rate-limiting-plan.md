@@ -178,3 +178,58 @@ RateLimiting:
 - Embedding limiter logic in business modules.
 - Hard‑coding per‑customer limits in code (use configuration and, eventually, data‑driven policies).
 - Rate limiting sensitive auth endpoints without careful exceptions.
+
+
+---
+
+## Option A: Minimal Wiring (Implemented)
+
+This repository now includes a minimal, working rate limiter configuration wired directly in `Program.cs` without the full centralized binding layer.
+
+- Policy added: `global:public-anon` using a Fixed Window limiter of 60 requests per 60 seconds, keyed by `PartitionKeys.FromRequest(context)`.
+- Middleware: `app.UseRateLimiter()` is active early in the pipeline.
+- Endpoint application: the root endpoint (`GET /`) uses `.RequireRateLimiting("global:public-anon")`.
+
+Code excerpts
+
+Service registration (before `builder.Build()`):
+```csharp
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using SharedKernel.TrafficControl;
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy(RateLimitPolicyRegistry.Names.GlobalPublicAnon, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: PartitionKeys.FromRequest(context),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromSeconds(60),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+});
+```
+
+Middleware (after `builder.Build()` and before mapping endpoints/auth):
+```csharp
+app.UseRateLimiter();
+```
+
+Endpoint usage:
+```csharp
+app.MapGet("/", handler)
+   .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+```
+
+How to extend
+- Apply the same policy to more endpoints via `.RequireRateLimiting("global:public-anon")`.
+- Add additional named policies inside the same `AddRateLimiter(...)` block (e.g., `global:user-standard`, `reporting:heavy`).
+- Use `.DisableRateLimiting()` on endpoints that must be exempt (e.g., health/JWKS) if you start applying policies broadly.
+
+Next step toward centralization
+- Migrate policy construction into `SharedKernel.TrafficControl.RateLimitingExtensions.AddRateLimiting(...)` to bind from configuration and standardize 429 responses and headers. Then switch `Program.cs` to call your centralized extension.

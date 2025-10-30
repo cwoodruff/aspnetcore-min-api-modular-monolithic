@@ -4,23 +4,18 @@ using Microsoft.Extensions.Options;
 
 namespace SharedKernel.Caching;
 
-internal sealed class CompositeCacheFacade : ICacheFacade
+internal sealed class CompositeCacheFacade(
+    IOptions<CacheOptions> options,
+    IL1Cache l1,
+    ILogger<CompositeCacheFacade> logger,
+    IL2Cache? l2 = null)
+    : ICacheFacade
 {
-    private readonly CacheOptions _opts;
-    private readonly IL1Cache _l1;
-    private readonly IL2Cache? _l2;
-    private readonly ILogger<CompositeCacheFacade> _logger;
+    private readonly CacheOptions _opts = options.Value;
+    private readonly ILogger<CompositeCacheFacade> _logger = logger;
 
     // Simple per-key async lock to avoid recomputation stampede
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
-
-    public CompositeCacheFacade(IOptions<CacheOptions> options, IL1Cache l1, ILogger<CompositeCacheFacade> logger, IL2Cache? l2 = null)
-    {
-        _opts = options.Value;
-        _l1 = l1;
-        _l2 = l2;
-        _logger = logger;
-    }
 
     public async Task<T?> GetOrAddAsync<T>(CacheKey key, Func<CancellationToken, Task<T?>> factory, CacheEntryOptions? options = null, CancellationToken ct = default)
     {
@@ -30,16 +25,16 @@ internal sealed class CompositeCacheFacade : ICacheFacade
         var cacheKey = key.ToString();
 
         // 1) L1
-        var (hit1, v1) = await _l1.TryGetAsync<T>(cacheKey, ct);
+        var (hit1, v1) = await l1.TryGetAsync<T>(cacheKey, ct);
         if (hit1) return v1;
 
         // 2) L2
-        if (_opts.Tier.Equals("L1L2", StringComparison.OrdinalIgnoreCase) && _l2 is not null)
+        if (_opts.Tier.Equals("L1L2", StringComparison.OrdinalIgnoreCase) && l2 is not null)
         {
-            var (hit2, v2) = await _l2.TryGetAsync<T>(cacheKey, ct);
+            var (hit2, v2) = await l2.TryGetAsync<T>(cacheKey, ct);
             if (hit2)
             {
-                await _l1.SetAsync(cacheKey, v2!, EffectiveOptions(options), ct);
+                await l1.SetAsync(cacheKey, v2!, EffectiveOptions(options), ct);
                 return v2;
             }
         }
@@ -50,16 +45,16 @@ internal sealed class CompositeCacheFacade : ICacheFacade
         try
         {
             // Re-check after acquiring the lock
-            var (hitAfter, vAfter) = await _l1.TryGetAsync<T>(cacheKey, ct);
+            var (hitAfter, vAfter) = await l1.TryGetAsync<T>(cacheKey, ct);
             if (hitAfter) return vAfter;
 
             var value = await factory(ct);
             var eff = EffectiveOptions(options);
             if (value is not null)
             {
-                if (_opts.Tier.Equals("L1L2", StringComparison.OrdinalIgnoreCase) && _l2 is not null)
-                    await _l2.SetAsync(cacheKey, value, eff, ct);
-                await _l1.SetAsync(cacheKey, value, eff, ct);
+                if (_opts.Tier.Equals("L1L2", StringComparison.OrdinalIgnoreCase) && l2 is not null)
+                    await l2.SetAsync(cacheKey, value, eff, ct);
+                await l1.SetAsync(cacheKey, value, eff, ct);
             }
             return value;
         }
@@ -75,16 +70,16 @@ internal sealed class CompositeCacheFacade : ICacheFacade
         if (!_opts.Enabled) return;
         var k = key.ToString();
         var eff = EffectiveOptions(options);
-        if (_opts.Tier.Equals("L1L2", StringComparison.OrdinalIgnoreCase) && _l2 is not null)
-            await _l2.SetAsync(k, value, eff, ct);
-        await _l1.SetAsync(k, value, eff, ct);
+        if (_opts.Tier.Equals("L1L2", StringComparison.OrdinalIgnoreCase) && l2 is not null)
+            await l2.SetAsync(k, value, eff, ct);
+        await l1.SetAsync(k, value, eff, ct);
     }
 
     public async Task RemoveAsync(CacheKey key, CancellationToken ct = default)
     {
         var k = key.ToString();
-        await _l1.RemoveAsync(k, ct);
-        if (_l2 is not null) await _l2.RemoveAsync(k, ct);
+        await l1.RemoveAsync(k, ct);
+        if (l2 is not null) await l2.RemoveAsync(k, ct);
     }
 
     public Task RemoveByTagAsync(string tag, CancellationToken ct = default)

@@ -38,6 +38,7 @@ public static class MusicDataHealthEndpoints
             })
             .WithName("MusicDataHealth")
             .Produces(200)
-            .WithTags("Music");
+            .WithTags("Music")
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

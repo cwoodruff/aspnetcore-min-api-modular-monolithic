@@ -10,6 +10,9 @@ using Reporting.Modules;
 using SharedKernel;
 using SharedKernel.Caching;
 using SharedKernel.Persistence;
+using SharedKernel.TrafficControl;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,6 +103,23 @@ builder.Services.AddIdentityAuth(builder.Configuration);
 // Central caching registration (L1 IMemoryCache by default; L2 if configured)
 builder.Services.AddCentralCaching(builder.Configuration);
 
+// Option A: Minimal in-app rate limiting wiring
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy(RateLimitPolicyRegistry.Names.GlobalPublicAnon, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: PartitionKeys.FromRequest(context),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60, // 60 requests per 60 seconds
+                Window = TimeSpan.FromSeconds(60),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+});
+
 var app = builder.Build();
 
 // Middleware
@@ -112,6 +132,9 @@ if (!app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors("Default");
+
+// Rate limiter should run early in the pipeline
+app.UseRateLimiter();
 
 // AuthN/AuthZ middleware from Identity module
 app.UseIdentityAuth();
@@ -138,7 +161,8 @@ app.MapGet("/", (IConfiguration cfg, IWebHostEnvironment env) =>
 })
 .WithName("Root")
 .Produces(200)
-.WithTags("Root");
+.WithTags("Root")
+.RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
 // Register and compose modules
 var modules = GetModules();

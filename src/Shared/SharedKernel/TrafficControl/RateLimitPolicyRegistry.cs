@@ -7,7 +7,7 @@ namespace SharedKernel.TrafficControl;
 /// This is scaffolding only: populate constants for common policy names and
 /// later bind thresholds/algorithms from configuration under RateLimiting:Policies.
 /// </summary>
-public sealed class RateLimitPolicyRegistry
+public sealed class RateLimitPolicyRegistry(IConfiguration configuration)
 {
     // Canonical policy names (modules should reference these names only)
     public static class Names
@@ -19,15 +19,8 @@ public sealed class RateLimitPolicyRegistry
         public const string ReportingHeavy = "reporting:heavy";
     }
 
-    private readonly IConfiguration _configuration;
-
-    public RateLimitPolicyRegistry(IConfiguration configuration)
-    {
-        _configuration = configuration;
-    }
-
     /// <summary>
     /// Placeholder for future binding of policies from configuration.
     /// </summary>
-    public IConfiguration Section => _configuration.GetSection("RateLimiting");
+    public IConfiguration Section => configuration.GetSection("RateLimiting");
 }

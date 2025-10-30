@@ -38,6 +38,7 @@ public static class AdministrationDataHealthEndpoints
             })
             .WithName("AdministrationDataHealth")
             .Produces(200)
-            .WithTags("Administration");
+            .WithTags("Administration")
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

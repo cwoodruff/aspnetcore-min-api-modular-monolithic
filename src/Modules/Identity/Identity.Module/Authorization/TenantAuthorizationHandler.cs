@@ -4,20 +4,14 @@ using Microsoft.AspNetCore.Http;
 
 namespace Identity.Modules.Authorization;
 
-public sealed class TenantAuthorizationHandler : AuthorizationHandler<TenantRequirement>
+public sealed class TenantAuthorizationHandler(
+    ITenantResolutionService resolver,
+    IHttpContextAccessor httpContextAccessor)
+    : AuthorizationHandler<TenantRequirement>
 {
-    private readonly ITenantResolutionService _resolver;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public TenantAuthorizationHandler(ITenantResolutionService resolver, IHttpContextAccessor httpContextAccessor)
-    {
-        _resolver = resolver;
-        _httpContextAccessor = httpContextAccessor;
-    }
-
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, TenantRequirement requirement)
     {
-        var http = _httpContextAccessor.HttpContext;
+        var http = httpContextAccessor.HttpContext;
         if (http is null)
         {
             return Task.CompletedTask;
@@ -30,7 +24,7 @@ public sealed class TenantAuthorizationHandler : AuthorizationHandler<TenantRequ
             return Task.CompletedTask;
         }
 
-        var requestTenant = _resolver.ResolveTenantId(http);
+        var requestTenant = resolver.ResolveTenantId(http);
         if (string.IsNullOrWhiteSpace(requestTenant))
         {
             // If request does not specify tenant, assume the user's own tenant scope

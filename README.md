@@ -102,7 +102,14 @@ Then browse http://localhost:8080/swagger
 ## Notes
 
 ### Rate limiting
-- Scaffolding for rate limiting policies exists under src/Shared/SharedKernel/TrafficControl, but the host does not currently call UseRateLimiter(). A future update can wire it with minimal changes.
+- Minimal in-app rate limiting is enabled (Option A). The API host registers a named policy `global:public-anon` with a fixed window of 60 requests per 60 seconds and applies it to the root endpoint (`GET /`).
+- Central scaffolding still lives under `src/Shared/SharedKernel/TrafficControl` for future expansion, but wiring is now active via `AddRateLimiter(...)` and `UseRateLimiter()` in `Program.cs`.
+- To protect additional endpoints, add `.RequireRateLimiting("global:public-anon")` (or other policies you add) to the desired endpoint mapping. To exempt an endpoint, use `.DisableRateLimiting()`.
+- Example:
+```
+app.MapGet("/api/reporting/exports", Handler)
+   .RequireRateLimiting("global:public-anon");
+```
 
 ### Logging and observability
 - Uses built-in ASP.NET Core logging by default. No Serilog or OpenTelemetry is wired out-of-the-box; you can add them later according to your needs.

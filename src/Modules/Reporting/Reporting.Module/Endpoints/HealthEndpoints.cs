@@ -26,6 +26,7 @@ public static class ReportingHealthEndpoints
             })
             .WithName("ReportingHealth")
             .Produces(200)
-            .WithTags("Reporting");
+            .WithTags("Reporting")
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }
