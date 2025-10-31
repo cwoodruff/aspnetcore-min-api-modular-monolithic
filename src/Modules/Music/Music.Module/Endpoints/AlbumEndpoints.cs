@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Caching;
 using SharedKernel.Persistence;
+using SharedKernel.Persistence.Extensions;
+using SharedKernel.Persistence.Repositories;
 
 namespace Music.Modules.Endpoints;
 
@@ -18,6 +20,7 @@ public static class AlbumEndpoints
         group.MapGet("/albums/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                IAlbumRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -34,18 +37,13 @@ public static class AlbumEndpoints
                 {
                     try
                     {
-                        var a = await db.GetAlbum(id);
-
-                        if (a is null)
-                            return null; // cache nulls? We choose not to set cache for nulls (facade skips nulls)
-
-                        // ApiModel to avoid leaking EF tracking proxies and reduce payload
-                        return a.Convert();
+                        var a = await repo.GetById(id);
+                        return a;
                     }
-                    catch
+                    catch(Exception ex)
                     {
                         // If the database is not initialized (e.g., missing schema), treat as not found for this demo endpoint
-                        return null;
+                        return ex.Message;
                     }
                 }, new CacheEntryOptions
                 {
@@ -62,11 +60,14 @@ public static class AlbumEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/albums
         group.MapGet("albums/", [Authorize] async (
                 AppDbContext db,
+                IAlbumRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -83,10 +84,11 @@ public static class AlbumEndpoints
                 {
                     try
                     {
-                        var albumEntities = await db.GetAllAlbums();
+                        var albumEntities = await repo.GetAll();
 
                         // ApiModel to avoid leaking EF tracking proxies and reduce payload
-                        return [albumEntities.Select(a => a.Convert())];
+                        //return [albumEntities.Select(a => a.Convert())];
+                        return albumEntities.ConvertAll();
                     }
                     catch
                     {
@@ -108,12 +110,15 @@ public static class AlbumEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         //
         group.MapGet("albums/artist/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                IAlbumRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -130,10 +135,10 @@ public static class AlbumEndpoints
                 {
                     try
                     {
-                        var albumEntities = await db.GetAlbumsByArtistId(id);
+                        var albumEntities = await repo.GetByArtistId(id);
 
                         // ApiModel to avoid leaking EF tracking proxies and reduce payload
-                        return [albumEntities.Select(a => a.Convert())];
+                        return albumEntities.ConvertAll();
                     }
                     catch
                     {
@@ -155,6 +160,8 @@ public static class AlbumEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

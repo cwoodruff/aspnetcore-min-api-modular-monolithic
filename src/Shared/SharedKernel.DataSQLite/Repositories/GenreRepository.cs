@@ -1,0 +1,14 @@
+﻿using Microsoft.EntityFrameworkCore;
+using SharedKernel.Persistence;
+using SharedKernel.Persistence.Entities;
+using SharedKernel.Persistence.Repositories;
+
+namespace SharedKernel.DataSQLite.Repositories;
+
+public class GenreRepository(AppDbContext context) : BaseRepository<Genre>(context), IGenreRepository
+{
+    public async Task<Genre> GetById(int id) =>
+        await _context.Genres
+            .AsNoTracking()
+            .SingleAsync(e => e.Id == id);
+}

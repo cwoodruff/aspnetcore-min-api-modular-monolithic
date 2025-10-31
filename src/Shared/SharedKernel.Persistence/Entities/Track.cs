@@ -1,11 +1,10 @@
 ﻿using SharedKernel.Persistence.ApiModels;
+using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class Track
+public partial class Track : BaseEntity, IConvertModel<TrackApiModel>
 {
-    public int Id { get; set; }
-
     public string? Name { get; set; }
 
     public int? AlbumId { get; set; }
@@ -43,11 +42,6 @@ public partial class Track
             Composer = Composer,
             Milliseconds = Milliseconds,
             Bytes = Bytes,
-            UnitPrice = UnitPrice,
-            InvoiceLines = InvoiceLines.Select(i => i.Convert()).ToList(),
-            Album = Album?.Convert(),
-            Genre = Genre?.Convert(),
-            MediaType = MediaType?.Convert(),
-            Playlists = Playlists.Select(p => p.Convert()).ToList()
+            UnitPrice = UnitPrice
         };
 }

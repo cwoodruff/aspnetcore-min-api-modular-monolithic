@@ -1,11 +1,10 @@
 ﻿using SharedKernel.Persistence.ApiModels;
+using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class Artist
+public partial class Artist : BaseEntity, IConvertModel<ArtistApiModel>
 {
-    public int Id { get; set; }
-
     public string? Name { get; set; }
 
     public virtual ICollection<Album> Albums { get; set; } = new List<Album>();
@@ -14,7 +13,6 @@ public partial class Artist
         new()
         {
             Id = Id,
-            Name = Name,
-            Albums = Albums.Select(t => t.Convert()).ToList()
+            Name = Name
         };
 }

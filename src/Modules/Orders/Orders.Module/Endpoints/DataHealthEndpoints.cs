@@ -39,6 +39,7 @@ public static class OrdersDataHealthEndpoints
             .WithName("OrdersDataHealth")
             .Produces(200)
             .WithTags("Orders")
+            .Produces(429) // Rate limiting
             .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

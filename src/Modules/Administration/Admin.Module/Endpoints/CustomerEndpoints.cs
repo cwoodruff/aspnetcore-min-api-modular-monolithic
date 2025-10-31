@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Caching;
 using SharedKernel.Persistence;
+using SharedKernel.Persistence.Extensions;
+using SharedKernel.Persistence.Repositories;
 
 namespace Admin.Modules.Endpoints;
 
@@ -18,6 +20,7 @@ public static class CustomerEndpoints
         group.MapGet("/customers/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                ICustomerRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -32,9 +35,8 @@ public static class CustomerEndpoints
                 {
                     try
                     {
-                        var c = await db.GetCustomer(id);
-                        if (c is null) return null;
-                        return c.Convert();
+                        var c = await repo.GetById(id);
+                        return c;
                     }
                     catch
                     {
@@ -54,11 +56,14 @@ public static class CustomerEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Administration");
+            .WithTags("Administration")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/admin/customers
         group.MapGet("customers/", [Authorize] async (
                 AppDbContext db,
+                ICustomerRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -73,8 +78,8 @@ public static class CustomerEndpoints
                 {
                     try
                     {
-                        var customerEntities = await db.GetAllCustomers();
-                        return [customerEntities.Select(c => c.Convert())];
+                        var customerEntities = await repo.GetAll();
+                        return customerEntities.ConvertAll();
                     }
                     catch
                     {
@@ -94,12 +99,15 @@ public static class CustomerEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Administration");
+            .WithTags("Administration")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/admin/customers/support-rep/{id}
         group.MapGet("customers/support-rep/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                ICustomerRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -114,8 +122,8 @@ public static class CustomerEndpoints
                 {
                     try
                     {
-                        var customerEntities = await db.GetCustomerBySupportRepId(id);
-                        return [customerEntities.Select(c => c.Convert())];
+                        var customerEntities = await repo.GetBySupportRepId(id);
+                        return customerEntities.ConvertAll();
                     }
                     catch
                     {
@@ -135,6 +143,8 @@ public static class CustomerEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Administration");
+            .WithTags("Administration")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

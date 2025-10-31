@@ -32,7 +32,9 @@ public static class AuthEndpoints
         })
         .AllowAnonymous()
         .WithTags("Identity")
-        .WithName("IdentityLogin");
+        .WithName("IdentityLogin")
+        .Produces(429) // Rate limiting
+        .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // POST /api/identity/refresh
         group.MapPost("/refresh", async (RefreshRequest req, ITokenService tokens, CancellationToken ct) =>
@@ -49,7 +51,9 @@ public static class AuthEndpoints
         })
         .AllowAnonymous()
         .WithTags("Identity")
-        .WithName("IdentityRefresh");
+        .WithName("IdentityRefresh")
+        .Produces(429) // Rate limiting
+        .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // POST /api/identity/logout
         group.MapPost("/logout", async (LogoutRequest req, IRefreshTokenStore store, CancellationToken ct) =>
@@ -59,7 +63,9 @@ public static class AuthEndpoints
         })
         .RequireAuthorization()
         .WithTags("Identity")
-        .WithName("IdentityLogout");
+        .WithName("IdentityLogout")
+        .Produces(429) // Rate limiting
+        .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/identity/userinfo
         group.MapGet("/userinfo", [Authorize] (ClaimsPrincipal user) =>
@@ -81,10 +87,14 @@ public static class AuthEndpoints
         group.MapGet("/.well-known/jwks.json", (IKeyMaterialService keys) => Results.Json(keys.GetJwksDocument()))
             .AllowAnonymous()
             .WithTags("Identity")
-            .WithName("IdentityJWKS");
+            .WithName("IdentityJWKS")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 
-    public sealed record LoginRequest(string username, string password);
-    public sealed record RefreshRequest(string userId, string refreshToken);
-    public sealed record LogoutRequest(string userId, string refreshToken);
+    private sealed record LoginRequest(string username, string password);
+
+    private sealed record RefreshRequest(string userId, string refreshToken);
+
+    private sealed record LogoutRequest(string userId, string refreshToken);
 }

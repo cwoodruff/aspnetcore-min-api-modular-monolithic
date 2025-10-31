@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Caching;
 using SharedKernel.Persistence;
+using SharedKernel.Persistence.Extensions;
+using SharedKernel.Persistence.Repositories;
 
 namespace Music.Modules.Endpoints;
 
@@ -18,6 +20,7 @@ public static class ArtistEndpoints
         group.MapGet("/artists/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                IArtistRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -34,18 +37,13 @@ public static class ArtistEndpoints
                 {
                     try
                     {
-                        var a = await db.GetArtist(id);
-
-                        if (a is null)
-                            return null; // facade skips caching nulls
-
-                        // ApiModel to avoid leaking EF tracking proxies and reduce payload
-                        return a.Convert();
+                        var a = await repo.GetById(id);
+                        return a;
                     }
-                    catch
+                    catch(Exception ex)
                     {
                         // If the database is not initialized (e.g., missing schema), treat as not found for this demo endpoint
-                        return null;
+                        return ex.Message;
                     }
                 }, new CacheEntryOptions
                 {
@@ -62,11 +60,14 @@ public static class ArtistEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/artists
         group.MapGet("artists/", [Authorize] async (
                 AppDbContext db,
+                IArtistRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -83,10 +84,10 @@ public static class ArtistEndpoints
                 {
                     try
                     {
-                        var artistEntities = await db.GetAllArtists();
+                        var artistEntities = await repo.GetAll();
 
                         // ApiModel to avoid leaking EF tracking proxies and reduce payload
-                        return [artistEntities.Select(a => a.Convert())];
+                        return artistEntities.ConvertAll();
                     }
                     catch
                     {
@@ -108,6 +109,8 @@ public static class ArtistEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

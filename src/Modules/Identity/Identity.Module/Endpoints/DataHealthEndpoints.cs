@@ -38,6 +38,8 @@ public static class IdentityDataHealthEndpoints
             })
             .WithName("IdentityDataHealth")
             .Produces(200)
-            .WithTags("Identity");
+            .WithTags("Identity")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

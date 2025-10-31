@@ -1,11 +1,10 @@
 ﻿using SharedKernel.Persistence.ApiModels;
+using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class InvoiceLine
+public partial class InvoiceLine : BaseEntity, IConvertModel<InvoiceLineApiModel>
 {
-    public int Id { get; set; }
-
     public int? InvoiceId { get; set; }
 
     public int? TrackId { get; set; }
@@ -25,8 +24,6 @@ public partial class InvoiceLine
             InvoiceId = InvoiceId,
             TrackId = TrackId,
             UnitPrice = UnitPrice,
-            Quantity = Quantity,
-            Invoice = Invoice?.Convert()!,
-            Track = Track?.Convert()!
+            Quantity = Quantity
         };
 }

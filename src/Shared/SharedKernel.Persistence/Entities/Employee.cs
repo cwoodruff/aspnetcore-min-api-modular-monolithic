@@ -1,11 +1,10 @@
 ﻿using SharedKernel.Persistence.ApiModels;
+using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class Employee
+public partial class Employee : BaseEntity, IConvertModel<EmployeeApiModel>
 {
-    public int Id { get; set; }
-
     public string? LastName { get; set; }
 
     public string? FirstName { get; set; }
@@ -57,9 +56,6 @@ public partial class Employee
             PostalCode = PostalCode,
             Phone = Phone,
             Fax = Fax,
-            Email = Email,
-            ReportsToNavigation = ReportsToNavigation != null ? $"{ReportsToNavigation.FirstName} {ReportsToNavigation.LastName}" : null,
-            InverseReportsToNavigation = InverseReportsToNavigation.Select(e => e.Convert()).ToList(),
-            Customers = Customers.Select(c => c.Convert()).ToList()
+            Email = Email
         };
 }

@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Caching;
 using SharedKernel.Persistence;
+using SharedKernel.Persistence.Extensions;
+using SharedKernel.Persistence.Repositories;
 
 namespace Orders.Modules.Endpoints;
 
@@ -18,6 +20,7 @@ public static class InvoiceLineEndpoints
         group.MapGet("/invoice-lines/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                IInvoiceLineRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -33,9 +36,8 @@ public static class InvoiceLineEndpoints
                 {
                     try
                     {
-                        var il = await db.GetInvoiceLine(id);
-                        if (il is null) return null; // facade skips caching nulls
-                        return il.Convert();
+                        var il = await repo.GetById(id); // facade skips caching nulls
+                        return il;
                     }
                     catch
                     {
@@ -56,11 +58,14 @@ public static class InvoiceLineEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Orders");
+            .WithTags("Orders")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/orders/invoice-lines
         group.MapGet("invoice-lines/", [Authorize] async (
                 AppDbContext db,
+                IInvoiceLineRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -77,8 +82,8 @@ public static class InvoiceLineEndpoints
                     try
                     {
                         await Task.Yield();
-                        var lineEntities = db.GetAllInvoiceLines();
-                        return [lineEntities.Select(il => il.Convert())];
+                        var lineEntities = await repo.GetAll();
+                        return lineEntities.ConvertAll();
                     }
                     catch
                     {
@@ -98,12 +103,15 @@ public static class InvoiceLineEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Orders");
+            .WithTags("Orders")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/orders/invoice-lines/invoice/{id}
         group.MapGet("invoice-lines/invoice/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                IInvoiceLineRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -119,8 +127,8 @@ public static class InvoiceLineEndpoints
                     try
                     {
                         await Task.Yield();
-                        var lineEntities = db.GetInvoiceLinesByInvoiceId(id);
-                        return [lineEntities.Select(il => il.Convert())];
+                        var lineEntities = await repo.GetByInvoiceId(id);
+                        return lineEntities.ConvertAll();
                     }
                     catch
                     {
@@ -140,12 +148,15 @@ public static class InvoiceLineEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Orders");
+            .WithTags("Orders")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/orders/invoice-lines/track/{id}
         group.MapGet("invoice-lines/track/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                IInvoiceLineRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -161,8 +172,8 @@ public static class InvoiceLineEndpoints
                     try
                     {
                         await Task.Yield();
-                        var lineEntities = db.GetInvoiceLinesByTrackId(id);
-                        return [lineEntities.Select(il => il.Convert())];
+                        var lineEntities = await repo.GetByTrackId(id);
+                        return lineEntities.ConvertAll();
                     }
                     catch
                     {
@@ -182,6 +193,8 @@ public static class InvoiceLineEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Orders");
+            .WithTags("Orders")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

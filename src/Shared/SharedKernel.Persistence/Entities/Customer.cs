@@ -1,11 +1,10 @@
 ﻿using SharedKernel.Persistence.ApiModels;
+using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class Customer
+public partial class Customer : BaseEntity, IConvertModel<CustomerApiModel>
 {
-    public int Id { get; set; }
-
     public string? FirstName { get; set; }
 
     public string? LastName { get; set; }
@@ -30,8 +29,6 @@ public partial class Customer
 
     public int? SupportRepId { get; set; }
 
-    public virtual ICollection<Customer> InverseSupportRep { get; set; } = new List<Customer>();
-
     public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 
     public virtual Employee? SupportRep { get; set; }
@@ -50,10 +47,6 @@ public partial class Customer
             PostalCode = PostalCode,
             Phone = Phone,
             Fax = Fax,
-            Email = Email,
-            SupportRepId = SupportRepId,
-            SupportRepName = SupportRep != null ? $"{SupportRep.FirstName} {SupportRep.LastName}" : null,
-            SupportRep = SupportRep?.Convert(),
-            Invoices = Invoices.Select(i => i.Convert()).ToList(),
+            Email = Email
         };
 }

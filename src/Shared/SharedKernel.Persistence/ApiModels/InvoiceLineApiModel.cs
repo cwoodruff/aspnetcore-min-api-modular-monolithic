@@ -10,9 +10,9 @@ public sealed class InvoiceLineApiModel : BaseApiModel, IConvertModel<InvoiceLin
     public string? TrackName { get; set; }
     public decimal? UnitPrice { get; set; }
     public int? Quantity { get; set; }
-    public InvoiceApiModel Invoice { get; set; } = null!;
+    public InvoiceApiModel? Invoice { get; set; } = null!;
 
-    public TrackApiModel Track { get; set; } = null!;
+    public TrackApiModel? Track { get; set; } = null!;
 
     public InvoiceLine Convert() =>
         new()

@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Caching;
 using SharedKernel.Persistence;
+using SharedKernel.Persistence.Extensions;
+using SharedKernel.Persistence.Repositories;
 
 namespace Admin.Modules.Endpoints;
 
@@ -18,6 +20,7 @@ public static class GenreEndpoints
         group.MapGet("/genres/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                IGenreRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -32,8 +35,7 @@ public static class GenreEndpoints
                 {
                     try
                     {
-                        var g = await db.GetGenre(id);
-                        if (g is null) return null;
+                        var g = await repo.GetById(id);
                         return g.Convert();
                     }
                     catch
@@ -54,11 +56,14 @@ public static class GenreEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Administration");
+            .WithTags("Administration")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/admin/genres
         group.MapGet("genres/", [Authorize] async (
                 AppDbContext db,
+                IGenreRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -74,8 +79,8 @@ public static class GenreEndpoints
                     try
                     {
                         await Task.Yield();
-                        var genreEntities = db.GetAllGenres();
-                        return [genreEntities.Select(g => g.Convert())];
+                        var genreEntities = await repo.GetAll();
+                        return genreEntities.ConvertAll();
                     }
                     catch
                     {
@@ -95,6 +100,8 @@ public static class GenreEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Administration");
+            .WithTags("Administration")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

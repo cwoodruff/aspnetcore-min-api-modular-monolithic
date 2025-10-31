@@ -1,11 +1,10 @@
 ﻿using SharedKernel.Persistence.ApiModels;
+using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class Invoice
+public partial class Invoice : BaseEntity, IConvertModel<InvoiceApiModel>
 {
-    public int Id { get; set; }
-
     public int? CustomerId { get; set; }
 
     public DateTime InvoiceDate { get; set; }
@@ -37,8 +36,6 @@ public partial class Invoice
             BillingState = BillingState,
             BillingCountry = BillingCountry,
             BillingPostalCode = BillingPostalCode,
-            Total = Total,
-            Customer = Customer?.Convert(),
-            InvoiceLines = InvoiceLines.Select(il => il.Convert()).ToList()
+            Total = Total
         };
 }

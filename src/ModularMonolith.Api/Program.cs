@@ -13,6 +13,8 @@ using SharedKernel.Persistence;
 using SharedKernel.TrafficControl;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
+using SharedKernel.DataSQLite.Repositories;
+using SharedKernel.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,6 +87,18 @@ if (string.IsNullOrWhiteSpace(existing))
         builder.Configuration["ConnectionStrings:AppDatabase"] = $"Data Source={dbPath}";
     }
 }
+
+// Data Repositories
+builder.Services.AddScoped<IAlbumRepository, AlbumRepository>()
+    .AddScoped<IArtistRepository, ArtistRepository>()
+    .AddScoped<ICustomerRepository, CustomerRepository>()
+    .AddScoped<IEmployeeRepository, EmployeeRepository>()
+    .AddScoped<IGenreRepository, GenreRepository>()
+    .AddScoped<IInvoiceRepository, InvoiceRepository>()
+    .AddScoped<IInvoiceLineRepository, InvoiceLineRepository>()
+    .AddScoped<IMediaTypeRepository, MediaTypeRepository>()
+    .AddScoped<IPlaylistRepository, PlaylistRepository>()
+    .AddScoped<ITrackRepository, TrackRepository>();
 
 builder.Services.AddKernelPersistence(builder.Configuration);
 
@@ -162,6 +176,7 @@ app.MapGet("/", (IConfiguration cfg, IWebHostEnvironment env) =>
 .WithName("Root")
 .Produces(200)
 .WithTags("Root")
+.Produces(429) // Rate limiting
 .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
 // Register and compose modules

@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Caching;
 using SharedKernel.Persistence;
+using SharedKernel.Persistence.Extensions;
+using SharedKernel.Persistence.Repositories;
 
 namespace Music.Modules.Endpoints;
 
@@ -18,6 +20,7 @@ public static class TrackEndpoints
         group.MapGet("/tracks/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                ITrackRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -32,9 +35,8 @@ public static class TrackEndpoints
                 {
                     try
                     {
-                        var t = await db.GetTrack(id);
-                        if (t is null) return null;
-                        return t.Convert();
+                        var t = await repo.GetById(id);
+                        return t;
                     }
                     catch
                     {
@@ -54,11 +56,14 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/tracks
         group.MapGet("tracks/", [Authorize] async (
                 AppDbContext db,
+                ITrackRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -74,8 +79,8 @@ public static class TrackEndpoints
                     try
                     {
                         await Task.Yield();
-                        var trackEntities = db.GetAllTracks();
-                        return [trackEntities.Select(t => t.Convert())];
+                        var trackEntities = await repo.GetAll();
+                        return trackEntities.ConvertAll();
                     }
                     catch
                     {
@@ -95,12 +100,15 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/tracks/artist/{id}
         group.MapGet("tracks/artist/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                ITrackRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -116,8 +124,8 @@ public static class TrackEndpoints
                     try
                     {
                         await Task.Yield();
-                        var trackEntities = db.GetTracksByArtistId(id);
-                        return [trackEntities.Select(t => t.Convert())];
+                        var trackEntities = await repo.GetByArtistId(id);
+                        return trackEntities.ConvertAll();
                     }
                     catch
                     {
@@ -137,12 +145,15 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/tracks/playlist/{id}
         group.MapGet("tracks/playlist/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                ITrackRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -158,8 +169,8 @@ public static class TrackEndpoints
                     try
                     {
                         await Task.Yield();
-                        var trackEntities = db.GetTracksByPlaylistId(id);
-                        return [trackEntities.Select(t => t.Convert())];
+                        var trackEntities = await repo.GetByPlaylistId(id);
+                        return trackEntities.ConvertAll();
                     }
                     catch
                     {
@@ -179,12 +190,15 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/tracks/album/{id}
         group.MapGet("tracks/album/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                ITrackRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -200,8 +214,8 @@ public static class TrackEndpoints
                     try
                     {
                         await Task.Yield();
-                        var trackEntities = db.GetTracksByAlbumId(id);
-                        return [trackEntities.Select(t => t.Convert())];
+                        var trackEntities = await repo.GetByAlbumId(id);
+                        return trackEntities.ConvertAll();
                     }
                     catch
                     {
@@ -221,12 +235,15 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/tracks/genre/{id}
         group.MapGet("tracks/genre/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                ITrackRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -242,8 +259,8 @@ public static class TrackEndpoints
                     try
                     {
                         await Task.Yield();
-                        var trackEntities = db.GetTracksByGenreId(id);
-                        return [trackEntities.Select(t => t.Convert())];
+                        var trackEntities = await repo.GetByGenreId(id);
+                        return trackEntities.ConvertAll();
                     }
                     catch
                     {
@@ -263,12 +280,15 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/tracks/mediatype/{id}
         group.MapGet("tracks/mediatype/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                ITrackRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -284,8 +304,8 @@ public static class TrackEndpoints
                     try
                     {
                         await Task.Yield();
-                        var trackEntities = db.GetTracksByMediaTypeId(id);
-                        return [trackEntities.Select(t => t.Convert())];
+                        var trackEntities = await repo.GetByMediaTypeId(id);
+                        return trackEntities.ConvertAll();
                     }
                     catch
                     {
@@ -305,12 +325,15 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/tracks/invoice/{id}
         group.MapGet("tracks/invoice/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                ITrackRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -326,8 +349,8 @@ public static class TrackEndpoints
                     try
                     {
                         await Task.Yield();
-                        var trackEntities = db.GetTracksByInvoiceId(id);
-                        return [trackEntities.Select(t => t.Convert())];
+                        var trackEntities = await repo.GetByInvoiceId(id);
+                        return trackEntities.ConvertAll();
                     }
                     catch
                     {
@@ -347,6 +370,8 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Shared\SharedKernel.DataSQLite\SharedKernel.DataSQLite.csproj" />
     <ProjectReference Include="..\Shared\SharedKernel\SharedKernel.csproj" />
     <ProjectReference Include="..\Shared\SharedKernel.Persistence\SharedKernel.Persistence.csproj" />
     <ProjectReference Include="..\Modules\Music\Music.Module\Music.Module.csproj" />

@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Caching;
 using SharedKernel.Persistence;
+using SharedKernel.Persistence.Extensions;
+using SharedKernel.Persistence.Repositories;
 
 namespace Music.Modules.Endpoints;
 
@@ -18,6 +20,7 @@ public static class PlaylistEndpoints
         group.MapGet("/playlists/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                IPlaylistRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -34,18 +37,13 @@ public static class PlaylistEndpoints
                 {
                     try
                     {
-                        var p = await db.GetPlaylist(id);
-
-                        if (p is null)
-                            return null; // facade skips caching nulls
-
-                        // ApiModel to avoid leaking EF tracking proxies and reduce payload
-                        return p.Convert();
+                        var p = await repo.GetById(id);
+                        return p;
                     }
-                    catch
+                    catch(Exception ex)
                     {
                         // If the database is not initialized (e.g., missing schema), treat as not found for this demo endpoint
-                        return null;
+                        return ex.Message;
                     }
                 }, new CacheEntryOptions
                 {
@@ -62,11 +60,14 @@ public static class PlaylistEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/playlists
         group.MapGet("playlists/", [Authorize] async (
                 AppDbContext db,
+                IPlaylistRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -85,10 +86,10 @@ public static class PlaylistEndpoints
                     {
                         // Ensure async path
                         await Task.Yield();
-                        var playlistEntities = db.GetAllPlaylists();
+                        var playlistEntities = await repo.GetAll();
 
                         // ApiModel to avoid leaking EF tracking proxies and reduce payload
-                        return [playlistEntities.Select(p => p.Convert())];
+                        return playlistEntities.ConvertAll();
                     }
                     catch
                     {
@@ -110,6 +111,8 @@ public static class PlaylistEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music");
+            .WithTags("Music")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

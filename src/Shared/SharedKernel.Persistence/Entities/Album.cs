@@ -1,11 +1,10 @@
 ﻿using SharedKernel.Persistence.ApiModels;
+using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class Album
+public partial class Album : BaseEntity, IConvertModel<AlbumApiModel>
 {
-    public int Id { get; set; }
-
     public string? Title { get; set; }
 
     public int? ArtistId { get; set; }
@@ -20,8 +19,6 @@ public partial class Album
             Id = Id,
             ArtistId = ArtistId,
             Title = Title,
-            ArtistName = Artist?.Name,
-            Artist = Artist?.Convert(),
-            Tracks = Tracks.Select(t => t.Convert()).ToList()
+            ArtistName = Artist?.Name
         };
 }

@@ -27,6 +27,7 @@ public static class MusicHealthEndpoints
             .WithName("MusicHealth")
             .Produces(200)
             .WithTags("Music")
+            .Produces(429) // Rate limiting
             .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

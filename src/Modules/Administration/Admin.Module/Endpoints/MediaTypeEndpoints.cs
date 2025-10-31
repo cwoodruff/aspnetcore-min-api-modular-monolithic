@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Caching;
 using SharedKernel.Persistence;
+using SharedKernel.Persistence.Extensions;
+using SharedKernel.Persistence.Repositories;
 
 namespace Admin.Modules.Endpoints;
 
@@ -18,6 +20,7 @@ public static class MediaTypeEndpoints
         group.MapGet("/media-types/{id:int}", [Authorize] async (
                 int id,
                 AppDbContext db,
+                IMediaTypeRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -32,8 +35,7 @@ public static class MediaTypeEndpoints
                 {
                     try
                     {
-                        var m = await db.GetMediaType(id);
-                        if (m is null) return null;
+                        var m = await repo.GetById(id);
                         return m.Convert();
                     }
                     catch
@@ -54,11 +56,14 @@ public static class MediaTypeEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Administration");
+            .WithTags("Administration")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/admin/media-types
         group.MapGet("media-types/", [Authorize] async (
                 AppDbContext db,
+                IMediaTypeRepository repo,
                 ICacheFacade cache,
                 ICacheKeyComposer keys,
                 CancellationToken ct) =>
@@ -74,8 +79,8 @@ public static class MediaTypeEndpoints
                     try
                     {
                         await Task.Yield();
-                        var mediaTypeEntities = db.GetAllMediaTypes();
-                        return [mediaTypeEntities.Select(m => m.Convert())];
+                        var mediaTypeEntities = await repo.GetAll();
+                        return mediaTypeEntities.ConvertAll();
                     }
                     catch
                     {
@@ -95,6 +100,8 @@ public static class MediaTypeEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Administration");
+            .WithTags("Administration")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

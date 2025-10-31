@@ -1,11 +1,10 @@
 ﻿using SharedKernel.Persistence.ApiModels;
+using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class MediaType
+public partial class MediaType : BaseEntity, IConvertModel<MediaTypeApiModel>
 {
-    public int Id { get; set; }
-
     public string? Name { get; set; }
 
     public virtual ICollection<Track> Tracks { get; set; } = new List<Track>();
@@ -14,7 +13,6 @@ public partial class MediaType
         new()
         {
             Id = Id,
-            Name = Name,
-            Tracks = Tracks.Select(t => t.Convert()).ToList()
+            Name = Name
         };
 }
