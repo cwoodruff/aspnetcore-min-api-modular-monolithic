@@ -9,19 +9,20 @@ namespace SharedKernel.DataSQLite.Repositories;
 public class PlaylistRepository(AppDbContext context) : BaseRepository<Playlist>(context), IPlaylistRepository
 {
     public async Task<List<Playlist>> GetByTrackId(int id) =>
-        await _context.Playlists.Where(c => c.Tracks!.Any(o => o.Id == id))
+        await _context.PlaylistTracks.Where(p => p.TrackId == id).Select(p => p.Playlist!)
             .AsNoTracking().ToListAsync();
 
     public async Task<PlaylistApiModel> GetById(int id)
     {
+        // Entities load (split queries), then manual projection to DTO
         var playlistEntity = await _context.Playlists
             .Where(p => p.Id == id)
             .Include(p => p.Tracks)
-            .ThenInclude(t => t.Album)       // optional for AlbumName
+                .ThenInclude(t => t.Album)
             .Include(p => p.Tracks)
-            .ThenInclude(t => t.Genre)       // optional for GenreName
+                .ThenInclude(t => t.Genre)
             .Include(p => p.Tracks)
-            .ThenInclude(t => t.MediaType)   // optional for MediaTypeName
+                .ThenInclude(t => t.MediaType)
             .AsNoTracking()
             .AsSplitQuery()
             .SingleAsync();

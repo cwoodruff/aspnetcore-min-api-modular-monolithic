@@ -31,6 +31,8 @@ public partial class Track : BaseEntity, IConvertModel<TrackApiModel>
 
     public virtual ICollection<Playlist> Playlists { get; set; } = new List<Playlist>();
 
+    public virtual ICollection<PlaylistTrack> PlaylistTracks { get; set; } = new List<PlaylistTrack>();
+
     public TrackApiModel Convert() =>
         new()
         {

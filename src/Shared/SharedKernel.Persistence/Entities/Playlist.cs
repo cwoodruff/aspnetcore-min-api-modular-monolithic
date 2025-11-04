@@ -7,7 +7,9 @@ public partial class Playlist : BaseEntity, IConvertModel<PlaylistApiModel>
 {
     public string? Name { get; set; }
 
-    public ICollection<Track> Tracks { get; set; } = new List<Track>();
+    public virtual ICollection<Track> Tracks { get; set; } = new List<Track>();
+
+    public virtual ICollection<PlaylistTrack> PlaylistTracks { get; set; } = new List<PlaylistTrack>();
 
     public PlaylistApiModel Convert() =>
         new()

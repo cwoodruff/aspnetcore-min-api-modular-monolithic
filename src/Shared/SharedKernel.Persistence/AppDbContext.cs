@@ -23,6 +23,8 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<Playlist> Playlists { get; set; }
 
+    public DbSet<PlaylistTrack> PlaylistTracks { get; set; }
+
     public DbSet<Track> Tracks { get; set; }
 
 
@@ -130,6 +132,43 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
 
             entity.Property(e => e.Name).HasColumnType("nvarchar(120)");
         });
+
+        modelBuilder.Entity<PlaylistTrack>(entity =>
+        {
+            entity.ToTable("PlaylistTrack");
+
+            entity.HasKey(e => new { e.PlaylistId, e.TrackId });
+
+            entity.HasOne(d => d.Playlist)
+                .WithMany(p => p.PlaylistTracks)
+                .HasForeignKey(d => d.PlaylistId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.Track)
+                .WithMany(t => t.PlaylistTracks)
+                .HasForeignKey(d => d.TrackId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        // Configure many-to-many skip navigations between Playlist and Track using PlaylistTrack as join
+        modelBuilder.Entity<Playlist>()
+            .HasMany(p => p.Tracks)
+            .WithMany(t => t.Playlists)
+            .UsingEntity<PlaylistTrack>(
+                j => j
+                    .HasOne(pt => pt.Track)
+                    .WithMany(t => t.PlaylistTracks)
+                    .HasForeignKey(pt => pt.TrackId),
+                j => j
+                    .HasOne(pt => pt.Playlist)
+                    .WithMany(p => p.PlaylistTracks)
+                    .HasForeignKey(pt => pt.PlaylistId),
+                j =>
+                {
+                    j.ToTable("PlaylistTrack");
+                    j.HasKey(pt => new { pt.PlaylistId, pt.TrackId });
+                });
+
 
         modelBuilder.Entity<Track>(entity =>
         {

@@ -33,17 +33,17 @@ public static class PlaylistEndpoints
                     discriminator: $"by-id:{id}");
 
                 // Cache-aside: fetch from cache or query the DB on miss
-                var playlist = await cache.GetOrAddAsync<object?>(key, async _ =>
+                var playlist = await cache.GetOrAddAsync<SharedKernel.Persistence.ApiModels.PlaylistApiModel?>(key, async _ =>
                 {
                     try
                     {
                         var p = await repo.GetById(id);
                         return p;
                     }
-                    catch(Exception ex)
+                    catch
                     {
-                        // If the database is not initialized (e.g., missing schema), treat as not found for this demo endpoint
-                        return ex.Message;
+                        // Treat exceptions (e.g., not found) as null to avoid caching error strings
+                        return null;
                     }
                 }, new CacheEntryOptions
                 {
@@ -52,7 +52,7 @@ public static class PlaylistEndpoints
                     Tags = PlaylistTags
                 }, ct);
 
-                return playlist is not null ? Results.Json(playlist) : Results.NotFound();
+                return playlist is not null ? TypedResults.Ok(playlist) : Results.NotFound();
             })
             .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
             .WithName("MusicGetPlaylistById")

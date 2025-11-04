@@ -21,7 +21,7 @@ public class TrackRepository(AppDbContext context) : BaseRepository<Track>(conte
                 .AsNoTracking().ToListAsync();
 
     public async Task<List<Track>> GetByPlaylistId(int id) =>
-        await _context.Playlists.Where(p => p.Id == id).SelectMany(p => p.Tracks!)
+        await _context.PlaylistTracks.Where(p => p.PlaylistId == id).Select(p => p.Track!)
                 .AsNoTracking().ToListAsync();
 
     public async Task<List<Track>> GetByArtistId(int id) =>

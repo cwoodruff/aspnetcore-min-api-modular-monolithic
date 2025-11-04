@@ -33,17 +33,17 @@ public static class AlbumEndpoints
                     discriminator: $"by-id:{id}");
 
                 // Cache-aside: fetch from cache or query the DB on miss
-                var album = await cache.GetOrAddAsync<object?>(key, async _ =>
+                var album = await cache.GetOrAddAsync<SharedKernel.Persistence.ApiModels.AlbumApiModel?>(key, async _ =>
                 {
                     try
                     {
                         var a = await repo.GetById(id);
                         return a;
                     }
-                    catch(Exception ex)
+                    catch
                     {
-                        // If the database is not initialized (e.g., missing schema), treat as not found for this demo endpoint
-                        return ex.Message;
+                        // Treat exceptions (e.g., not found) as null to avoid caching error strings
+                        return null;
                     }
                 }, new CacheEntryOptions
                 {
@@ -52,7 +52,7 @@ public static class AlbumEndpoints
                     Tags = AlbumTags
                 }, ct);
 
-                return album is not null ? Results.Json(album) : Results.NotFound();
+                return album is not null ? TypedResults.Ok(album) : Results.NotFound();
             })
             .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
             .WithName("MusicGetAlbumById")
