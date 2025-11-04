@@ -14,44 +14,44 @@ public class PlaylistRepository(AppDbContext context) : BaseRepository<Playlist>
 
     public async Task<PlaylistApiModel> GetById(int id)
     {
-        // Entities load (split queries), then manual projection to DTO
-        var playlistEntity = await _context.Playlists
-            .Where(p => p.Id == id)
-            .Include(p => p.Tracks)
-                .ThenInclude(t => t.Album)
-            .Include(p => p.Tracks)
-                .ThenInclude(t => t.Genre)
-            .Include(p => p.Tracks)
-                .ThenInclude(t => t.MediaType)
+        // Option A: Two lean queries with direct projection to DTOs (no entity graph materialization)
+        var header = await _context.Playlists
             .AsNoTracking()
-            .AsSplitQuery()
+            .Where(p => p.Id == id)
+            .Select(p => new { p.Id, p.Name })
             .SingleAsync();
 
-        var playlistDto = new PlaylistApiModel
-        {
-            Id = playlistEntity.Id,
-            Name = playlistEntity.Name,
-            Tracks = playlistEntity.Tracks.Select(t => new TrackApiModel
+        var tracks = await _context.PlaylistTracks
+            .AsNoTracking()
+            .Where(pt => pt.PlaylistId == id)
+            .Select(pt => new TrackApiModel
             {
-                Id = t.Id,
-                Name = t.Name,
-                AlbumId = t.AlbumId,
-                GenreId = t.GenreId,
-                MediaTypeId = t.MediaTypeId,
-                Composer = t.Composer,
-                Milliseconds = t.Milliseconds,
-                Bytes = t.Bytes,
-                UnitPrice = t.UnitPrice,
-                AlbumName = t.Album?.Title,
-                GenreName = t.Genre?.Name,
-                MediaTypeName = t.MediaType?.Name,
+                Id = pt.Track.Id,
+                Name = pt.Track.Name,
+                AlbumId = pt.Track.AlbumId,
+                GenreId = pt.Track.GenreId,
+                MediaTypeId = pt.Track.MediaTypeId,
+                Composer = pt.Track.Composer,
+                Milliseconds = pt.Track.Milliseconds,
+                Bytes = pt.Track.Bytes,
+                UnitPrice = pt.Track.UnitPrice,
+                AlbumName = pt.Track.Album != null ? pt.Track.Album.Title : null,
+                GenreName = pt.Track.Genre != null ? pt.Track.Genre.Name : null,
+                MediaTypeName = pt.Track.MediaType != null ? pt.Track.MediaType.Name : null,
                 Album = null,
                 Genre = null,
                 MediaType = null,
                 Playlists = new List<PlaylistApiModel>(),
                 InvoiceLines = new List<InvoiceLineApiModel>()
-            }).ToList()
+            })
+            .OrderBy(t => t.Id)
+            .ToListAsync();
+
+        return new PlaylistApiModel
+        {
+            Id = header.Id,
+            Name = header.Name,
+            Tracks = tracks
         };
-        return playlistDto;
     }
 }
