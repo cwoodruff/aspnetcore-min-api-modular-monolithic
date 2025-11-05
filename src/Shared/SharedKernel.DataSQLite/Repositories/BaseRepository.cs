@@ -2,7 +2,6 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Persistence;
 using SharedKernel.Persistence.Entities;
-using SharedKernel.Persistence.Extensions;
 using SharedKernel.Persistence.Repositories;
 
 namespace SharedKernel.DataSQLite.Repositories;

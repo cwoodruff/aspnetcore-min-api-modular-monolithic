@@ -2,7 +2,6 @@
 using SharedKernel.Persistence;
 using SharedKernel.Persistence.ApiModels;
 using SharedKernel.Persistence.Entities;
-using SharedKernel.Persistence.Extensions;
 using SharedKernel.Persistence.Repositories;
 
 namespace SharedKernel.DataSQLite.Repositories;

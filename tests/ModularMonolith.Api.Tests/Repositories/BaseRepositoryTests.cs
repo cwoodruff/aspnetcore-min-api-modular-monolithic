@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using FluentAssertions;
 using SharedKernel.DataSQLite.Repositories;
 using SharedKernel.Persistence.Entities;

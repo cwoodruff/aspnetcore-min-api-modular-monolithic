@@ -1,5 +1,3 @@
-using SharedKernel.Persistence.Extensions;
-
 namespace SharedKernel.Persistence.Repositories;
 
 public interface IRepository<T>
