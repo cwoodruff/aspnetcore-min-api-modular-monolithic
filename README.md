@@ -1,6 +1,7 @@
-# ModularMonolith.Api (ASP.NET Core 9 Minimal APIs)
+# ModularMonolith.Api (ASP.NET Core 10 Minimal APIs)
 
-Production-ready modular monolith starter using ASP.NET Core 9 (net9.0) and Minimal APIs. It demonstrates module composition via a simple IModule contract, clear boundaries, and integration tests.
+Production-ready modular monolith starter using ASP.NET Core 10 (net10.0) and Minimal APIs. It demonstrates module
+composition via a simple IModule contract, clear boundaries, and integration tests.
 
 Looking to recreate this solution from scratch? See the step-by-step guide in docs/Walkthrough.md.
 
@@ -8,7 +9,7 @@ Looking to recreate this solution from scratch? See the step-by-step guide in do
 
 ```
 /src
-  /ModularMonolith.Api                (ASP.NET Core 9 Web API host, Minimal APIs)
+  /ModularMonolith.Api                (ASP.NET Core 10 Web API host, Minimal APIs)
   /Modules
     /Music/Music.Module               (Class Library)
     /Orders/Orders.Module             (Class Library)
