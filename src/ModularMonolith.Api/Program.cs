@@ -3,7 +3,6 @@ using Admin.Modules;
 using Identity.Modules;
 using Identity.Modules.Extensions;
 using Microsoft.AspNetCore.Http.Json;
-using Microsoft.OpenApi.Models;
 using Music.Modules;
 using Orders.Modules;
 using Reporting.Modules;
@@ -12,6 +11,7 @@ using SharedKernel.Caching;
 using SharedKernel.Persistence;
 using SharedKernel.TrafficControl;
 using System.Threading.RateLimiting;
+using Microsoft.OpenApi;
 using SharedKernel.DataSQLite.Repositories;
 using SharedKernel.Persistence.Repositories;
 
@@ -42,18 +42,14 @@ builder.Services.AddSwaggerGen(c =>
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
-        BearerFormat = "JWT",
-        Reference = new OpenApiReference
-        {
-            Type = ReferenceType.SecurityScheme,
-            Id = "Bearer"
-        }
+        BearerFormat = "JWT"
     };
 
     c.AddSecurityDefinition("Bearer", jwtSecurityScheme);
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
-        { jwtSecurityScheme, Array.Empty<string>() }
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = [],
+        [new OpenApiSecuritySchemeReference("X-API-Key", document)] = []
     });
 });
 builder.Services.AddProblemDetails();
