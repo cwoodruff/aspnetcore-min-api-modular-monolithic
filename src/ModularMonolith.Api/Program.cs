@@ -63,10 +63,12 @@ if (string.IsNullOrWhiteSpace(existing))
 {
     static string? TryFindDb(string contentRoot)
     {
-        // 1) Prefer host content root /data/chinook.db (this repo ships the seeded DB under the API project)
         var contentDb = Path.Combine(contentRoot, "data", "chinook.db");
-        if (File.Exists(contentDb)) return contentDb;
-        // 2) Fallback to repo-root /data/chinook.db if present
+        if (File.Exists(contentDb))
+        {
+            return contentDb;
+        }
+
         var current = new DirectoryInfo(AppContext.BaseDirectory);
         while (current is not null && !Directory.Exists(Path.Combine(current.FullName, "data")))
         {
