@@ -2,54 +2,21 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using SharedKernel.Caching;
-using SharedKernel.Persistence;
-using SharedKernel.Persistence.Extensions;
-using SharedKernel.Persistence.Repositories;
+using Music.Modules.Services;
 
 namespace Music.Modules.Endpoints;
 
 public static class AlbumEndpoints
 {
-    private static readonly string[] AlbumTags = ["music:album", "music:album:by-id"];
-
     public static void MapAlbumEndpoints(this IEndpointRouteBuilder group)
     {
         // GET /api/music/albums/{id}
         group.MapGet("/albums/{id:int}", [Authorize] async (
                 int id,
-                AppDbContext db,
-                IAlbumRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                IAlbumService service,
                 CancellationToken ct) =>
             {
-                // Compose a namespaced cache key for this album-by-id
-                var key = keys.Compose(
-                    moduleName: "music",
-                    entity: "album",
-                    version: "v1", // bump when response shape changes
-                    discriminator: $"by-id:{id}");
-
-                // Cache-aside: fetch from cache or query the DB on miss
-                var album = await cache.GetOrAddAsync<SharedKernel.Persistence.ApiModels.AlbumApiModel?>(key, async _ =>
-                {
-                    try
-                    {
-                        var a = await repo.GetById(id);
-                        return a;
-                    }
-                    catch
-                    {
-                        // Treat exceptions (e.g., not found) as null to avoid caching error strings
-                        return null;
-                    }
-                }, new CacheEntryOptions
-                {
-                    // Albums are relatively static; cache for 20 minutes by default
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = AlbumTags
-                }, ct);
+                var album = await service.GetAlbumByIdAsync(id, ct);
 
                 return album is not null ? TypedResults.Ok(album) : Results.NotFound();
             })
@@ -65,41 +32,10 @@ public static class AlbumEndpoints
 
         // GET /api/music/albums
         group.MapGet("albums/", [Authorize] async (
-                AppDbContext db,
-                IAlbumRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                IAlbumService service,
                 CancellationToken ct) =>
             {
-                // Compose a namespaced cache key for the albums list
-                var key = keys.Compose(
-                    moduleName: "music",
-                    entity: "album",
-                    version: "v1", // bump when response shape changes
-                    discriminator: "all");
-
-                // Cache-aside: fetch from cache or query the DB on miss
-                var albums = await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
-                {
-                    try
-                    {
-                        var albumEntities = await repo.GetAll();
-
-                        // ApiModel to avoid leaking EF tracking proxies and reduce payload
-                        //return [albumEntities.Select(a => a.Convert())];
-                        return albumEntities.ConvertAll();
-                    }
-                    catch
-                    {
-                        // If the database is not initialized (e.g., missing schema), return empty list for this demo endpoint
-                        return [];
-                    }
-                }, new CacheEntryOptions
-                {
-                    // Albums are relatively static; cache for 20 minutes by default
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = AlbumTags
-                }, ct);
+                var albums = await service.GetAllAlbumsAsync(ct);
 
                 return Results.Json(albums);
             })
@@ -116,40 +52,10 @@ public static class AlbumEndpoints
         //
         group.MapGet("albums/artist/{id:int}", [Authorize] async (
                 int id,
-                AppDbContext db,
-                IAlbumRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                IAlbumService service,
                 CancellationToken ct) =>
             {
-                // Compose a namespaced cache key for the albums list by artist
-                var key = keys.Compose(
-                    moduleName: "music",
-                    entity: "album",
-                    version: "v1", // bump when response shape changes
-                    discriminator: $"by-artist:{id}");
-
-                // Cache-aside: fetch from cache or query the DB on miss
-                var albums = await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
-                {
-                    try
-                    {
-                        var albumEntities = await repo.GetByArtistId(id);
-
-                        // ApiModel to avoid leaking EF tracking proxies and reduce payload
-                        return albumEntities.ConvertAll();
-                    }
-                    catch
-                    {
-                        // If the database is not initialized (e.g., missing schema), return empty list for this demo endpoint
-                        return [];
-                    }
-                }, new CacheEntryOptions
-                {
-                    // Albums are relatively static; cache for 20 minutes by default
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = AlbumTags
-                }, ct);
+                var albums = await service.GetAlbumsByArtistIdAsync(id, ct);
 
                 return Results.Json(albums);
             })

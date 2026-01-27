@@ -2,50 +2,21 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using SharedKernel.Caching;
-using SharedKernel.Persistence;
-using SharedKernel.Persistence.Extensions;
-using SharedKernel.Persistence.Repositories;
+using Music.Modules.Services;
 
 namespace Music.Modules.Endpoints;
 
 public static class TrackEndpoints
 {
-    private static readonly string[] TrackTags = ["music:track", "music:track:by-id"];
-
     public static void MapTrackEndpoints(this IEndpointRouteBuilder group)
     {
         // GET /api/music/tracks/{id}
         group.MapGet("/tracks/{id:int}", [Authorize] async (
                 int id,
-                AppDbContext db,
-                ITrackRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                ITrackService service,
                 CancellationToken ct) =>
             {
-                var key = keys.Compose(
-                    moduleName: "music",
-                    entity: "track",
-                    version: "v1",
-                    discriminator: $"by-id:{id}");
-
-                var track = await cache.GetOrAddAsync<object?>(key, async _ =>
-                {
-                    try
-                    {
-                        var t = await repo.GetById(id);
-                        return t;
-                    }
-                    catch
-                    {
-                        return null;
-                    }
-                }, new CacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = TrackTags
-                }, ct);
+                var track = await service.GetTrackByIdAsync(id, ct);
 
                 return track is not null ? Results.Json(track) : Results.NotFound();
             })
@@ -61,35 +32,10 @@ public static class TrackEndpoints
 
         // GET /api/music/tracks
         group.MapGet("tracks/", [Authorize] async (
-                AppDbContext db,
-                ITrackRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                ITrackService service,
                 CancellationToken ct) =>
             {
-                var key = keys.Compose(
-                    moduleName: "music",
-                    entity: "track",
-                    version: "v1",
-                    discriminator: "all");
-
-                var tracks = await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
-                {
-                    try
-                    {
-                        await Task.Yield();
-                        var trackEntities = await repo.GetAll();
-                        return trackEntities.ConvertAll();
-                    }
-                    catch
-                    {
-                        return [];
-                    }
-                }, new CacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = TrackTags
-                }, ct);
+                var tracks = await service.GetAllTracksAsync(ct);
 
                 return Results.Json(tracks);
             })
@@ -106,35 +52,10 @@ public static class TrackEndpoints
         // GET /api/music/tracks/artist/{id}
         group.MapGet("tracks/artist/{id:int}", [Authorize] async (
                 int id,
-                AppDbContext db,
-                ITrackRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                ITrackService service,
                 CancellationToken ct) =>
             {
-                var key = keys.Compose(
-                    moduleName: "music",
-                    entity: "track",
-                    version: "v1",
-                    discriminator: $"by-artist:{id}");
-
-                var tracks = await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
-                {
-                    try
-                    {
-                        await Task.Yield();
-                        var trackEntities = await repo.GetByArtistId(id);
-                        return trackEntities.ConvertAll();
-                    }
-                    catch
-                    {
-                        return [];
-                    }
-                }, new CacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = TrackTags
-                }, ct);
+                var tracks = await service.GetTracksByArtistIdAsync(id, ct);
 
                 return Results.Json(tracks);
             })
@@ -151,35 +72,10 @@ public static class TrackEndpoints
         // GET /api/music/tracks/playlist/{id}
         group.MapGet("tracks/playlist/{id:int}", [Authorize] async (
                 int id,
-                AppDbContext db,
-                ITrackRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                ITrackService service,
                 CancellationToken ct) =>
             {
-                var key = keys.Compose(
-                    moduleName: "music",
-                    entity: "track",
-                    version: "v1",
-                    discriminator: $"by-playlist:{id}");
-
-                var tracks = await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
-                {
-                    try
-                    {
-                        await Task.Yield();
-                        var trackEntities = await repo.GetByPlaylistId(id);
-                        return trackEntities.ConvertAll();
-                    }
-                    catch
-                    {
-                        return [];
-                    }
-                }, new CacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = TrackTags
-                }, ct);
+                var tracks = await service.GetTracksByPlaylistIdAsync(id, ct);
 
                 return Results.Json(tracks);
             })
@@ -196,35 +92,10 @@ public static class TrackEndpoints
         // GET /api/music/tracks/album/{id}
         group.MapGet("tracks/album/{id:int}", [Authorize] async (
                 int id,
-                AppDbContext db,
-                ITrackRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                ITrackService service,
                 CancellationToken ct) =>
             {
-                var key = keys.Compose(
-                    moduleName: "music",
-                    entity: "track",
-                    version: "v1",
-                    discriminator: $"by-album:{id}");
-
-                var tracks = await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
-                {
-                    try
-                    {
-                        await Task.Yield();
-                        var trackEntities = await repo.GetByAlbumId(id);
-                        return trackEntities.ConvertAll();
-                    }
-                    catch
-                    {
-                        return [];
-                    }
-                }, new CacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = TrackTags
-                }, ct);
+                var tracks = await service.GetTracksByAlbumIdAsync(id, ct);
 
                 return Results.Json(tracks);
             })
@@ -241,35 +112,10 @@ public static class TrackEndpoints
         // GET /api/music/tracks/genre/{id}
         group.MapGet("tracks/genre/{id:int}", [Authorize] async (
                 int id,
-                AppDbContext db,
-                ITrackRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                ITrackService service,
                 CancellationToken ct) =>
             {
-                var key = keys.Compose(
-                    moduleName: "music",
-                    entity: "track",
-                    version: "v1",
-                    discriminator: $"by-genre:{id}");
-
-                var tracks = await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
-                {
-                    try
-                    {
-                        await Task.Yield();
-                        var trackEntities = await repo.GetByGenreId(id);
-                        return trackEntities.ConvertAll();
-                    }
-                    catch
-                    {
-                        return [];
-                    }
-                }, new CacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = TrackTags
-                }, ct);
+                var tracks = await service.GetTracksByGenreIdAsync(id, ct);
 
                 return Results.Json(tracks);
             })
@@ -286,35 +132,10 @@ public static class TrackEndpoints
         // GET /api/music/tracks/mediatype/{id}
         group.MapGet("tracks/mediatype/{id:int}", [Authorize] async (
                 int id,
-                AppDbContext db,
-                ITrackRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                ITrackService service,
                 CancellationToken ct) =>
             {
-                var key = keys.Compose(
-                    moduleName: "music",
-                    entity: "track",
-                    version: "v1",
-                    discriminator: $"by-mediatype:{id}");
-
-                var tracks = await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
-                {
-                    try
-                    {
-                        await Task.Yield();
-                        var trackEntities = await repo.GetByMediaTypeId(id);
-                        return trackEntities.ConvertAll();
-                    }
-                    catch
-                    {
-                        return [];
-                    }
-                }, new CacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = TrackTags
-                }, ct);
+                var tracks = await service.GetTracksByMediaTypeIdAsync(id, ct);
 
                 return Results.Json(tracks);
             })
@@ -331,35 +152,10 @@ public static class TrackEndpoints
         // GET /api/music/tracks/invoice/{id}
         group.MapGet("tracks/invoice/{id:int}", [Authorize] async (
                 int id,
-                AppDbContext db,
-                ITrackRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                ITrackService service,
                 CancellationToken ct) =>
             {
-                var key = keys.Compose(
-                    moduleName: "music",
-                    entity: "track",
-                    version: "v1",
-                    discriminator: $"by-invoice:{id}");
-
-                var tracks = await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
-                {
-                    try
-                    {
-                        await Task.Yield();
-                        var trackEntities = await repo.GetByInvoiceId(id);
-                        return trackEntities.ConvertAll();
-                    }
-                    catch
-                    {
-                        return [];
-                    }
-                }, new CacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = TrackTags
-                }, ct);
+                var tracks = await service.GetTracksByInvoiceIdAsync(id, ct);
 
                 return Results.Json(tracks);
             })

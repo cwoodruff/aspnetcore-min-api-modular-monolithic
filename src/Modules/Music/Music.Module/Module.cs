@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Music.Modules.Endpoints;
+using Music.Modules.Services;
 using SharedKernel;
 
 namespace Music.Modules;
@@ -15,7 +16,11 @@ public static class MusicModule
 
         public void RegisterServices(IServiceCollection services, IConfiguration config)
         {
-            // Register module-specific services here in the future
+            // Register module-specific services
+            services.AddScoped<IAlbumService, AlbumService>();
+            services.AddScoped<IArtistService, ArtistService>();
+            services.AddScoped<IPlaylistService, PlaylistService>();
+            services.AddScoped<ITrackService, TrackService>();
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)

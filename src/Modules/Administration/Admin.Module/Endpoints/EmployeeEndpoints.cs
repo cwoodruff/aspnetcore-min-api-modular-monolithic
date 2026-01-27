@@ -1,51 +1,23 @@
+using Admin.Modules.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using SharedKernel.Caching;
-using SharedKernel.Persistence;
-using SharedKernel.Persistence.Extensions;
 using SharedKernel.Persistence.Repositories;
 
 namespace Admin.Modules.Endpoints;
 
 public static class EmployeeEndpoints
 {
-    private static readonly string[] EmployeeTags = ["administration:employee", "administration:employee:by-id"];
-
     public static void MapEmployeeEndpoints(this IEndpointRouteBuilder group)
     {
         // GET /api/admin/employees/{id}
         group.MapGet("/employees/{id:int}", [Authorize] async (
                 int id,
-                AppDbContext db,
-                IEmployeeRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                IEmployeeService service,
                 CancellationToken ct) =>
             {
-                var key = keys.Compose(
-                    moduleName: "administration",
-                    entity: "employee",
-                    version: "v1",
-                    discriminator: $"by-id:{id}");
-
-                var employee = await cache.GetOrAddAsync<object?>(key, async _ =>
-                {
-                    try
-                    {
-                        var e = await repo.GetById(id);
-                        return e;
-                    }
-                    catch
-                    {
-                        return null;
-                    }
-                }, new CacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = EmployeeTags
-                }, ct);
+                var employee = await service.GetEmployeeByIdAsync(id, ct);
 
                 return employee is not null ? Results.Json(employee) : Results.NotFound();
             })
@@ -61,34 +33,10 @@ public static class EmployeeEndpoints
 
         // GET /api/admin/employees
         group.MapGet("employees/", [Authorize] async (
-                AppDbContext db,
-                IEmployeeRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                IEmployeeService service,
                 CancellationToken ct) =>
             {
-                var key = keys.Compose(
-                    moduleName: "administration",
-                    entity: "employee",
-                    version: "v1",
-                    discriminator: "all");
-
-                var employees = await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
-                {
-                    try
-                    {
-                        var employeeEntities = await repo.GetAll();
-                        return employeeEntities.ConvertAll();
-                    }
-                    catch
-                    {
-                        return [];
-                    }
-                }, new CacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = EmployeeTags
-                }, ct);
+                var employees = await service.GetAllEmployeesAsync(ct);
 
                 return Results.Json(employees);
             })
@@ -105,34 +53,10 @@ public static class EmployeeEndpoints
         // GET /api/admin/employees/{id}/direct-reports
         group.MapGet("employees/{id:int}/direct-reports", [Authorize] async (
                 int id,
-                AppDbContext db,
-                IEmployeeRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                IEmployeeService service,
                 CancellationToken ct) =>
             {
-                var key = keys.Compose(
-                    moduleName: "administration",
-                    entity: "employee",
-                    version: "v1",
-                    discriminator: $"direct-reports:{id}");
-
-                var employees = await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
-                {
-                    try
-                    {
-                        var employeeEntities = await repo.GetDirectReports(id);
-                        return employeeEntities.ConvertAll();
-                    }
-                    catch
-                    {
-                        return [];
-                    }
-                }, new CacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = EmployeeTags
-                }, ct);
+                var employees = await service.GetDirectReportsAsync(id, ct);
 
                 return Results.Json(employees);
             })
@@ -149,34 +73,10 @@ public static class EmployeeEndpoints
         // GET /api/admin/employees/{id}/reports-to
         group.MapGet("employees/{id:int}/reports-to", [Authorize] async (
                 int id,
-                AppDbContext db,
-                IEmployeeRepository repo,
-                ICacheFacade cache,
-                ICacheKeyComposer keys,
+                IEmployeeService service,
                 CancellationToken ct) =>
             {
-                var key = keys.Compose(
-                    moduleName: "administration",
-                    entity: "employee",
-                    version: "v1",
-                    discriminator: $"reports-to:{id}");
-
-                var manager = await cache.GetOrAddAsync<object?>(key, async _ =>
-                {
-                    try
-                    {
-                        var m = await repo.GetReportsTo(id);
-                        return m.Convert();
-                    }
-                    catch
-                    {
-                        return null;
-                    }
-                }, new CacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-                    Tags = EmployeeTags
-                }, ct);
+                var manager = await service.GetReportsToAsync(id, ct);
 
                 return manager is not null ? Results.Json(manager) : Results.NotFound();
             })

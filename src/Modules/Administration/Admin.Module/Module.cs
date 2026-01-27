@@ -1,4 +1,5 @@
 using Admin.Modules.Endpoints;
+using Admin.Modules.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
@@ -15,7 +16,11 @@ public static class AdministrationModule
 
         public void RegisterServices(IServiceCollection services, IConfiguration config)
         {
-            // Register module-specific services here in the future
+            // Register module-specific services
+            services.AddScoped<ICustomerService, CustomerService>();
+            services.AddScoped<IGenreService, GenreService>();
+            services.AddScoped<IEmployeeService, EmployeeService>();
+            services.AddScoped<IMediaTypeService, MediaTypeService>();
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)

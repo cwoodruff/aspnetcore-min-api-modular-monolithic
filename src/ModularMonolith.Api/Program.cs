@@ -131,6 +131,13 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+// Register module services BEFORE building the app
+var modules = GetModules();
+foreach (var module in modules)
+{
+    module.RegisterServices(builder.Services, builder.Configuration);
+}
+
 var app = builder.Build();
 
 // Middleware
@@ -176,15 +183,7 @@ app.MapGet("/", (IConfiguration cfg, IWebHostEnvironment env) =>
 .Produces(429) // Rate limiting
 .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
-// Register and compose modules
-var modules = GetModules();
-
-foreach (var module in modules)
-{
-    module.RegisterServices(builder.Services, app.Configuration); // register into DI if needed (no-op for now)
-}
-
-// Map endpoints after building to ensure middleware is in place
+// Map module endpoints
 app.MapGroup(""); // noop to ensure route builder initialized
 foreach (var module in modules)
 {

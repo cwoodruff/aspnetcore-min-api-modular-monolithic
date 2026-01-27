@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orders.Modules.Endpoints;
+using Orders.Modules.Services;
 using SharedKernel;
 
 namespace Orders.Modules;
@@ -15,7 +16,9 @@ public static class OrdersModule
 
         public void RegisterServices(IServiceCollection services, IConfiguration config)
         {
-            // Register module-specific services here in the future
+            // Register module-specific services
+            services.AddScoped<IInvoiceService, InvoiceService>();
+            services.AddScoped<IInvoiceLineService, InvoiceLineService>();
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)
