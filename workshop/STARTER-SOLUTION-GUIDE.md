@@ -341,7 +341,7 @@ git push origin workshop-starter
 
 ### For Participants
 
-- [ ] .NET SDK 9.0+ or 10.0 installed
+- [ ] .NET SDK 10.0 installed
 - [ ] IDE installed (Rider, VS 2022, or VS Code)
 - [ ] Git installed
 - [ ] Internet access (or offline package cache)

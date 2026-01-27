@@ -64,6 +64,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workshop", "workshop", "{2C
 		workshop\QUICK-REFERENCE.md = workshop\QUICK-REFERENCE.md
 		workshop\STARTER-SOLUTION-GUIDE.md = workshop\STARTER-SOLUTION-GUIDE.md
 		workshop\WORKSHOP-CURRICULUM.md = workshop\WORKSHOP-CURRICULUM.md
+		workshop\WORKSHOP-EMAIL-ANNOUNCEMENT.md = workshop\WORKSHOP-EMAIL-ANNOUNCEMENT.md
+		workshop\WORKSHOP-FLYER.md = workshop\WORKSHOP-FLYER.md
+		workshop\WORKSHOP-LANDING-PAGE.md = workshop\WORKSHOP-LANDING-PAGE.md
+		workshop\BUSINESS-DEVELOPMENT.md = workshop\BUSINESS-DEVELOPMENT.md
+		workshop\PARTNERSHIP-PROPOSAL.md = workshop\PARTNERSHIP-PROPOSAL.md
 	EndProjectSection
 EndProject
 Global
