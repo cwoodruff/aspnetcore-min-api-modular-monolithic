@@ -89,9 +89,20 @@ Registration in the host (ModularMonolith.Api)
 
 How modules access the DbContext
 - Option A (recommended): depend on IAppDbContext (from SharedKernel.Persistence) in module services/handlers, and use Set<T>() to query/update entities.
-- Option B: define per‑module repositories (interfaces in the module, implementations in the module) that internally depend on IAppDbContext.
+- Option B (implemented): define per‑module repositories (interfaces in SharedKernel.Persistence, implementations in SharedKernel.DataSQLite) that internally depend on IAppDbContext.
+- Option C (current pattern): Use a service layer that wraps repositories with caching, validation, and business logic.
 - Avoid making modules depend on the host project. They should only reference SharedKernel (+ SharedKernel.Persistence for EF abstractions).
-- You can keep entities outside modules (SharedKernel.Persistence/Entities/<ModuleName>) if you want a single schema project, or keep aggregates closer to modules and map them via partial OnModelCreating contributions (see next section).
+- Entities are centralized in SharedKernel.Persistence/Entities/.
+
+Service layer integration
+- Services inject repositories (e.g., ICustomerRepository) and ICacheFacade
+- Services handle:
+  - Input validation via FluentValidation
+  - Cache-aside pattern for reads
+  - Cache invalidation on writes
+  - Entity-to-DTO conversion
+- Endpoints inject services (not repositories directly) for data access
+- Example flow: Endpoint → Service → Repository → DbContext
 
 
 Entity type configuration organization (mapping)

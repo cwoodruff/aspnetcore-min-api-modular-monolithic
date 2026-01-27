@@ -123,6 +123,18 @@ This document is a practical, API‑focused cheat sheet of the OWASP risks most 
 - Avoid regex DoS; use efficient validators.
 - Output minimal necessary fields; redact or omit sensitive data.
 
+### Service layer validation (implemented)
+- All write operations use FluentValidation before persistence
+- Validators are centralized in `SharedKernel.Persistence/Validation/`
+- Validation rules include:
+  - Required field checks (`NotNull()`, `NotEmpty()`)
+  - Length constraints (`MaximumLength()`)
+  - Format validation (`EmailAddress()`, `Matches()` for regex)
+  - Business rules (`GreaterThan()`, `LessThanOrEqualTo()`)
+- ValidationException thrown on failure, converted to HTTP 400 ProblemDetails
+- Example validators: CustomerValidator, TrackValidator, InvoiceValidator
+- See [validation-strategy.md](validation-strategy.md) for complete implementation details
+
 ---
 
 ### Database and EF Core hardening

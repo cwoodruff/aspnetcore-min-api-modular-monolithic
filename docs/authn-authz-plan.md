@@ -80,6 +80,29 @@ The solution uses RS256 (RSA) signing with a pluggable key management abstractio
   - group.MapPost("/orders", ...).RequireAuthorization("orders.write");
 - Read user claims via HttpContext.User, e.g., User.FindFirst("tenant").
 
+### Service Layer Integration
+- Services are authorization-agnostic; they do not check permissions
+- Authorization is enforced at the endpoint level via `.RequireAuthorization()`
+- Services focus on:
+  - Input validation (FluentValidation)
+  - Cache management (ICacheFacade)
+  - Data access (repositories)
+- This separation allows services to be reused across different authorization contexts
+
+Example endpoint with service:
+```csharp
+group.MapPost("/customers", [Authorize] async (
+    CustomerApiModel model,
+    ICustomerService service,
+    CancellationToken ct) =>
+{
+    var created = await service.CreateCustomerAsync(model, ct);
+    return Results.Created($"/api/admin/customers/{created.Id}", created);
+})
+.RequireAuthorization("administration.write")
+.RequireAuthorization("tenant.scoped");
+```
+
 ### Authorization Model
 - Policy-based authorization using claim-based permissions and roles.
 - Naming: music.read, music.write, orders.read, orders.write, admin.users.manage, report.view.

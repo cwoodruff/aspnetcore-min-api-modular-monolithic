@@ -70,13 +70,41 @@ Prerequisites
 6. Feature modules following the module pattern
 - Each module exposes a static <Feature>Module with nested public sealed class Modules : IModule
   - Example Music.Modules.MusicModule.Modules implements Name => "Music"
-  - RegisterServices: register internal services if any (can be empty initially)
+  - RegisterServices: register internal services (e.g., IArtistService, IAlbumService)
   - MapEndpoints: map health endpoints and the feature endpoints under /api/<feature>
 - Music module sample endpoints:
   - group.MapGet("/health", ...) returning module health JSON
   - group.MapGet("/data/health", ...) checking AppDbContext and returning DB status
-  - Album endpoints (GET /albums, GET /albums/{id}) reading from AppDbContext with minimal DTOs
-- Mirror pattern for Orders, Administration, Reporting with their own Health endpoints.
+  - Album endpoints (GET /albums, GET /albums/{id}) using IAlbumService with caching
+- Mirror pattern for Orders, Administration, Reporting with their own Services and Health endpoints.
+
+6a. Service layer pattern
+- Create Services folder in each module (e.g., src/Modules/Music/Music.Module/Services/)
+- Define interface and implementation pairs:
+  - IArtistService / ArtistService
+  - IAlbumService / AlbumService
+  - ITrackService / TrackService
+  - IPlaylistService / PlaylistService
+- Service constructor dependencies:
+  - Repository interface (e.g., IArtistRepository) for data access
+  - ICacheFacade for caching
+  - ICacheKeyComposer for structured cache keys
+  - IValidator<T> for FluentValidation
+- Service responsibilities:
+  - Validation before writes (using FluentValidation)
+  - Cache-aside pattern for reads (GetOrAddAsync)
+  - Cache invalidation on writes (RemoveByTagAsync)
+  - Entity-to-DTO conversion
+- Register services in Module.cs:
+  ```csharp
+  public void RegisterServices(IServiceCollection services, IConfiguration config)
+  {
+      services.AddScoped<IArtistService, ArtistService>();
+      services.AddScoped<IAlbumService, AlbumService>();
+      services.AddScoped<ITrackService, TrackService>();
+      services.AddScoped<IPlaylistService, PlaylistService>();
+  }
+  ```
 
 7. API host composition (src/ModularMonolith.Api/Program.cs)
 - Minimal API setup:

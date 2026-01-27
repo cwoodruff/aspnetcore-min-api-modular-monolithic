@@ -9,17 +9,36 @@ Looking to recreate this solution from scratch? See the step-by-step guide in do
 
 ```
 /src
-  /ModularMonolith.Api                (ASP.NET Core 10 Web API host, Minimal APIs)
+  /ModularMonolith.Api                     (ASP.NET Core 10 Web API host, Minimal APIs)
   /Modules
-    /Music/Music.Module               (Class Library)
-    /Orders/Orders.Module             (Class Library)
-    /Administration/Admin.Module      (Class Library)
-    /Reporting/Reporting.Module       (Class Library)
-    /Identity/Identity.Module         (Class Library)
-  /Shared/SharedKernel                (Class Library for cross-cutting primitives only)
-  /Shared/SharedKernel.Persistence    (Class Library for EF Core + AppDbContext and persistence helpers)
+    /Music/Music.Module                    (Class Library)
+      /Services                            (IArtistService, IAlbumService, ITrackService, IPlaylistService)
+      /Endpoints                           (ArtistEndpoints, AlbumEndpoints, TrackEndpoints, etc.)
+    /Orders/Orders.Module                  (Class Library)
+      /Services                            (IInvoiceService, IInvoiceLineService)
+      /Endpoints                           (InvoiceEndpoints, InvoiceLineEndpoints)
+    /Administration/Admin.Module           (Class Library)
+      /Services                            (ICustomerService, IEmployeeService, IGenreService, IMediaTypeService)
+      /Endpoints                           (CustomerEndpoints, EmployeeEndpoints, GenreEndpoints, etc.)
+    /Reporting/Reporting.Module            (Class Library - health endpoints only)
+    /Identity/Identity.Module              (Class Library)
+      /Services                            (TokenService, UserStore, RefreshTokenStore)
+      /Endpoints                           (AuthEndpoints)
+      /Authorization                       (PolicyRegistry, TenantAuthorizationHandler)
+      /KeyManagement                       (DevKeyMaterialService)
+  /Shared
+    /SharedKernel                          (Class Library for cross-cutting primitives)
+      /Caching                             (ICacheFacade, CacheKeyComposer, CompositeCacheFacade)
+      /TrafficControl                      (RateLimitPolicyRegistry, PartitionKeys)
+    /SharedKernel.Persistence              (Class Library for EF Core, entities, validation)
+      /Entities                            (Album, Artist, Customer, Employee, Genre, etc.)
+      /ApiModels                           (AlbumApiModel, ArtistApiModel, etc.)
+      /Repositories                        (IAlbumRepository, IArtistRepository, etc.)
+      /Validation                          (FluentValidation validators)
+    /SharedKernel.DataSQLite               (Class Library for SQLite repository implementations)
+      /Repositories                        (AlbumRepository, ArtistRepository, BaseRepository<T>)
 /tests
-  /ModularMonolith.Api.Tests          (xUnit integration tests using WebApplicationFactory)
+  /ModularMonolith.Api.Tests               (xUnit integration tests using WebApplicationFactory)
 ```
 
 ## Module contract
@@ -35,7 +54,87 @@ public interface IModule
 }
 ```
 
-Each module exposes a public static <ModuleName>Module with a nested public sealed class Modules : IModule that registers services and maps endpoints (note the plural “Modules”, e.g., MusicModule.Modules). Only the IModule is public outside the module; all other types should remain internal by default.
+Each module exposes a public static <ModuleName>Module with a nested public sealed class Modules : IModule that registers services and maps endpoints (note the plural "Modules", e.g., MusicModule.Modules). Only the IModule is public outside the module; all other types should remain internal by default.
+
+## Service layer architecture
+
+Each module implements a service layer that encapsulates business logic, validation, and caching:
+
+### Service responsibilities
+- **Input validation** - FluentValidation before persistence operations
+- **Cache management** - Cache-aside pattern with tag-based invalidation
+- **Repository orchestration** - Coordinate data access
+- **Error handling** - Graceful degradation with null/empty returns
+
+### Service pattern example
+```csharp
+public sealed class CustomerService(
+    ICustomerRepository repo,
+    ICacheFacade cache,
+    ICacheKeyComposer keys,
+    IValidator<CustomerApiModel> validator) : ICustomerService
+{
+    // Read with caching
+    public async Task<CustomerApiModel?> GetCustomerByIdAsync(int id, CancellationToken ct)
+    {
+        var key = keys.Compose("administration", "customer", "v1", discriminator: $"by-id:{id}");
+        return await cache.GetOrAddAsync<CustomerApiModel?>(key, async _ =>
+        {
+            return await repo.GetById(id);
+        }, new CacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
+            Tags = ["administration:customer"]
+        }, ct);
+    }
+
+    // Write with validation and cache invalidation
+    public async Task<CustomerApiModel?> CreateCustomerAsync(CustomerApiModel model, CancellationToken ct)
+    {
+        var result = await validator.ValidateAsync(model, ct);
+        if (!result.IsValid)
+            throw new ValidationException(result.Errors);
+
+        var created = await repo.Add(model.Convert());
+        await cache.RemoveByTagAsync("administration:customer", ct);
+        return created?.Convert();
+    }
+}
+```
+
+### Services by module
+
+| Module | Services |
+|--------|----------|
+| Administration | CustomerService, EmployeeService, GenreService, MediaTypeService |
+| Music | ArtistService, AlbumService, TrackService, PlaylistService |
+| Orders | InvoiceService, InvoiceLineService |
+| Identity | TokenService, InMemoryUserStore, InMemoryRefreshTokenStore |
+
+## Validation with FluentValidation
+
+All input validation uses FluentValidation with validators in `SharedKernel.Persistence/Validation/`:
+
+```csharp
+public class CustomerValidator : AbstractValidator<CustomerApiModel>
+{
+    public CustomerValidator()
+    {
+        RuleFor(c => c.FirstName).NotNull().MaximumLength(40);
+        RuleFor(c => c.LastName).NotNull().MaximumLength(20);
+        RuleFor(c => c.Email).EmailAddress();
+        RuleFor(c => c.Phone).Matches(@"\(?\d{3}\)?[-\.]? *\d{3}[-\.]? *[-\.]?\d{4}");
+        RuleFor(c => c.PostalCode).Matches(@"^[0-9]{5}(?:-[0-9]{4})?$");
+    }
+}
+```
+
+Validators are auto-registered via assembly scanning:
+```csharp
+services.AddValidatorsFromAssemblyContaining<CustomerValidator>();
+```
+
+See [docs/validation-strategy.md](docs/validation-strategy.md) for complete documentation.
 
 ## Endpoints
 
@@ -221,6 +320,24 @@ Notes
 - Defaults: CacheEntryOptions support AbsoluteExpirationRelativeToNow, SlidingExpiration, Jitter (±10% by default) to avoid stampedes.
 - Cache key composition: Keys include environment and service name components, derived from configuration keys ASPNETCORE_ENVIRONMENT/DOTNET_ENVIRONMENT and ServiceName (defaults to "mmapi"). See SharedKernel/Caching/CacheKeyComposer.cs.
 
+### Service-level caching
+All module services implement caching using the cache-aside pattern:
+
+```csharp
+// Cache tags for bulk invalidation
+private static readonly string[] CustomerTags = ["administration:customer", "administration:customer:by-id"];
+
+// Read with caching
+var key = keys.Compose("administration", "customer", "v1", discriminator: $"by-id:{id}");
+return await cache.GetOrAddAsync<CustomerApiModel?>(key, async _ => await repo.GetById(id),
+    new CacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20), Tags = CustomerTags }, ct);
+
+// Write with cache invalidation
+await cache.RemoveByTagAsync(CustomerTags[0], ct);
+```
+
+See [docs/caching-strategy.md](docs/caching-strategy.md) for complete documentation including service-level patterns.
+
 This solution uses the Repository pattern with DbContext pooling for high throughput:
 
 - Repository interfaces: Defined in `src/Shared/SharedKernel.Persistence/Repositories/` (e.g., `IAlbumRepository`, `IArtistRepository`, etc.).
@@ -268,3 +385,43 @@ Notes:
 - Repository implementations are in `SharedKernel.DataSQLite/Repositories/`
 - The host registers all repositories in Program.cs
 - The host computes an absolute SQLite Data Source to data/chinook.db at startup
+
+## Documentation
+
+Detailed documentation is available in the `/docs` folder:
+
+### Architecture & Implementation
+- [Services Architecture](docs/services-architecture.md) - Service layer patterns, caching integration, and validation
+- [Validation Strategy](docs/validation-strategy.md) - FluentValidation implementation and patterns
+- [Caching Strategy](docs/caching-strategy.md) - Multi-tier caching with tag-based invalidation
+- [EF Core Plan](docs/EFCore-Plan.md) - Database architecture and repository pattern
+- [Walkthrough](docs/Walkthrough.md) - Step-by-step guide to recreate the solution
+
+### Security
+- [Authentication & Authorization](docs/authn-authz-plan.md) - JWT bearer authentication and policy-based authorization
+- [OWASP Threats & Mitigations](docs/owasp-top-threats-and-mitigations.md) - Security best practices
+- [Secure Headers Plan](docs/secure-headers-plan.md) - HTTP security headers configuration
+- [HTTPS Enforcement](docs/https-enforcement-plan.md) - TLS configuration guide
+
+### Traffic Control
+- [Rate Limiting Plan](docs/rate-limiting-plan.md) - Centralized rate limiting and throttling
+
+## Test Coverage
+
+The solution includes comprehensive integration tests in `tests/ModularMonolith.Api.Tests/`:
+
+| Test Category | Description |
+|---------------|-------------|
+| Health endpoints | Module health and data-health endpoint tests |
+| Identity endpoints | Login, refresh, logout, userinfo, JWKS tests |
+| Write operations | POST/PUT/DELETE endpoint tests with authorization |
+| Rate limiting | 429 response behavior tests |
+| Caching behavior | Cache consistency and stampede prevention tests |
+| Error scenarios | Invalid JSON, validation errors, edge cases |
+
+Run tests with coverage:
+```bash
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+Current coverage: **73% line coverage** across all modules

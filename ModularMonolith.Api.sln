@@ -59,6 +59,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{C82539F3-3
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedKernel.DataSQLite", "src\Shared\SharedKernel.DataSQLite\SharedKernel.DataSQLite.csproj", "{0F1D59D1-ADDA-4166-9331-5DE936CDE9F3}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workshop", "workshop", "{2CEF717D-DC67-452B-BED1-FFA59F0A7256}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

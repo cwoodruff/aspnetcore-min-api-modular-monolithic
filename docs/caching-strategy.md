@@ -19,14 +19,212 @@ Configuration keys (in `appsettings.json`):
 - `Caching:Tier` = "L1" (default) or "L1L2"
 - `Caching:Provider` = "InMemory" (default) or configure Redis separately
 
-Example usage in Music module (AlbumEndpoints.cs):
-```csharp
-var cacheKey = keyComposer.Compose("music", "album", "v1", discriminator: $"by-id:{id}");
-var album = await cache.GetOrAddAsync(cacheKey, async ct => await repo.GetByIdAsync(id, ct), ct);
-```
-
 Non-goals
 - Caching mutable security artifacts (access tokens, refresh tokens)
+
+---
+
+## Service-Level Caching Implementation
+
+All module services implement caching using a consistent pattern. This section documents how services integrate with the cache facade.
+
+### Service Dependencies
+
+Every service that requires caching injects these dependencies:
+
+```csharp
+public sealed class CustomerService(
+    ICustomerRepository repo,           // Data access
+    ICacheFacade cache,                  // Cache operations
+    ICacheKeyComposer keys,              // Key composition
+    IValidator<CustomerApiModel> validator  // Validation
+) : ICustomerService
+```
+
+### Cache Tags by Module
+
+Each service defines static cache tags for bulk invalidation:
+
+| Module | Service | Tags |
+|--------|---------|------|
+| Administration | CustomerService | `["administration:customer", "administration:customer:by-id"]` |
+| Administration | EmployeeService | `["administration:employee", "administration:employee:by-id"]` |
+| Administration | GenreService | `["administration:genre", "administration:genre:by-id"]` |
+| Administration | MediaTypeService | `["administration:mediatype", "administration:mediatype:by-id"]` |
+| Music | ArtistService | `["music:artist", "music:artist:by-id"]` |
+| Music | AlbumService | `["music:album", "music:album:by-id"]` |
+| Music | TrackService | `["music:track", "music:track:by-id"]` |
+| Music | PlaylistService | `["music:playlist", "music:playlist:by-id"]` |
+| Orders | InvoiceService | `["orders:invoice", "orders:invoice:by-id"]` |
+| Orders | InvoiceLineService | `["orders:invoiceline", "orders:invoiceline:by-id"]` |
+
+### Read Operation Caching Pattern
+
+All read operations use the cache-aside pattern with `GetOrAddAsync`:
+
+```csharp
+public async Task<CustomerApiModel?> GetCustomerByIdAsync(int id, CancellationToken ct)
+{
+    // 1. Compose structured cache key
+    var key = keys.Compose(
+        moduleName: "administration",
+        entity: "customer",
+        version: "v1",
+        discriminator: $"by-id:{id}");
+
+    // 2. Cache-aside: check cache, fetch on miss, store result
+    return await cache.GetOrAddAsync<CustomerApiModel?>(key, async _ =>
+    {
+        try
+        {
+            return await repo.GetById(id);
+        }
+        catch
+        {
+            return null;  // Graceful degradation
+        }
+    }, new CacheEntryOptions
+    {
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
+        Tags = CustomerTags  // For bulk invalidation
+    }, ct);
+}
+```
+
+### List Operation Caching
+
+Collections are cached similarly with different discriminators:
+
+```csharp
+public async Task<IEnumerable<CustomerApiModel>> GetAllCustomersAsync(CancellationToken ct)
+{
+    var key = keys.Compose(
+        moduleName: "administration",
+        entity: "customer",
+        version: "v1",
+        discriminator: "all");  // List discriminator
+
+    return await cache.GetOrAddAsync<IEnumerable<CustomerApiModel>>(key, async _ =>
+    {
+        var entities = await repo.GetAll();
+        return entities.ConvertAll();
+    }, new CacheEntryOptions
+    {
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
+        Tags = CustomerTags
+    }, ct) ?? [];
+}
+```
+
+### Write Operation Cache Invalidation
+
+Create, Update, and Delete operations invalidate related cache entries:
+
+#### Create Operation
+```csharp
+public async Task<CustomerApiModel?> CreateCustomerAsync(CustomerApiModel model, CancellationToken ct)
+{
+    // Validate first
+    var result = await _validator.ValidateAsync(model, ct);
+    if (!result.IsValid)
+        throw new ValidationException(result.Errors);
+
+    // Persist
+    var entity = model.Convert();
+    var created = await repo.Add(entity);
+
+    // Invalidate all customer cache entries by tag
+    await cache.RemoveByTagAsync(CustomerTags[0], ct);  // "administration:customer"
+
+    return created?.Convert();
+}
+```
+
+#### Update Operation
+```csharp
+public async Task<bool> UpdateCustomerAsync(CustomerApiModel model, CancellationToken ct)
+{
+    // Validate
+    var result = await _validator.ValidateAsync(model, ct);
+    if (!result.IsValid)
+        throw new ValidationException(result.Errors);
+
+    // Persist
+    var entity = model.Convert();
+    var updated = await repo.Update(entity);
+
+    if (updated)
+    {
+        // Invalidate by tag (bulk)
+        await cache.RemoveByTagAsync(CustomerTags[0], ct);
+
+        // Also invalidate specific key
+        var key = keys.Compose(
+            moduleName: "administration",
+            entity: "customer",
+            version: "v1",
+            discriminator: $"by-id:{model.Id}");
+        await cache.RemoveAsync(key, ct);
+    }
+
+    return updated;
+}
+```
+
+#### Delete Operation
+```csharp
+public async Task<bool> DeleteGenreAsync(int id, CancellationToken ct)
+{
+    var deleted = await repo.Delete(id);
+
+    if (deleted)
+    {
+        // Invalidate all genre cache entries
+        await cache.RemoveByTagAsync(GenreTags[0], ct);
+    }
+
+    return deleted;
+}
+```
+
+### TTL Configuration
+
+All services use a consistent 20-minute TTL:
+
+```csharp
+new CacheEntryOptions
+{
+    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
+    Tags = EntityTags
+}
+```
+
+### Cache Key Examples
+
+Generated cache keys follow this pattern:
+```
+{env}:{app}:{module}:{entity}:{version}:{tenant}:{locale}:{feature}:{discriminator}
+```
+
+Examples:
+- `prod:mmapi:administration:customer:v1::::::by-id:42`
+- `prod:mmapi:music:artist:v1::::::all`
+- `prod:mmapi:orders:invoice:v1::::::by-customer:15`
+
+### Services with Caching
+
+| Module | Service | Cached Methods |
+|--------|---------|----------------|
+| Administration | CustomerService | GetById, GetAll, GetBySupportRepId |
+| Administration | EmployeeService | GetById, GetAll, GetDirectReports, GetReportsTo |
+| Administration | GenreService | GetById, GetAll |
+| Administration | MediaTypeService | GetById, GetAll |
+| Music | ArtistService | GetById, GetAll |
+| Music | AlbumService | GetById, GetAll, GetByArtistId |
+| Music | TrackService | GetById, GetAll, GetByArtist, GetByAlbum, GetByPlaylist, GetByGenre, GetByMediaType, GetByInvoice |
+| Music | PlaylistService | GetById, GetAll |
+| Orders | InvoiceService | GetById, GetAll, GetByCustomerId |
+| Orders | InvoiceLineService | GetById, GetAll, GetByInvoiceId, GetByTrackId |
 
 ---
 
