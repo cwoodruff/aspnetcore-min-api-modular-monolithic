@@ -1,6 +1,8 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SharedKernel.Persistence.Validation;
 
 namespace SharedKernel.Persistence;
 
@@ -38,6 +40,9 @@ public static class PersistenceRegistration
 
         // services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+
+        // Register FluentValidation validators
+        services.AddValidatorsFromAssemblyContaining<CustomerValidator>();
 
         return services;
     }

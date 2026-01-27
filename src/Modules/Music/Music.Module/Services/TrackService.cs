@@ -1,5 +1,7 @@
+using FluentValidation;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
+using SharedKernel.Persistence.Entities;
 using SharedKernel.Persistence.Extensions;
 using SharedKernel.Persistence.Repositories;
 
@@ -8,8 +10,10 @@ namespace Music.Modules.Services;
 public class TrackService(
     ITrackRepository repository,
     ICacheFacade cache,
-    ICacheKeyComposer keys) : ITrackService
+    ICacheKeyComposer keys,
+    IValidator<TrackApiModel> validator) : ITrackService
 {
+    private readonly IValidator<TrackApiModel> _validator = validator;
     private static readonly string[] TrackTags = ["music:track", "music:track:by-id"];
 
     public async Task<object?> GetTrackByIdAsync(int id, CancellationToken ct)
@@ -211,7 +215,6 @@ public class TrackService(
         {
             try
             {
-                await Task.Yield();
                 var entities = await repository.GetByInvoiceId(id);
                 return entities.ConvertAll();
             }
@@ -224,5 +227,48 @@ public class TrackService(
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
             Tags = TrackTags
         }, ct) ?? [];
+    }
+
+    public async Task<TrackApiModel?> CreateTrackAsync(TrackApiModel model, CancellationToken ct)
+    {
+        var result = await _validator.ValidateAsync(model, ct);
+        if (!result.IsValid)
+        {
+            throw new ValidationException(result.Errors);
+        }
+
+        var entity = model.Convert();
+        var created = await repository.Add(entity);
+
+        // Invalidate cache
+        await cache.RemoveByTagAsync(TrackTags[0], ct);
+
+        return created?.Convert();
+    }
+
+    public async Task<bool> UpdateTrackAsync(TrackApiModel model, CancellationToken ct)
+    {
+        var result = await _validator.ValidateAsync(model, ct);
+        if (!result.IsValid)
+        {
+            throw new ValidationException(result.Errors);
+        }
+
+        var entity = model.Convert();
+        var updated = await repository.Update(entity);
+
+        if (updated)
+        {
+            // Invalidate cache
+            await cache.RemoveByTagAsync(TrackTags[0], ct);
+            var key = keys.Compose(
+                moduleName: "music",
+                entity: "track",
+                version: "v1",
+                discriminator: $"by-id:{model.Id}");
+            await cache.RemoveAsync(key, ct);
+        }
+
+        return updated;
     }
 }

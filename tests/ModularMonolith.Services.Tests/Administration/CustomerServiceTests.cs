@@ -1,5 +1,6 @@
 using Admin.Modules.Services;
 using FluentAssertions;
+using FluentValidation;
 using NSubstitute;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
@@ -14,15 +15,76 @@ public class CustomerServiceTests
     private readonly ICustomerRepository _repo = Substitute.For<ICustomerRepository>();
     private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
     private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
+    private readonly IValidator<CustomerApiModel> _validator = Substitute.For<IValidator<CustomerApiModel>>();
     private readonly CustomerService _service;
 
     public CustomerServiceTests()
     {
-        _service = new CustomerService(_repo, _cache, _keys);
+        // Default successful validation
+        _validator.ValidateAsync(Arg.Any<CustomerApiModel>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
+
+        _service = new CustomerService(_repo, _cache, _keys, _validator);
         
         // Setup default key composition
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));
+    }
+
+    [Fact]
+    public async Task CreateCustomerAsync_ShouldThrowValidationException_WhenValidationFails()
+    {
+        // Arrange
+        var model = new CustomerApiModel { FirstName = "" };
+        var ct = CancellationToken.None;
+        
+        _validator.ValidateAsync(Arg.Any<CustomerApiModel>(), ct)
+            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult(new[] 
+            { 
+                new FluentValidation.Results.ValidationFailure("FirstName", "FirstName is required") 
+            })));
+
+        // Act & Assert
+        await _service.Invoking(s => s.CreateCustomerAsync(model, ct))
+            .Should().ThrowAsync<ValidationException>();
+        await _repo.DidNotReceive().Add(Arg.Any<Customer>());
+    }
+
+    [Fact]
+    public async Task CreateCustomerAsync_ShouldAddAndInvalidateCache()
+    {
+        // Arrange
+        var model = new CustomerApiModel { FirstName = "John", LastName = "Doe" };
+        var ct = CancellationToken.None;
+        var created = new Customer { Id = 10, FirstName = "John", LastName = "Doe" };
+        _repo.Add(Arg.Any<Customer>()).Returns(created);
+
+        // Act
+        var result = await _service.CreateCustomerAsync(model, ct);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.FirstName.Should().Be("John");
+        await _repo.Received(1).Add(Arg.Is<Customer>(c => c.FirstName == "John"));
+        await _cache.Received(1).RemoveByTagAsync("administration:customer", ct);
+    }
+
+    [Fact]
+    public async Task UpdateCustomerAsync_ShouldUpdateAndInvalidateCache()
+    {
+        // Arrange
+        var model = new CustomerApiModel { Id = 1, FirstName = "John", LastName = "Doe" };
+        var ct = CancellationToken.None;
+        _repo.Update(Arg.Any<Customer>()).Returns(true);
+
+        // Act
+        var result = await _service.UpdateCustomerAsync(model, ct);
+
+        // Assert
+        result.Should().BeTrue();
+        await _repo.Received(1).Update(Arg.Is<Customer>(c => c.Id == 1 && c.FirstName == "John"));
+        await _cache.Received(1).RemoveByTagAsync("administration:customer", ct);
+        await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
     }
 
     [Fact]

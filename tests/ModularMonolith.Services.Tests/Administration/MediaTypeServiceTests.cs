@@ -1,5 +1,6 @@
 using Admin.Modules.Services;
 using FluentAssertions;
+using FluentValidation;
 using NSubstitute;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
@@ -14,11 +15,12 @@ public class MediaTypeServiceTests
     private readonly IMediaTypeRepository _repo = Substitute.For<IMediaTypeRepository>();
     private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
     private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
+    private readonly IValidator<MediaTypeApiModel> _validator = Substitute.For<IValidator<MediaTypeApiModel>>();
     private readonly MediaTypeService _service;
 
     public MediaTypeServiceTests()
     {
-        _service = new MediaTypeService(_repo, _cache, _keys);
+        _service = new MediaTypeService(_repo, _cache, _keys, _validator);
         
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));

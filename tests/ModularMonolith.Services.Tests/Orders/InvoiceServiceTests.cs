@@ -1,4 +1,5 @@
 using FluentAssertions;
+using FluentValidation;
 using NSubstitute;
 using Orders.Modules.Services;
 using SharedKernel.Caching;
@@ -14,14 +15,75 @@ public class InvoiceServiceTests
     private readonly IInvoiceRepository _repo = Substitute.For<IInvoiceRepository>();
     private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
     private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
+    private readonly IValidator<InvoiceApiModel> _validator = Substitute.For<IValidator<InvoiceApiModel>>();
     private readonly InvoiceService _service;
 
     public InvoiceServiceTests()
     {
-        _service = new InvoiceService(_repo, _cache, _keys);
+        // Default successful validation
+        _validator.ValidateAsync(Arg.Any<InvoiceApiModel>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
+
+        _service = new InvoiceService(_repo, _cache, _keys, _validator);
         
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));
+    }
+
+    [Fact]
+    public async Task CreateInvoiceAsync_ShouldThrowValidationException_WhenValidationFails()
+    {
+        // Arrange
+        var model = new InvoiceApiModel { CustomerId = 1, Total = -1m }; // Invalid total
+        var ct = CancellationToken.None;
+        
+        _validator.ValidateAsync(Arg.Any<InvoiceApiModel>(), ct)
+            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult(new[] 
+            { 
+                new FluentValidation.Results.ValidationFailure("Total", "Total must be greater than 0") 
+            })));
+
+        // Act & Assert
+        await _service.Invoking(s => s.CreateInvoiceAsync(model, ct))
+            .Should().ThrowAsync<ValidationException>();
+        await _repo.DidNotReceive().Add(Arg.Any<Invoice>());
+    }
+
+    [Fact]
+    public async Task CreateInvoiceAsync_ShouldAddAndInvalidateCache()
+    {
+        // Arrange
+        var model = new InvoiceApiModel { CustomerId = 1, Total = 1.98m, InvoiceDate = DateTime.Now, BillingAddress = "A", BillingCity = "C", BillingCountry = "Co", BillingState = "S", BillingPostalCode = "12345" };
+        var ct = CancellationToken.None;
+        var created = new Invoice { Id = 10, CustomerId = 1, Total = 1.98m };
+        _repo.Add(Arg.Any<Invoice>()).Returns(created);
+
+        // Act
+        var result = await _service.CreateInvoiceAsync(model, ct);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Total.Should().Be(1.98m);
+        await _repo.Received(1).Add(Arg.Is<Invoice>(i => i.Total == 1.98m));
+        await _cache.Received(1).RemoveByTagAsync("orders:invoice", ct);
+    }
+
+    [Fact]
+    public async Task UpdateInvoiceAsync_ShouldUpdateAndInvalidateCache()
+    {
+        // Arrange
+        var model = new InvoiceApiModel { Id = 1, CustomerId = 1, Total = 1.98m, InvoiceDate = DateTime.Now, BillingAddress = "A", BillingCity = "C", BillingCountry = "Co", BillingState = "S", BillingPostalCode = "12345" };
+        var ct = CancellationToken.None;
+        _repo.Update(Arg.Any<Invoice>()).Returns(true);
+
+        // Act
+        var result = await _service.UpdateInvoiceAsync(model, ct);
+
+        // Assert
+        result.Should().BeTrue();
+        await _repo.Received(1).Update(Arg.Is<Invoice>(i => i.Id == 1 && i.Total == 1.98m));
+        await _cache.Received(1).RemoveByTagAsync("orders:invoice", ct);
+        await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
     }
 
     [Fact]

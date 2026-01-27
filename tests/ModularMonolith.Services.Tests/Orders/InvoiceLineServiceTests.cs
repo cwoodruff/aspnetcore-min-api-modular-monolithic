@@ -1,4 +1,5 @@
 using FluentAssertions;
+using FluentValidation;
 using NSubstitute;
 using Orders.Modules.Services;
 using SharedKernel.Caching;
@@ -14,14 +15,75 @@ public class InvoiceLineServiceTests
     private readonly IInvoiceLineRepository _repo = Substitute.For<IInvoiceLineRepository>();
     private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
     private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
+    private readonly IValidator<InvoiceLineApiModel> _validator = Substitute.For<IValidator<InvoiceLineApiModel>>();
     private readonly InvoiceLineService _service;
 
     public InvoiceLineServiceTests()
     {
-        _service = new InvoiceLineService(_repo, _cache, _keys);
+        // Default successful validation
+        _validator.ValidateAsync(Arg.Any<InvoiceLineApiModel>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
+
+        _service = new InvoiceLineService(_repo, _cache, _keys, _validator);
         
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));
+    }
+
+    [Fact]
+    public async Task CreateInvoiceLineAsync_ShouldThrowValidationException_WhenValidationFails()
+    {
+        // Arrange
+        var model = new InvoiceLineApiModel { InvoiceId = 1, TrackId = 1, UnitPrice = -1m }; // Invalid unit price
+        var ct = CancellationToken.None;
+        
+        _validator.ValidateAsync(Arg.Any<InvoiceLineApiModel>(), ct)
+            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult(new[] 
+            { 
+                new FluentValidation.Results.ValidationFailure("UnitPrice", "UnitPrice must be greater than 0") 
+            })));
+
+        // Act & Assert
+        await _service.Invoking(s => s.CreateInvoiceLineAsync(model, ct))
+            .Should().ThrowAsync<ValidationException>();
+        await _repo.DidNotReceive().Add(Arg.Any<InvoiceLine>());
+    }
+
+    [Fact]
+    public async Task CreateInvoiceLineAsync_ShouldAddAndInvalidateCache()
+    {
+        // Arrange
+        var model = new InvoiceLineApiModel { InvoiceId = 1, TrackId = 1, UnitPrice = 0.99m, Quantity = 1 };
+        var ct = CancellationToken.None;
+        var created = new InvoiceLine { Id = 10, InvoiceId = 1, TrackId = 1, UnitPrice = 0.99m };
+        _repo.Add(Arg.Any<InvoiceLine>()).Returns(created);
+
+        // Act
+        var result = await _service.CreateInvoiceLineAsync(model, ct);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.UnitPrice.Should().Be(0.99m);
+        await _repo.Received(1).Add(Arg.Is<InvoiceLine>(il => il.UnitPrice == 0.99m));
+        await _cache.Received(1).RemoveByTagAsync("orders:invoiceline", ct);
+    }
+
+    [Fact]
+    public async Task UpdateInvoiceLineAsync_ShouldUpdateAndInvalidateCache()
+    {
+        // Arrange
+        var model = new InvoiceLineApiModel { Id = 1, InvoiceId = 1, TrackId = 1, UnitPrice = 0.99m, Quantity = 1 };
+        var ct = CancellationToken.None;
+        _repo.Update(Arg.Any<InvoiceLine>()).Returns(true);
+
+        // Act
+        var result = await _service.UpdateInvoiceLineAsync(model, ct);
+
+        // Assert
+        result.Should().BeTrue();
+        await _repo.Received(1).Update(Arg.Is<InvoiceLine>(il => il.Id == 1 && il.UnitPrice == 0.99m));
+        await _cache.Received(1).RemoveByTagAsync("orders:invoiceline", ct);
+        await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
     }
 
     [Fact]

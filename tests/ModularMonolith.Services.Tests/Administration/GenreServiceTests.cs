@@ -1,5 +1,6 @@
 using Admin.Modules.Services;
 using FluentAssertions;
+using FluentValidation;
 using NSubstitute;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
@@ -14,14 +15,19 @@ public class GenreServiceTests
     private readonly IGenreRepository _repo = Substitute.For<IGenreRepository>();
     private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
     private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
+    private readonly IValidator<GenreApiModel> _validator = Substitute.For<IValidator<GenreApiModel>>();
     private readonly GenreService _service;
 
     public GenreServiceTests()
     {
-        _service = new GenreService(_repo, _cache, _keys);
-        
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));
+
+        // Default successful validation
+        _validator.ValidateAsync(Arg.Any<GenreApiModel>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
+
+        _service = new GenreService(_repo, _cache, _keys, _validator);
     }
 
     [Fact]
@@ -67,6 +73,25 @@ public class GenreServiceTests
         result!.Name.Should().Be(name);
         await _repo.Received(1).Add(Arg.Is<Genre>(g => g.Name == name));
         await _cache.Received(1).RemoveByTagAsync("administration:genre", ct);
+    }
+
+    [Fact]
+    public async Task CreateGenreAsync_ShouldThrowValidationException_WhenValidationFails()
+    {
+        // Arrange
+        var name = ""; // Invalid
+        var ct = CancellationToken.None;
+        
+        _validator.ValidateAsync(Arg.Any<GenreApiModel>(), ct)
+            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult(new[] 
+            { 
+                new FluentValidation.Results.ValidationFailure("Name", "Name is required") 
+            })));
+
+        // Act & Assert
+        await _service.Invoking(s => s.CreateGenreAsync(name, ct))
+            .Should().ThrowAsync<ValidationException>();
+        await _repo.DidNotReceive().Add(Arg.Any<Genre>());
     }
 
     [Fact]

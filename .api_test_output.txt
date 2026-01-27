@@ -1,0 +1,19 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  SharedKernel -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/src/Shared/SharedKernel/bin/Debug/net10.0/SharedKernel.dll
+  SharedKernel.Persistence -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/src/Shared/SharedKernel.Persistence/bin/Debug/net10.0/SharedKernel.Persistence.dll
+  SharedKernel.DataSQLite -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/src/Shared/SharedKernel.DataSQLite/bin/Debug/net10.0/SharedKernel.DataSQLite.dll
+  Admin.Module -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/src/Modules/Administration/Admin.Module/bin/Debug/net10.0/Admin.Module.dll
+  Music.Module -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/src/Modules/Music/Music.Module/bin/Debug/net10.0/Music.Module.dll
+  Orders.Module -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/src/Modules/Orders/Orders.Module/bin/Debug/net10.0/Orders.Module.dll
+  Reporting.Module -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/src/Modules/Reporting/Reporting.Module/bin/Debug/net10.0/Reporting.Module.dll
+  Identity.Module -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/src/Modules/Identity/Identity.Module/bin/Debug/net10.0/Identity.Module.dll
+  ModularMonolith.Api -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/src/ModularMonolith.Api/bin/Debug/net10.0/ModularMonolith.Api.dll
+  ModularMonolith.Api.Tests -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/tests/ModularMonolith.Api.Tests/bin/Debug/net10.0/ModularMonolith.Api.Tests.dll
+Test run for /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/tests/ModularMonolith.Api.Tests/bin/Debug/net10.0/ModularMonolith.Api.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (arm64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:   143, Skipped:     0, Total:   143, Duration: 10 s - ModularMonolith.Api.Tests.dll (net10.0)

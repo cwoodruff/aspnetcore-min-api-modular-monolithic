@@ -8,4 +8,6 @@ public interface IInvoiceLineService
     Task<IEnumerable<object>> GetAllInvoiceLinesAsync(CancellationToken ct);
     Task<IEnumerable<object>> GetInvoiceLinesByInvoiceIdAsync(int id, CancellationToken ct);
     Task<IEnumerable<object>> GetInvoiceLinesByTrackIdAsync(int id, CancellationToken ct);
+    Task<InvoiceLineApiModel?> CreateInvoiceLineAsync(InvoiceLineApiModel model, CancellationToken ct);
+    Task<bool> UpdateInvoiceLineAsync(InvoiceLineApiModel model, CancellationToken ct);
 }

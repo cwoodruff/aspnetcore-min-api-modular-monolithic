@@ -1,3 +1,4 @@
+using FluentValidation;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
 using SharedKernel.Persistence.Extensions;
@@ -8,8 +9,10 @@ namespace Admin.Modules.Services;
 public sealed class CustomerService(
     ICustomerRepository repo,
     ICacheFacade cache,
-    ICacheKeyComposer keys) : ICustomerService
+    ICacheKeyComposer keys,
+    IValidator<CustomerApiModel> validator) : ICustomerService
 {
+    private readonly IValidator<CustomerApiModel> _validator = validator;
     private static readonly string[] CustomerTags = ["administration:customer", "administration:customer:by-id"];
 
     public async Task<CustomerApiModel?> GetCustomerByIdAsync(int id, CancellationToken ct)
@@ -88,5 +91,48 @@ public sealed class CustomerService(
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
             Tags = CustomerTags
         }, ct) ?? [];
+    }
+
+    public async Task<CustomerApiModel?> CreateCustomerAsync(CustomerApiModel model, CancellationToken ct)
+    {
+        var result = await _validator.ValidateAsync(model, ct);
+        if (!result.IsValid)
+        {
+            throw new ValidationException(result.Errors);
+        }
+
+        var entity = model.Convert();
+        var created = await repo.Add(entity);
+
+        // Invalidate cache
+        await cache.RemoveByTagAsync(CustomerTags[0], ct);
+
+        return created?.Convert();
+    }
+
+    public async Task<bool> UpdateCustomerAsync(CustomerApiModel model, CancellationToken ct)
+    {
+        var result = await _validator.ValidateAsync(model, ct);
+        if (!result.IsValid)
+        {
+            throw new ValidationException(result.Errors);
+        }
+
+        var entity = model.Convert();
+        var updated = await repo.Update(entity);
+
+        if (updated)
+        {
+            // Invalidate cache
+            await cache.RemoveByTagAsync(CustomerTags[0], ct);
+            var key = keys.Compose(
+                moduleName: "administration",
+                entity: "customer",
+                version: "v1",
+                discriminator: $"by-id:{model.Id}");
+            await cache.RemoveAsync(key, ct);
+        }
+
+        return updated;
     }
 }

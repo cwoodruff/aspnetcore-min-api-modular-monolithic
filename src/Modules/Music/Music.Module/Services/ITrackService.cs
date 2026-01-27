@@ -12,4 +12,6 @@ public interface ITrackService
     Task<IEnumerable<object>> GetTracksByGenreIdAsync(int id, CancellationToken ct);
     Task<IEnumerable<object>> GetTracksByMediaTypeIdAsync(int id, CancellationToken ct);
     Task<IEnumerable<object>> GetTracksByInvoiceIdAsync(int id, CancellationToken ct);
+    Task<TrackApiModel?> CreateTrackAsync(TrackApiModel model, CancellationToken ct);
+    Task<bool> UpdateTrackAsync(TrackApiModel model, CancellationToken ct);
 }

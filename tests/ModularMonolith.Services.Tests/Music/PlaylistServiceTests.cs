@@ -1,4 +1,5 @@
 using FluentAssertions;
+using FluentValidation;
 using Music.Modules.Services;
 using NSubstitute;
 using SharedKernel.Caching;
@@ -14,11 +15,12 @@ public class PlaylistServiceTests
     private readonly IPlaylistRepository _repo = Substitute.For<IPlaylistRepository>();
     private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
     private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
+    private readonly IValidator<PlaylistApiModel> _validator = Substitute.For<IValidator<PlaylistApiModel>>();
     private readonly PlaylistService _service;
 
     public PlaylistServiceTests()
     {
-        _service = new PlaylistService(_repo, _cache, _keys);
+        _service = new PlaylistService(_repo, _cache, _keys, _validator);
         
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));

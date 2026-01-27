@@ -1,3 +1,4 @@
+using FluentValidation;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
 using SharedKernel.Persistence.Entities;
@@ -9,7 +10,8 @@ namespace Admin.Modules.Services;
 public sealed class GenreService(
     IGenreRepository repo,
     ICacheFacade cache,
-    ICacheKeyComposer keys) : IGenreService
+    ICacheKeyComposer keys,
+    IValidator<GenreApiModel> validator) : IGenreService
 {
     private static readonly string[] GenreTags = ["administration:genre", "administration:genre:by-id"];
 
@@ -67,17 +69,31 @@ public sealed class GenreService(
 
     public async Task<GenreApiModel?> CreateGenreAsync(string name, CancellationToken ct)
     {
+        var model = new GenreApiModel { Name = name };
+        var result = await validator.ValidateAsync(model, ct);
+        if (!result.IsValid)
+        {
+            throw new ValidationException(result.Errors);
+        }
+
         var genre = new Genre { Name = name };
         var created = await repo.Add(genre);
 
         // Invalidate cache
         await cache.RemoveByTagAsync(GenreTags[0], ct);
 
-        return created.Convert();
+        return created?.Convert();
     }
 
     public async Task<bool> UpdateGenreAsync(int id, string name, CancellationToken ct)
     {
+        var model = new GenreApiModel { Id = id, Name = name };
+        var result = await validator.ValidateAsync(model, ct);
+        if (!result.IsValid)
+        {
+            throw new ValidationException(result.Errors);
+        }
+
         var genre = new Genre { Id = id, Name = name };
         var updated = await repo.Update(genre);
 

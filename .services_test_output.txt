@@ -1,0 +1,15 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  SharedKernel.Persistence -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/src/Shared/SharedKernel.Persistence/bin/Debug/net10.0/SharedKernel.Persistence.dll
+  SharedKernel -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/src/Shared/SharedKernel/bin/Debug/net10.0/SharedKernel.dll
+  Admin.Module -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/src/Modules/Administration/Admin.Module/bin/Debug/net10.0/Admin.Module.dll
+  Music.Module -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/src/Modules/Music/Music.Module/bin/Debug/net10.0/Music.Module.dll
+  Orders.Module -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/src/Modules/Orders/Orders.Module/bin/Debug/net10.0/Orders.Module.dll
+  ModularMonolith.Services.Tests -> /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/tests/ModularMonolith.Services.Tests/bin/Debug/net10.0/ModularMonolith.Services.Tests.dll
+Test run for /Volumes/extra/Git/aspnetcore-min-api-modular-monolithic/tests/ModularMonolith.Services.Tests/bin/Debug/net10.0/ModularMonolith.Services.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (arm64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    25, Skipped:     0, Total:    25, Duration: 93 ms - ModularMonolith.Services.Tests.dll (net10.0)
