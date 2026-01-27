@@ -1,10 +1,12 @@
 ### EF Core plan for the modular monolith (SQLite, single DbContext)
 
-This document outlines how to integrate Entity Framework Core into this modular monolith so that:
-- We use a single DbContext for the entire app.
-- All modules (and the host/kernel) can access the same database file using the SQLite provider.
-- The database file is /data/chinook.db located at the solution root.
-- The design supports modularity, clear boundaries, and future growth.
+**Status: Implemented**
+
+This document outlines how Entity Framework Core is integrated into this modular monolith:
+- A single DbContext (`AppDbContext`) serves the entire app.
+- All modules access the same SQLite database (Chinook) via `IAppDbContext` or `AppDbContext`.
+- The database file is `data/chinook.db` located under the host content root or at the solution root.
+- Repository pattern implemented via `SharedKernel.Persistence` (interfaces) and `SharedKernel.DataSQLite` (implementations).
 
 
 Goals
@@ -147,23 +149,26 @@ Security and access control
 - Avoid exposing DbContext directly to controllers/endpoints; use services that encapsulate queries and commands.
 
 
-Current implementation status (2025-10-16)
-- SharedKernel.Persistence project created with:
-  - AppDbContext, IAppDbContext abstraction (with CA1716 suppression scoped to the interface file around Set<TEntity>),
-    PersistenceRegistration.AddKernelPersistence extension, and AppDbContextFactory for design-time tooling.
-  - Packages added: Microsoft.EntityFrameworkCore, Microsoft.EntityFrameworkCore.Sqlite, Microsoft.EntityFrameworkCore.Design.
+Current implementation status (updated 2026-01)
+- SharedKernel.Persistence project:
+  - `AppDbContext` with full Chinook schema: Albums, Artists, Customers, Employees, Genres, Invoices, InvoiceLines, MediaTypes, Playlists, PlaylistTracks, Tracks.
+  - `IAppDbContext` abstraction for modules preferring to avoid direct EF Core dependency.
+  - `PersistenceRegistration.AddKernelPersistence` extension with DbContext pooling (128 pool size).
+  - `AppDbContextFactory` for design-time tooling (migrations).
+  - Repository interfaces: `IAlbumRepository`, `IArtistRepository`, `ICustomerRepository`, `IEmployeeRepository`, `IGenreRepository`, `IInvoiceRepository`, `IInvoiceLineRepository`, `IMediaTypeRepository`, `IPlaylistRepository`, `ITrackRepository`.
+- SharedKernel.DataSQLite project:
+  - Concrete repository implementations for all entities above.
+  - `BaseRepository<T>` with common CRUD operations.
 - Host wiring (src/ModularMonolith.Api/Program.cs):
-  - Builds absolute path to the SQLite file using: Path.Combine(builder.Environment.ContentRootPath, "data", "chinook.db").
-  - Ensures the directory exists, sets ConnectionStrings:AppDatabase at startup, and calls AddKernelPersistence.
-  - In Development, ensures database creation with db.Database.EnsureCreated(); switch to db.Database.Migrate() once migrations are added.
-- Configuration:
-  - appsettings.Development.json contains a placeholder ConnectionStrings:AppDatabase ("Data Source=CHANGE_ME_AT_RUNTIME"); runtime code overrides it with an absolute path.
+  - Auto-discovers SQLite file path from `src/ModularMonolith.Api/data/chinook.db` or repo root `/data/chinook.db`.
+  - Sets `ConnectionStrings:AppDatabase` at runtime when not provided.
+  - Registers all repository interfaces with their SQLite implementations.
+  - Calls `AddKernelPersistence(builder.Configuration)`.
 - Testing:
-  - Solution builds and all integration tests pass (6/6) with the EF Core infrastructure wired up.
-- Docker:
-  - Dockerfile does not yet copy data/chinook.db; to run with the DB file inside the container, add steps to create /app/data and copy the file, or mount a volume at runtime.
+  - Integration tests use `WebApplicationFactory<Program>` with SQLite.
+  - Repository unit tests in `tests/ModularMonolith.Api.Tests/Repositories/`.
 - Target frameworks:
-  - Projects use net10.0 in their csproj files; avoid relying solely on Directory.Build.props if it diverges.
+  - Individual csproj files specify `net10.0`, overriding `Directory.Build.props` which specifies `net9.0`.
 
 Tips and commands
 - Add a migration (from src/Shared/SharedKernel.Persistence):
@@ -174,8 +179,9 @@ Tips and commands
 
 
 Deliverables checklist
-- [ ] Create SharedKernel.Persistence project with AppDbContext, IAppDbContext, registration extensions, and design‑time factory.
-- [ ] Add EF Core packages and Sqlite provider.
-- [ ] Host registers persistence via AddKernelPersistence and configures absolute path to /data/chinook.db.
-- [ ] Migrations are created and applied in Dev/Test as appropriate.
-- [ ] Modules depend only on SharedKernel (+ SharedKernel.Persistence for IAppDbContext) and use it via DI.
+- [x] Create SharedKernel.Persistence project with AppDbContext, IAppDbContext, registration extensions, and design‑time factory.
+- [x] Add EF Core packages and Sqlite provider.
+- [x] Host registers persistence via AddKernelPersistence and configures absolute path to /data/chinook.db.
+- [x] Repository pattern implemented (interfaces in SharedKernel.Persistence, implementations in SharedKernel.DataSQLite).
+- [ ] Migrations are created and applied in Dev/Test as appropriate. (Using existing Chinook schema; no custom migrations yet.)
+- [x] Modules depend only on SharedKernel (+ SharedKernel.Persistence for IAppDbContext) and use it via DI.

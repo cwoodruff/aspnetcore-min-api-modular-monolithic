@@ -1,6 +1,8 @@
-# HTTPS Enforcement Plan (No Code Changes)
+# HTTPS Enforcement Plan (Configuration Only)
 
-This document lists the configuration‐only steps to enforce HTTPS for the Modular Monolith API across environments. No application source code changes are required. Use platform/server configuration and deployment settings to guarantee transport security.
+**Status: Reference guide (configuration-only, no code changes required)**
+
+This document lists the configuration‐only steps to enforce HTTPS for the Modular Monolith API across environments. Use platform/server configuration and deployment settings to guarantee transport security.
 
 ---
 

@@ -1,10 +1,31 @@
 # Central Caching Strategy for ASP.NET Core 10 Modular Monolith
 
-This document proposes a central caching layer that all modules (Music, Orders, Administration, Reporting, Identity) can use without cross-module coupling. It provides guidance, patterns, configuration outlines, and examples. No code changes are introduced by this document.
+**Status: Implemented (L1 cache with L2 optional)**
+
+This document describes the central caching layer that all modules (Music, Orders, Administration, Reporting, Identity) can use without cross-module coupling. The core facade and registration are implemented in `SharedKernel.Caching`.
+
+## Current Implementation (2026-01)
+
+The following components are implemented in `src/Shared/SharedKernel/Caching/`:
+- `ICacheFacade` - Main abstraction for cache operations (`GetOrAddAsync`, etc.)
+- `CompositeCacheFacade` - Two-tier implementation (L1 + optional L2)
+- `IL1Cache`, `L1MemoryCacheAdapter` - In-memory cache adapter
+- `IL2Cache`, `L2DistributedCacheAdapter` - Distributed cache adapter (e.g., Redis)
+- `ICacheKeyComposer`, `CacheKeyComposer` - Namespaced key composition
+- `CacheOptions` - Configuration binding
+- `CachingRegistration.AddCentralCaching()` - DI registration extension
+
+Configuration keys (in `appsettings.json`):
+- `Caching:Tier` = "L1" (default) or "L1L2"
+- `Caching:Provider` = "InMemory" (default) or configure Redis separately
+
+Example usage in Music module (AlbumEndpoints.cs):
+```csharp
+var cacheKey = keyComposer.Compose("music", "album", "v1", discriminator: $"by-id:{id}");
+var album = await cache.GetOrAddAsync(cacheKey, async ct => await repo.GetByIdAsync(id, ct), ct);
+```
 
 Non-goals
-- Changing any existing code today
-- Choosing a vendor lock-in path without a portable fallback
 - Caching mutable security artifacts (access tokens, refresh tokens)
 
 ---
@@ -211,12 +232,12 @@ Mechanisms
 
 ---
 
-## 11) Adoption Plan (No Code Changes Now)
-- Phase 1: Introduce central facade library and register it behind a feature flag (Caching:Enabled). Default to L1 only in dev.
-- Phase 2: Opt-in one module (Reporting) with read-only scenarios using cache-aside. Define initial keys and TTLs.
-- Phase 3: Enable L2 Redis in staging/prod; monitor hit rates and latencies; tune TTLs.
-- Phase 4: Add SWR and single-flight on hot paths (e.g., top dashboards, catalog lists).
-- Phase 5: Add event-driven invalidation; implement versioned prefixes and tag-based bulk purge tooling.
+## 11) Adoption Plan
+- Phase 1: Introduce central facade library and register it. ✓ Complete (L1 only by default)
+- Phase 2: Opt-in Music module with read-only scenarios using cache-aside. ✓ Complete (Album endpoint cached)
+- Phase 3: Enable L2 Redis in staging/prod; monitor hit rates and latencies; tune TTLs. (Pending - set `Caching:Tier=L1L2` and configure Redis)
+- Phase 4: Add SWR and single-flight on hot paths (e.g., top dashboards, catalog lists). (Pending)
+- Phase 5: Add event-driven invalidation; implement versioned prefixes and tag-based bulk purge tooling. (Pending)
 
 ---
 

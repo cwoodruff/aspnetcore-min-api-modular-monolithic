@@ -1,6 +1,8 @@
-# Secure Headers Plan for the Modular Monolith API (ASP.NET Core 9/10, Minimal APIs)
+# Secure Headers Plan for the Modular Monolith API (ASP.NET Core 10, Minimal APIs)
 
-This document defines a configuration-first, incrementally adoptable plan for applying modern HTTP security headers to the API host while keeping modules isolated from transport/security concerns. No code changes are introduced by this document; it is an implementation guide and blueprint for a future PR.
+**Status: Proposed (not yet implemented)**
+
+This document defines a configuration-first, incrementally adoptable plan for applying modern HTTP security headers to the API host while keeping modules isolated from transport/security concerns. This is an implementation guide and blueprint for a future PR.
 
 Non‑goals
 - Refactor existing modules or add identity logic outside the Identity module

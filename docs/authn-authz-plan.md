@@ -1,5 +1,8 @@
 ### Executive Summary
-We will introduce JWT bearer authentication for the Modular Monolith, centralizing all authentication and authorization logic inside the Identity module. The Identity module will issue and validate tokens, define policies, manage refresh tokens, and expose JWKS for key distribution. Other modules (Music, Orders, Administration, Reporting) will remain identity-agnostic, simply marking endpoints with RequireAuthorization() or RequireAuthorization("policy-name") as needed.
+
+**Status: Implemented**
+
+JWT bearer authentication is implemented for the Modular Monolith, with all authentication and authorization logic centralized in the Identity module. The Identity module issues and validates tokens, defines policies, manages refresh tokens, and exposes JWKS for key distribution. Other modules (Music, Orders, Administration, Reporting) remain identity-agnostic, marking endpoints with `RequireAuthorization()` or `RequireAuthorization("policy-name")` as needed.
 
 The solution uses RS256 (RSA) signing with a pluggable key management abstraction. A dev-friendly in-memory key provider is scaffolded now, while production guidance recommends a managed KMS (e.g., Azure Key Vault) and periodic key rotation with a short overlap window. Access tokens are short-lived (15 minutes), refresh tokens are longer (7 days, sliding rotation optional). Claims include permissions and roles, enabling policy-based authorization across modules.
 
@@ -38,28 +41,31 @@ The solution uses RS256 (RSA) signing with a pluggable key management abstractio
 - Clock skew: 2 minutes.
 - Replay protection: jti included; a store could track used JTIs for high-security flows.
 
-### Identity Module Deliverables (scaffolded)
-- Extensions/IdentityAuthExtensions.cs
-  - AddIdentityAuth(IServiceCollection, IConfiguration)
-  - UseIdentityAuth(IApplicationBuilder)
-  - Registers JwtBearer and Authorization policies via PolicyRegistry.
-- Endpoints/AuthEndpoints.cs
-  - POST /api/identity/login (demo user) -> access + refresh
-  - POST /api/identity/refresh -> rotate refresh
-  - POST /api/identity/logout -> revoke refresh
-  - GET  /api/identity/userinfo -> current claims
-  - GET  /api/identity/.well-known/jwks.json -> JWKS
-- Services
-  - ITokenService, TokenService (RS256 issuance, kid header)
-  - IRefreshTokenStore, InMemoryRefreshTokenStore
-  - IUserStore, InMemoryUserStore (demo only)
-- Authorization
-  - Permissions.cs (string constants)
-  - PolicyRegistry.cs (policies per permission; no global fallback policy)
-- Key management
-  - IKeyMaterialService, DevKeyMaterialService (in-memory RSA, JWKS)
-- Config keys
-  - Jwt: Issuer, Audience, AccessTokenMinutes, RefreshTokenDays, KeyProvider, KeyVaultVaultUri, KeyVaultKeyName
+### Identity Module Deliverables (implemented)
+- Extensions/IdentityAuthExtensions.cs ✓
+  - `AddIdentityAuth(IServiceCollection, IConfiguration)` - registers JWT Bearer, policies, services
+  - `UseIdentityAuth(IApplicationBuilder)` - wires `UseAuthentication()` + `UseAuthorization()`
+  - `JwtAuthOptions` class for configuration binding
+- Endpoints/AuthEndpoints.cs ✓
+  - `POST /api/identity/login` - issues access + refresh tokens for demo users
+  - `POST /api/identity/refresh` - rotates refresh token
+  - `POST /api/identity/logout` - revokes refresh token (requires auth)
+  - `GET /api/identity/userinfo` - returns current user claims (requires auth)
+  - `GET /api/identity/.well-known/jwks.json` - exposes JWKS document
+- Services ✓
+  - `ITokenService`, `TokenService` (RS256 issuance with kid header)
+  - `IRefreshTokenStore`, `InMemoryRefreshTokenStore`
+  - `IUserStore`, `InMemoryUserStore` (demo users: demo, usermo, report, admin)
+- Authorization ✓
+  - `Permissions.cs` (string constants for music.read, music.write, orders.read, etc.)
+  - `PolicyRegistry.cs` (policies per permission + tenant-scoped policy)
+  - `TenantAuthorizationHandler` + `TenantRequirement` for multi-tenant authorization
+  - `ITenantResolutionService`, `HttpContextTenantResolutionService` (resolves tenant from X-Tenant-Id header or claims)
+- Key management ✓
+  - `IKeyMaterialService`, `DevKeyMaterialService` (in-memory RSA key, JWKS generation)
+- Config keys (via `JwtAuthOptions`):
+  - `Jwt:Issuer`, `Jwt:Audience`, `Jwt:AccessTokenMinutes`, `Jwt:RefreshTokenDays`
+  - `Jwt:KeyProvider` (Dev by default; KeyVault support stubbed)
 
 ### Host Wiring (samples)
 - In Program.cs before Build():
@@ -110,8 +116,8 @@ The solution uses RS256 (RSA) signing with a pluggable key management abstractio
 - CI: use test keys distinct from prod; validate kid rollover.
 
 ### Rollout Plan
-- Phase 1: Introduce scaffolding and host wiring (done, behind no global auth).
-- Phase 2: Protect select endpoints with RequireAuthorization().
-- Phase 3: Add fine-grained permission policies and gradually adopt across modules.
-- Phase 4: Implement refresh rotation and revocation with persistence; add key rotation in prod via KMS.
-- Phase 5: Optional OIDC discovery and external identity providers.
+- Phase 1: Introduce scaffolding and host wiring. ✓ Complete
+- Phase 2: Protect select endpoints with RequireAuthorization(). ✓ Complete (Music, Orders modules protected)
+- Phase 3: Add fine-grained permission policies and gradually adopt across modules. ✓ Complete (music.read, music.write, orders.read, orders.write, admin.users.manage, report.view policies defined; tenant.scoped policy active)
+- Phase 4: Implement refresh rotation and revocation with persistence; add key rotation in prod via KMS. (In-memory stores implemented; persistent stores and KMS integration pending)
+- Phase 5: Optional OIDC discovery and external identity providers. (Pending)

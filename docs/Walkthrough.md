@@ -5,7 +5,7 @@ This guide shows a developer how to build this solution from nothing using the .
 It is divided into small, verifiable steps. Commands assume macOS/Linux bash; on Windows, use PowerShell equivalents.
 
 Prerequisites
-- .NET SDK 9.0 or later (this repo targets net9.0 via Directory.Build.props)
+- .NET SDK 10.0 or later (individual csproj files target `net10.0`, overriding `Directory.Build.props`)
 - An editor or IDE (JetBrains Rider recommended)
 - Optional: Docker (to run in a container)
 
@@ -18,11 +18,11 @@ Prerequisites
 - Create shared and module projects (class libraries):
   - dotnet new classlib -n SharedKernel -o src/Shared/SharedKernel
   - dotnet new classlib -n SharedKernel.Persistence -o src/Shared/SharedKernel.Persistence
+  - dotnet new classlib -n SharedKernel.DataSQLite -o src/Shared/SharedKernel.DataSQLite
   - dotnet new classlib -n Music.Module -o src/Modules/Music/Music.Module
   - dotnet new classlib -n Orders.Module -o src/Modules/Orders/Orders.Module
   - dotnet new classlib -n Admin.Module -o src/Modules/Administration/Admin.Module
   - dotnet new classlib -n Reporting.Module -o src/Modules/Reporting/Reporting.Module
-  - dotnet new classlib -n Identity.Domain -o src/Modules/Identity/Identity.Domain
   - dotnet new classlib -n Identity.Module -o src/Modules/Identity/Identity.Module
 - Create tests project:
   - dotnet new xunit -n ModularMonolith.Api.Tests -o tests/ModularMonolith.Api.Tests
@@ -31,7 +31,7 @@ Prerequisites
 
 2. Centralize build settings with Directory.Build.props
 - At the repo root, create Directory.Build.props with:
-  - TargetFramework net9.0
+  - TargetFramework net9.0 (note: individual csproj files may override this to net10.0)
   - Nullable enable, ImplicitUsings enable
   - TreatWarningsAsErrors true (optional)
   - LangVersion preview (optional)

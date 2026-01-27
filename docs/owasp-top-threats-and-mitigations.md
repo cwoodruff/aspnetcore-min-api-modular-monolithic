@@ -1,6 +1,6 @@
-### OWASP Top Threats & Mitigations for the Modular Monolith API (ASP.NET Core 9/10)
+### OWASP Top Threats & Mitigations for the Modular Monolith API (ASP.NET Core 10)
 
-Last updated: 2025-10-16
+Last updated: 2026-01
 
 #### Executive summary
 This document is a practical, API‑focused cheat sheet of the OWASP risks most relevant to your ASP.NET Core Minimal API Modular Monolith (modules: Music, Orders, Administration, Reporting, Identity). It centers on the OWASP API Security Top 10 (2023) with concise, actionable mitigations tailored to this solution, and highlights overlaps with the general OWASP Top 10 (2021).

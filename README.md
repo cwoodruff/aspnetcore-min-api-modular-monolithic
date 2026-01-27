@@ -210,7 +210,7 @@ Notes
 - EF Core plan (single SQLite DbContext shared by all modules): see docs/EFCore-Plan.md
 - Database file location: The app prefers src/ModularMonolith.Api/data/chinook.db (under the host content root) and falls back to repo-root /data/chinook.db if not found. At startup, Program.cs auto-detects the file and populates ConnectionStrings:AppDatabase when not provided.
 
-### Compiled queries and DbContext pooling
+### DbContext pooling and Repository pattern
 
 #### Connection string configuration
 - You can set the SQLite connection via appsettings (ConnectionStrings:AppDatabase), environment variables (ConnectionStrings__AppDatabase), or rely on auto-discovery in Program.cs which sets the key at runtime when not provided.
@@ -221,35 +221,50 @@ Notes
 - Defaults: CacheEntryOptions support AbsoluteExpirationRelativeToNow, SlidingExpiration, Jitter (±10% by default) to avoid stampedes.
 - Cache key composition: Keys include environment and service name components, derived from configuration keys ASPNETCORE_ENVIRONMENT/DOTNET_ENVIRONMENT and ServiceName (defaults to "mmapi"). See SharedKernel/Caching/CacheKeyComposer.cs.
 
-This solution uses EF Core compiled queries that are defined on the AppDbContext type and DbContext pooling for high throughput:
+This solution uses the Repository pattern with DbContext pooling for high throughput:
 
-- Where the compiled queries live: inside AppDbContext as private static delegates created with EF.CompileAsyncQuery, exposed via small instance methods like GetAlbum(id), GetAllAlbums(), etc.
-  - See: src/Shared/SharedKernel.Persistence/AppDbContext.cs (search for "Compiled Queries").
-- How the DbContext is registered: AddDbContextPool<AppDbContext>(..., poolSize: 128) in src/Shared/SharedKernel.Persistence/PersistenceRegistration.cs.
-- Why this matters: compiled queries are JIT-compiled once per process for the DbContext type. With pooling enabled, the 128 AppDbContext instances resolved from DI reuse the same compiled delegates, so there is no per-request re-compilation. This reduces allocations and CPU and keeps query hot paths consistently fast.
-- Adding a new hot query: define a new private static readonly delegate using EF.CompileAsyncQuery and a corresponding public instance method that invokes it. Prefer shapes that match your endpoint needs to minimize extra LINQ.
-- How modules consume them: inject AppDbContext or IAppDbContext and call the provided methods instead of re-authoring LINQ in every endpoint/service.
+- Repository interfaces: Defined in `src/Shared/SharedKernel.Persistence/Repositories/` (e.g., `IAlbumRepository`, `IArtistRepository`, etc.).
+- Repository implementations: Defined in `src/Shared/SharedKernel.DataSQLite/Repositories/` with a `BaseRepository<T>` providing common CRUD operations.
+- How the DbContext is registered: `AddDbContextPool<AppDbContext>(..., poolSize: 128)` in `src/Shared/SharedKernel.Persistence/PersistenceRegistration.cs`.
+- Why pooling matters: The 128 AppDbContext instances resolved from DI are reused, reducing allocations and connection overhead.
+- How modules consume data: Inject repository interfaces (e.g., `IAlbumRepository`) or `IAppDbContext`/`AppDbContext` directly in endpoint handlers.
 
-### How modules access the DbContext
+### How modules access data
 
-Note: Modules that need EF abstractions should reference the SharedKernel.Persistence project to access IAppDbContext and AppDbContext types.
+Modules access data via repository interfaces or the DbContext directly:
 
-All modules share a single DbContext registered by the host via AddKernelPersistence. Modules can access it through ASP.NET Core DI:
-
-- For endpoint handlers (Minimal APIs), inject AppDbContext directly in the delegate parameters (scope is per-request):
-
-  Example (from Administration module):
-  - group.MapGet("/data-health", async (AppDbContext db, IHostEnvironment env, IConfiguration cfg, CancellationToken ct) => { var ok = await db.Database.CanConnectAsync(ct); /* ... */ });
-
-- For application services/handlers inside a module, depend on the abstraction IAppDbContext (preferred to keep EF types out of most code):
-
-  public sealed class GetSomethingHandler
+**Option 1: Repository pattern (preferred)**
+- Inject repository interfaces in endpoint handlers:
+  ```csharp
+  group.MapGet("/albums/{id}", async (int id, IAlbumRepository repo, CancellationToken ct) =>
   {
-      private readonly IAppDbContext _db;
-      public GetSomethingHandler(IAppDbContext db) => _db = db;
-      public async Task<IReadOnlyList<Thing>> Handle(CancellationToken ct) => await _db.Set<Thing>().ToListAsync(ct);
+      var album = await repo.GetByIdAsync(id, ct);
+      return album is null ? Results.NotFound() : Results.Ok(album);
+  });
+  ```
+
+**Option 2: Direct DbContext access**
+- For health checks or custom queries, inject `AppDbContext` directly:
+  ```csharp
+  group.MapGet("/data-health", async (AppDbContext db, CancellationToken ct) =>
+  {
+      var ok = await db.Database.CanConnectAsync(ct);
+      // ...
+  });
+  ```
+
+**Option 3: IAppDbContext abstraction**
+- For services that need EF Core but want to avoid concrete DbContext dependency:
+  ```csharp
+  public sealed class MyService(IAppDbContext db)
+  {
+      public async Task<List<Album>> GetAlbumsAsync(CancellationToken ct)
+          => await db.Set<Album>().ToListAsync(ct);
   }
+  ```
 
 Notes:
-- Modules should reference SharedKernel.Persistence if they need the IAppDbContext or AppDbContext types.
-- The host computes an absolute SQLite Data Source to data/chinook.db at startup and sets ConnectionStrings:AppDatabase accordingly (see Program.cs).
+- Repository interfaces are in `SharedKernel.Persistence/Repositories/`
+- Repository implementations are in `SharedKernel.DataSQLite/Repositories/`
+- The host registers all repositories in Program.cs
+- The host computes an absolute SQLite Data Source to data/chinook.db at startup

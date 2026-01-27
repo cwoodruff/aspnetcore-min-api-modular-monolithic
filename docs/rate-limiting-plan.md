@@ -1,6 +1,8 @@
 # Centralized Rate Limiting & Throttling Plan (ASP.NET Core 10 Minimal API – Modular Monolith)
 
-This document proposes a centralized, policy‑driven rate limiting and throttling strategy for the Modular Monolith with modules: Music, Orders, Administration, Reporting, Identity. It includes architecture, policy model, configuration shapes, ops guidance, rollout, and risks. Scaffolding locations are provided; no business logic is embedded in modules.
+**Status: Partially implemented (Option A minimal wiring active)**
+
+This document describes a centralized, policy‑driven rate limiting and throttling strategy for the Modular Monolith. Basic rate limiting (Option A) is currently active with the `global:public-anon` policy applied to the root endpoint and identity endpoints. The full centralized configuration-driven system (Options B/C) remains available for future adoption.
 
 ---
 
