@@ -39,3 +39,5 @@ Thumbs.db
 **/CLAUDE.md
 /src/.claude
 /.claude
+.test_output.txt
+.test_api_output.txt
