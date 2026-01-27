@@ -71,6 +71,27 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workshop", "workshop", "{2C
 		workshop\PARTNERSHIP-PROPOSAL.md = workshop\PARTNERSHIP-PROPOSAL.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "partnership", "partnership", "{E5BAFF16-3E19-4BB9-A715-BABA30E3FBFE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "advanced-topics", "advanced-topics", "{80E19211-D5FE-4C09-A7D0-93F6DFE9A7A2}"
+	ProjectSection(SolutionItems) = preProject
+		workshop\advanced-topics\README.md = workshop\advanced-topics\README.md
+		workshop\advanced-topics\14-OUTBOX-PATTERN.md = workshop\advanced-topics\14-OUTBOX-PATTERN.md
+		workshop\advanced-topics\13-GRPC.md = workshop\advanced-topics\13-GRPC.md
+		workshop\advanced-topics\12-SIGNALR.md = workshop\advanced-topics\12-SIGNALR.md
+		workshop\advanced-topics\11-CQRS-MEDIATR.md = workshop\advanced-topics\11-CQRS-MEDIATR.md
+		workshop\advanced-topics\10-COMPRESSION.md = workshop\advanced-topics\10-COMPRESSION.md
+		workshop\advanced-topics\09-FEATURE-FLAGS.md = workshop\advanced-topics\09-FEATURE-FLAGS.md
+		workshop\advanced-topics\08-OPENTELEMETRY.md = workshop\advanced-topics\08-OPENTELEMETRY.md
+		workshop\advanced-topics\07-BACKGROUND-SERVICES.md = workshop\advanced-topics\07-BACKGROUND-SERVICES.md
+		workshop\advanced-topics\06-API-VERSIONING.md = workshop\advanced-topics\06-API-VERSIONING.md
+		workshop\advanced-topics\05-STRUCTURED-LOGGING.md = workshop\advanced-topics\05-STRUCTURED-LOGGING.md
+		workshop\advanced-topics\04-HEALTH-CHECKS.md = workshop\advanced-topics\04-HEALTH-CHECKS.md
+		workshop\advanced-topics\03-OUTPUT-CACHING.md = workshop\advanced-topics\03-OUTPUT-CACHING.md
+		workshop\advanced-topics\02-TYPED-RESULTS.md = workshop\advanced-topics\02-TYPED-RESULTS.md
+		workshop\advanced-topics\01-ENDPOINT-FILTERS.md = workshop\advanced-topics\01-ENDPOINT-FILTERS.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -223,5 +244,7 @@ Global
 		{8612CCD4-469F-4160-986A-EC943613AE2F} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{7D5BE834-946A-4317-BB73-E5C722646B8C} = {C8E42992-5E42-0C2B-DBFE-AA848D06431C}
 		{0F1D59D1-ADDA-4166-9331-5DE936CDE9F3} = {C8E42992-5E42-0C2B-DBFE-AA848D06431C}
+		{E5BAFF16-3E19-4BB9-A715-BABA30E3FBFE} = {2CEF717D-DC67-452B-BED1-FFA59F0A7256}
+		{80E19211-D5FE-4C09-A7D0-93F6DFE9A7A2} = {2CEF717D-DC67-452B-BED1-FFA59F0A7256}
 	EndGlobalSection
 EndGlobal
