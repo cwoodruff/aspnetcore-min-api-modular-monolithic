@@ -92,6 +92,20 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "advanced-topics", "advanced
 		workshop\advanced-topics\01-ENDPOINT-FILTERS.md = workshop\advanced-topics\01-ENDPOINT-FILTERS.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sessions", "sessions", "{D5639FAE-E1E5-4244-A1F3-2827E814C9B6}"
+	ProjectSection(SolutionItems) = preProject
+		workshop\sessions\README.md = workshop\sessions\README.md
+		workshop\sessions\09-TESTING-WRAP-UP.md = workshop\sessions\09-TESTING-WRAP-UP.md
+		workshop\sessions\08-RATE-LIMITING-SECURITY.md = workshop\sessions\08-RATE-LIMITING-SECURITY.md
+		workshop\sessions\07-FLUENT-VALIDATION.md = workshop\sessions\07-FLUENT-VALIDATION.md
+		workshop\sessions\06-SERVICE-LAYER-CACHING.md = workshop\sessions\06-SERVICE-LAYER-CACHING.md
+		workshop\sessions\05-REPOSITORY-PATTERN-DATA-ACCESS.md = workshop\sessions\05-REPOSITORY-PATTERN-DATA-ACCESS.md
+		workshop\sessions\04-AUTHENTICATION-AUTHORIZATION.md = workshop\sessions\04-AUTHENTICATION-AUTHORIZATION.md
+		workshop\sessions\03-BUILDING-YOUR-FIRST-MODULE.md = workshop\sessions\03-BUILDING-YOUR-FIRST-MODULE.md
+		workshop\sessions\02-ARCHITECTURE-MODULE-CONTRACT.md = workshop\sessions\02-ARCHITECTURE-MODULE-CONTRACT.md
+		workshop\sessions\01-WELCOME-ENVIRONMENT-SETUP.md = workshop\sessions\01-WELCOME-ENVIRONMENT-SETUP.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -246,5 +260,6 @@ Global
 		{0F1D59D1-ADDA-4166-9331-5DE936CDE9F3} = {C8E42992-5E42-0C2B-DBFE-AA848D06431C}
 		{E5BAFF16-3E19-4BB9-A715-BABA30E3FBFE} = {2CEF717D-DC67-452B-BED1-FFA59F0A7256}
 		{80E19211-D5FE-4C09-A7D0-93F6DFE9A7A2} = {2CEF717D-DC67-452B-BED1-FFA59F0A7256}
+		{D5639FAE-E1E5-4244-A1F3-2827E814C9B6} = {2CEF717D-DC67-452B-BED1-FFA59F0A7256}
 	EndGlobalSection
 EndGlobal
