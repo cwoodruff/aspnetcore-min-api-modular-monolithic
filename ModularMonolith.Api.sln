@@ -72,6 +72,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workshop", "workshop", "{2C
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "partnership", "partnership", "{E5BAFF16-3E19-4BB9-A715-BABA30E3FBFE}"
+	ProjectSection(SolutionItems) = preProject
+		workshop\partnerships\CORPORATE-TRAINING-TOOLKIT.md = workshop\partnerships\CORPORATE-TRAINING-TOOLKIT.md
+		workshop\partnerships\CONSULTING-FIRMS-TOOLKIT.md = workshop\partnerships\CONSULTING-FIRMS-TOOLKIT.md
+		workshop\partnerships\RECRUITING-FIRMS-TOOLKIT.md = workshop\partnerships\RECRUITING-FIRMS-TOOLKIT.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "advanced-topics", "advanced-topics", "{80E19211-D5FE-4C09-A7D0-93F6DFE9A7A2}"
 	ProjectSection(SolutionItems) = preProject
