@@ -3,16 +3,18 @@ using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class Genre : BaseEntity, IConvertModel<GenreApiModel>
+public class Genre : BaseEntity, IConvertModel<GenreApiModel>
 {
     public string? Name { get; set; }
 
     public virtual ICollection<Track> Tracks { get; set; } = new List<Track>();
 
-    public GenreApiModel Convert() =>
-        new()
+    public GenreApiModel Convert()
+    {
+        return new GenreApiModel
         {
             Id = Id,
             Name = Name
         };
+    }
 }

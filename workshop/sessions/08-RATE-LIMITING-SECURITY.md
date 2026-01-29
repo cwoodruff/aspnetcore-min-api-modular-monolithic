@@ -7,13 +7,16 @@
 
 ## Overview
 
-This session covers API protection with rate limiting and security best practices. You'll learn to configure rate limiting policies, apply them to endpoints, and understand key security considerations.
+This session covers API protection with rate limiting and security best
+practices. You'll learn to configure rate limiting policies, apply them to
+endpoints, and understand key security considerations.
 
 ---
 
 ## Learning Objectives
 
 By the end of this session, you will:
+
 - Configure rate limiting middleware
 - Create rate limit policies with fixed windows
 - Derive partition keys from requests
@@ -59,6 +62,7 @@ app.UseRateLimiter();
 ```
 
 Position in pipeline:
+
 1. `UseExceptionHandler()`
 2. `UseStatusCodePages()`
 3. `UseCors()`
@@ -115,13 +119,13 @@ public sealed class RateLimitPolicyRegistry(IConfiguration configuration)
 
 ### 2.2 Policy Design
 
-| Policy | Purpose | Typical Limits |
-|--------|---------|----------------|
-| `global:public-anon` | Anonymous/unauthenticated | 60 req/min |
-| `global:user-standard` | Standard authenticated users | 120 req/min |
-| `global:tenant-standard` | Per-tenant limits | 600 req/min |
-| `global:admin-elevated` | Admin users | 300 req/min |
-| `reporting:heavy` | Heavy report endpoints | 10 req/min |
+| Policy                   | Purpose                      | Typical Limits |
+|--------------------------|------------------------------|----------------|
+| `global:public-anon`     | Anonymous/unauthenticated    | 60 req/min     |
+| `global:user-standard`   | Standard authenticated users | 120 req/min    |
+| `global:tenant-standard` | Per-tenant limits            | 600 req/min    |
+| `global:admin-elevated`  | Admin users                  | 300 req/min    |
+| `reporting:heavy`        | Heavy report endpoints       | 10 req/min     |
 
 ---
 
@@ -283,16 +287,16 @@ app.UseAuthorization();
 
 ### 6.1 Production Checklist
 
-| Area | Recommendation |
-|------|----------------|
-| **HTTPS** | Always use HTTPS in production |
-| **HSTS** | Enable HTTP Strict Transport Security |
-| **CORS** | Restrict to known origins |
-| **Rate Limiting** | Apply to all public endpoints |
-| **Authentication** | Use strong algorithms (RS256) |
-| **Authorization** | Principle of least privilege |
-| **Secrets** | Never commit secrets; use Key Vault |
-| **Headers** | Add security headers |
+| Area               | Recommendation                        |
+|--------------------|---------------------------------------|
+| **HTTPS**          | Always use HTTPS in production        |
+| **HSTS**           | Enable HTTP Strict Transport Security |
+| **CORS**           | Restrict to known origins             |
+| **Rate Limiting**  | Apply to all public endpoints         |
+| **Authentication** | Use strong algorithms (RS256)         |
+| **Authorization**  | Principle of least privilege          |
+| **Secrets**        | Never commit secrets; use Key Vault   |
+| **Headers**        | Add security headers                  |
 
 ### 6.2 Security Middleware
 
@@ -425,6 +429,7 @@ RateLimitPartition.GetTokenBucketLimiter(
 ## Next Session
 
 In **Session 9: Testing & Wrap-Up**, you will:
+
 - Write integration tests with WebApplicationFactory
 - Test authenticated endpoints
 - Review key workshop concepts

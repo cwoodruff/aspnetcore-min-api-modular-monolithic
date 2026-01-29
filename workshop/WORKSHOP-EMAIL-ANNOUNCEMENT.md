@@ -1,22 +1,27 @@
 # Email Announcement Templates
 
-Use these templates to announce the workshop via email, newsletters, or social media.
+Use these templates to announce the workshop via email, newsletters, or social
+media.
 
 ---
 
 ## Email Template 1: Full Announcement
 
-**Subject:** Learn to Build Production-Ready APIs — Modular Monolith Workshop [DATE]
+**Subject:** Learn to Build Production-Ready APIs — Modular Monolith
+Workshop [DATE]
 
 ---
 
 Hi [Name],
 
-Are you building APIs and wondering if there's a better way than the traditional monolith—without jumping to microservices?
+Are you building APIs and wondering if there's a better way than the traditional
+monolith—without jumping to microservices?
 
-Join us for a **full-day, hands-on workshop** where you'll learn to build production-ready ASP.NET Core APIs using the Modular Monolithic architecture.
+Join us for a **full-day, hands-on workshop** where you'll learn to build
+production-ready ASP.NET Core APIs using the Modular Monolithic architecture.
 
 **What You'll Build:**
+
 - A complete API with 5 independent modules
 - JWT authentication with RS256 signing
 - Policy-based authorization with multi-tenant support
@@ -24,15 +29,19 @@ Join us for a **full-day, hands-on workshop** where you'll learn to build produc
 - Rate limiting and comprehensive tests
 
 **Workshop Details:**
+
 - **Date:** [DATE]
 - **Time:** 8:00 AM - 5:00 PM
 - **Location:** [VENUE/VIRTUAL]
 - **Price:** [PRICE]
 
 **Who Should Attend:**
-This workshop is for intermediate .NET developers who want to level up their API architecture skills. You should be comfortable with C# and have basic ASP.NET Core experience.
+This workshop is for intermediate .NET developers who want to level up their API
+architecture skills. You should be comfortable with C# and have basic ASP.NET
+Core experience.
 
 **What's Included:**
+
 - Starter solution so you can focus on learning
 - Complete reference implementation to take home
 - Documentation and quick reference card
@@ -61,6 +70,7 @@ Hi [Name],
 **Quick question:** Are you happy with your current API architecture?
 
 If you're tired of:
+
 - Monolithic code that's hard to maintain
 - Microservices complexity you don't need yet
 - Unclear module boundaries
@@ -92,20 +102,24 @@ Only [X] spots available.
 
 Hi [Name],
 
-The **Modular Monolith Workshop** is just one week away! Here's what you need to do before [DATE]:
+The **Modular Monolith Workshop** is just one week away! Here's what you need to
+do before [DATE]:
 
 **Setup Checklist:**
+
 - [ ] Install .NET 10 SDK ([download](https://dot.net))
 - [ ] Install your preferred IDE (Rider, VS 2022, or VS Code)
 - [ ] Install Git
 - [ ] Test: Run `dotnet --version` in your terminal
 
 **What to Bring:**
+
 - Laptop with the above installed
 - Charger (it's a full day!)
 - Questions about API architecture
 
 **Schedule Reminder:**
+
 - **Date:** [DATE]
 - **Time:** 8:00 AM - 5:00 PM
 - **Location:** [VENUE]
@@ -132,6 +146,7 @@ Hi [Name],
 Final reminder: The **Modular Monolith Workshop** is TOMORROW!
 
 **Quick Details:**
+
 - **When:** [DATE], 8:00 AM - 5:00 PM
 - **Where:** [VENUE]
 - **Bring:** Laptop with .NET 10 SDK installed
@@ -151,7 +166,8 @@ See you tomorrow!
 
 🚀 **Workshop Announcement**
 
-I'm teaching a full-day workshop on building production-ready APIs with ASP.NET Core and Modular Monolithic architecture.
+I'm teaching a full-day workshop on building production-ready APIs with ASP.NET
+Core and Modular Monolithic architecture.
 
 **What you'll learn:**
 • The IModule contract pattern for clean composition
@@ -163,7 +179,8 @@ I'm teaching a full-day workshop on building production-ready APIs with ASP.NET 
 **When:** [DATE]
 **Where:** [LOCATION]
 
-Perfect for .NET developers who want clean architecture without microservices complexity.
+Perfect for .NET developers who want clean architecture without microservices
+complexity.
 
 Link in comments 👇
 
@@ -175,7 +192,8 @@ Link in comments 👇
 
 🔥 Workshop: Build Production-Ready APIs with ASP.NET Core
 
-Learn the Modular Monolith pattern — clean boundaries without microservices complexity.
+Learn the Modular Monolith pattern — clean boundaries without microservices
+complexity.
 
 📅 [DATE]
 📍 [LOCATION]
@@ -197,7 +215,8 @@ Register: [LINK]
 
 1/5 🧵 Thinking about microservices for your next project?
 
-Before you commit to that operational complexity, consider the Modular Monolith pattern.
+Before you commit to that operational complexity, consider the Modular Monolith
+pattern.
 
 I'm teaching a full-day workshop on [DATE] where you'll build one from scratch.
 
@@ -247,17 +266,21 @@ Questions? DM me!
 ## Meetup/Event Description
 
 ### Title
-ASP.NET Core Workshop: Build Production-Ready APIs with Modular Monolithic Architecture
+
+ASP.NET Core Workshop: Build Production-Ready APIs with Modular Monolithic
+Architecture
 
 ### Description
 
 **Full-Day Hands-On Workshop**
 
-Join us for an intensive workshop where you'll learn to build production-ready ASP.NET Core APIs using the Modular Monolithic architecture pattern.
+Join us for an intensive workshop where you'll learn to build production-ready
+ASP.NET Core APIs using the Modular Monolithic architecture pattern.
 
 **Why Modular Monolith?**
 
 It's the sweet spot between traditional monoliths and microservices:
+
 - Clean module boundaries without distributed systems complexity
 - Easy team scaling with clear ownership
 - Simple deployment with single artifact
@@ -266,6 +289,7 @@ It's the sweet spot between traditional monoliths and microservices:
 **What You'll Build**
 
 Starting from a prepared base solution, you'll implement:
+
 - Module composition using the IModule contract
 - JWT Bearer authentication with RS256 signing
 - Policy-based authorization with multi-tenant support
@@ -317,27 +341,44 @@ Contact [email] or message the organizer.
 ## Conference CFP Abstract
 
 ### Title
+
 From Monolith to Modular: Building Production-Ready APIs with ASP.NET Core
 
 ### Abstract (300 words)
 
-The software industry presents developers with a false dichotomy: build a tangled monolith or embrace microservices complexity. But there's a pragmatic middle ground that companies like Shopify, Basecamp, and GitHub use successfully: the Modular Monolith.
+The software industry presents developers with a false dichotomy: build a
+tangled monolith or embrace microservices complexity. But there's a pragmatic
+middle ground that companies like Shopify, Basecamp, and GitHub use
+successfully: the Modular Monolith.
 
-In this hands-on workshop, attendees will build a production-ready ASP.NET Core Minimal API using the Modular Monolithic architecture pattern. Starting from a prepared base solution, participants will implement module composition, JWT authentication, caching, validation, and testing—all following patterns they can immediately apply to their projects.
+In this hands-on workshop, attendees will build a production-ready ASP.NET Core
+Minimal API using the Modular Monolithic architecture pattern. Starting from a
+prepared base solution, participants will implement module composition, JWT
+authentication, caching, validation, and testing—all following patterns they can
+immediately apply to their projects.
 
 **Key Topics:**
 
-1. **Architecture Fundamentals** — The IModule contract pattern that enables clean module boundaries while maintaining deployment simplicity
+1. **Architecture Fundamentals** — The IModule contract pattern that enables
+   clean module boundaries while maintaining deployment simplicity
 
-2. **Authentication & Authorization** — Building JWT Bearer authentication from scratch, including RS256 signing, JWKS endpoints, and policy-based authorization with multi-tenant support
+2. **Authentication & Authorization** — Building JWT Bearer authentication from
+   scratch, including RS256 signing, JWKS endpoints, and policy-based
+   authorization with multi-tenant support
 
-3. **Data Access & Performance** — Repository pattern with EF Core, DbContext pooling, and a service layer implementing cache-aside with tag-based invalidation
+3. **Data Access & Performance** — Repository pattern with EF Core, DbContext
+   pooling, and a service layer implementing cache-aside with tag-based
+   invalidation
 
-4. **Code Quality** — FluentValidation for clean input validation, RFC 7807 Problem Details for error responses, and integration testing with WebApplicationFactory
+4. **Code Quality** — FluentValidation for clean input validation, RFC 7807
+   Problem Details for error responses, and integration testing with
+   WebApplicationFactory
 
-5. **API Protection** — Rate limiting strategies using ASP.NET Core's built-in middleware
+5. **API Protection** — Rate limiting strategies using ASP.NET Core's built-in
+   middleware
 
 **Attendees Will Leave With:**
+
 - A working modular API they built themselves
 - Complete reference implementation and documentation
 - Patterns immediately applicable to production systems
@@ -349,7 +390,12 @@ Attendees should bring laptops with .NET 10 SDK installed.
 **Duration:** Full day (8 hours including breaks)
 
 ### Bio
+
 [Instructor bio]
 
 ### Notes for Reviewers
-This workshop has been delivered to [X] developers with consistently positive feedback. All materials, including starter solution, reference implementation, and documentation, are prepared and tested. The hands-on format ensures attendees leave with practical skills, not just slides.
+
+This workshop has been delivered to [X] developers with consistently positive
+feedback. All materials, including starter solution, reference implementation,
+and documentation, are prepared and tested. The hands-on format ensures
+attendees leave with practical skills, not just slides.

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Music.Modules.Services;
+using SharedKernel.TrafficControl;
 
 namespace Music.Modules.Endpoints;
 
@@ -28,7 +29,7 @@ public static class PlaylistEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Music")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/playlists
         group.MapGet("playlists/", [Authorize] async (
@@ -47,6 +48,6 @@ public static class PlaylistEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Music")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

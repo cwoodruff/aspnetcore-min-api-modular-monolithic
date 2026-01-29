@@ -8,7 +8,8 @@
 
 ### The Opportunity
 
-Partner with us to offer high-value technical training that attracts and engages .NET developers in your market.
+Partner with us to offer high-value technical training that attracts and engages
+.NET developers in your market.
 
 ### The Problem You Face
 
@@ -19,7 +20,9 @@ Partner with us to offer high-value technical training that attracts and engages
 
 ### Our Solution
 
-A **full-day, hands-on workshop** on modern API architecture with ASP.NET Core that:
+A **full-day, hands-on workshop** on modern API architecture with ASP.NET Core
+that:
+
 - Provides genuine value developers actually want
 - Creates 8 hours of meaningful interaction (not 45 minutes of small talk)
 - Positions your firm as a technical resource, not just a staffing vendor
@@ -27,17 +30,18 @@ A **full-day, hands-on workshop** on modern API architecture with ASP.NET Core t
 
 ### How It Works
 
-| You Provide | We Provide |
-|-------------|------------|
-| Venue (your office or rented space) | Complete training curriculum |
-| Marketing to your candidate database | Expert instruction |
-| Registration management | All participant materials |
-| Catering/refreshments | Certificates of completion |
-| A/V setup | Follow-up resources |
+| You Provide                          | We Provide                   |
+|--------------------------------------|------------------------------|
+| Venue (your office or rented space)  | Complete training curriculum |
+| Marketing to your candidate database | Expert instruction           |
+| Registration management              | All participant materials    |
+| Catering/refreshments                | Certificates of completion   |
+| A/V setup                            | Follow-up resources          |
 
 ### Partnership Models
 
 **Option A: Sponsored Workshop (Free to Attendees)**
+
 - You cover instructor fee + expenses
 - Workshop is free for developers
 - Maximum goodwill and attendance
@@ -45,6 +49,7 @@ A **full-day, hands-on workshop** on modern API architecture with ASP.NET Core t
 - **Investment:** $3,500-5,000
 
 **Option B: Revenue Share**
+
 - Charge $199-299 per attendee
 - Split revenue 60/40 (instructor/partner)
 - Lower upfront cost
@@ -52,6 +57,7 @@ A **full-day, hands-on workshop** on modern API architecture with ASP.NET Core t
 - **Your Investment:** Venue + marketing only
 
 **Option C: Premium Event**
+
 - Charge $399-499 per attendee
 - Higher revenue potential
 - Position as exclusive/premium offering
@@ -61,6 +67,7 @@ A **full-day, hands-on workshop** on modern API architecture with ASP.NET Core t
 ### Expected Results
 
 Based on similar partnerships:
+
 - **Attendance:** 15-25 developers per workshop
 - **Lead quality:** 90%+ actively job-seeking or open
 - **Engagement:** 8 hours of genuine interaction
@@ -69,17 +76,22 @@ Based on similar partnerships:
 
 ### Case Study
 
-> "[Recruiting Firm] hosted our workshop in Q3. From 22 attendees, they added 18 qualified candidates to their active pipeline. Within 4 months, they made 3 placements directly attributed to workshop connections—generating $45,000 in placement fees from a $4,000 investment."
+> "[Recruiting Firm] hosted our workshop in Q3. From 22 attendees, they added 18
+> qualified candidates to their active pipeline. Within 4 months, they made 3
+> placements directly attributed to workshop
+> connections—generating $45,000 in placement fees from a $4,000 investment."
 
 ### Why This Works
 
 **For Developers:**
+
 - Real skills they can use immediately
 - Not a sales pitch disguised as content
 - Certificate for professional development
 - Free/affordable compared to commercial training
 
 **For Your Firm:**
+
 - Quality time with engaged candidates
 - Technical credibility with hiring managers
 - Content for social media and marketing
@@ -108,17 +120,20 @@ Based on similar partnerships:
 
 ### The Opportunity
 
-Add a proven .NET training curriculum to your service offerings—either for internal consultant development or as a client-facing service.
+Add a proven .NET training curriculum to your service offerings—either for
+internal consultant development or as a client-facing service.
 
 ### The Business Case
 
 **For Internal Training:**
+
 - Upskill consultants for client engagements
 - Standardize architectural approach across projects
 - Reduce ramp-up time on new engagements
 - Increase consultant utilization rates
 
 **As Client Service:**
+
 - New revenue stream (training services)
 - Land-and-expand opportunity with existing clients
 - Demonstrate technical depth to prospects
@@ -127,6 +142,7 @@ Add a proven .NET training curriculum to your service offerings—either for int
 ### Partnership Tiers
 
 #### Tier 1: Referral Partner
+
 **Best for:** Firms wanting to test the waters
 
 - Introduce us to your clients
@@ -135,6 +151,7 @@ Add a proven .NET training curriculum to your service offerings—either for int
 - **Commission:** 15-20% of training fee
 
 #### Tier 2: Reseller Partner
+
 **Best for:** Firms wanting to offer training services
 
 - Sell training to your clients
@@ -144,6 +161,7 @@ Add a proven .NET training curriculum to your service offerings—either for int
 - **Investment:** $5,000/year + $2,000/delivery
 
 #### Tier 3: White Label License
+
 **Best for:** Larger firms with training capacity
 
 - Full rights to deliver internally and to clients
@@ -153,6 +171,7 @@ Add a proven .NET training curriculum to your service offerings—either for int
 - **Investment:** $15,000/year
 
 #### Tier 4: Train-the-Trainer Only
+
 **Best for:** Firms wanting internal delivery capability
 
 - One-time knowledge transfer
@@ -168,6 +187,7 @@ Add a proven .NET training curriculum to your service offerings—either for int
 **Duration:** Full day (8 hours)
 
 **Topics:**
+
 - Module composition and boundaries
 - JWT authentication and authorization
 - Repository pattern and data access
@@ -177,6 +197,7 @@ Add a proven .NET training curriculum to your service offerings—either for int
 - Integration testing
 
 **Deliverables:**
+
 - Instructor guide
 - Participant workbook
 - Starter solution (code)
@@ -195,24 +216,27 @@ Add a proven .NET training curriculum to your service offerings—either for int
 ### Client Use Cases
 
 **Scenario 1: Team Upskilling**
-> Client's development team is transitioning from legacy .NET Framework to .NET Core. Workshop accelerates adoption and aligns team on modern patterns.
+> Client's development team is transitioning from legacy .NET Framework to .NET
+> Core. Workshop accelerates adoption and aligns team on modern patterns.
 
 **Scenario 2: Architecture Alignment**
-> Client has multiple teams building APIs differently. Workshop establishes common patterns and reduces integration friction.
+> Client has multiple teams building APIs differently. Workshop establishes
+> common patterns and reduces integration friction.
 
 **Scenario 3: New Project Kickoff**
-> Client starting greenfield API project. Workshop trains team on architecture before development begins, reducing false starts.
+> Client starting greenfield API project. Workshop trains team on architecture
+> before development begins, reducing false starts.
 
 ### ROI for Your Clients
 
 **Typical client profile:** 10-person development team
 
-| Without Training | With Training |
-|-----------------|---------------|
-| 3-6 months to align on architecture | Aligned in 1 day |
-| Multiple rewrites as team learns | Right approach from start |
-| Senior devs tied up mentoring | Seniors focus on features |
-| 4-month new hire ramp-up | 6-week ramp-up |
+| Without Training                    | With Training             |
+|-------------------------------------|---------------------------|
+| 3-6 months to align on architecture | Aligned in 1 day          |
+| Multiple rewrites as team learns    | Right approach from start |
+| Senior devs tied up mentoring       | Seniors focus on features |
+| 4-month new hire ramp-up            | 6-week ramp-up            |
 
 **Estimated annual savings:** $50,000-100,000
 **Training investment:** $8,000-10,000
@@ -241,7 +265,8 @@ Add a proven .NET training curriculum to your service offerings—either for int
 
 ### Invest in Your Team's Architecture Skills
 
-A one-day workshop that gets your entire team aligned on modern API development practices.
+A one-day workshop that gets your entire team aligned on modern API development
+practices.
 
 ### The Challenge
 
@@ -253,22 +278,24 @@ A one-day workshop that gets your entire team aligned on modern API development 
 
 ### The Solution
 
-An intensive, hands-on workshop where your team builds a production-ready API together—learning shared patterns they can apply immediately.
+An intensive, hands-on workshop where your team builds a production-ready API
+together—learning shared patterns they can apply immediately.
 
 ### What Your Team Will Learn
 
-| Module | Skills Gained |
-|--------|---------------|
-| Architecture | Module composition, clean boundaries |
-| Security | JWT authentication, authorization policies |
-| Data Access | Repository pattern, EF Core best practices |
-| Performance | Caching strategies, cache invalidation |
-| Quality | Input validation, error handling |
-| Testing | Integration tests, WebApplicationFactory |
+| Module       | Skills Gained                              |
+|--------------|--------------------------------------------|
+| Architecture | Module composition, clean boundaries       |
+| Security     | JWT authentication, authorization policies |
+| Data Access  | Repository pattern, EF Core best practices |
+| Performance  | Caching strategies, cache invalidation     |
+| Quality      | Input validation, error handling           |
+| Testing      | Integration tests, WebApplicationFactory   |
 
 ### Format Options
 
 **On-Site Delivery**
+
 - Instructor comes to your office
 - Hands-on with your team
 - Networking during breaks
@@ -276,6 +303,7 @@ An intensive, hands-on workshop where your team builds a production-ready API to
 - Best for: Teams in one location
 
 **Virtual Delivery**
+
 - Live via Zoom/Teams
 - Interactive exercises
 - Screen sharing and breakout rooms
@@ -283,6 +311,7 @@ An intensive, hands-on workshop where your team builds a production-ready API to
 - Best for: Distributed teams
 
 **Hybrid**
+
 - Instructor on-site with core team
 - Remote participants join virtually
 - Best for: Mixed location teams
@@ -299,11 +328,11 @@ An intensive, hands-on workshop where your team builds a production-ready API to
 
 ### Investment
 
-| Team Size | Price | Per Person |
-|-----------|-------|------------|
-| 5-10 developers | $5,000 | $500-1,000 |
-| 11-15 developers | $7,000 | $467-636 |
-| 16-20 developers | $9,000 | $450-563 |
+| Team Size        | Price  | Per Person |
+|------------------|--------|------------|
+| 5-10 developers  | $5,000 | $500-1,000 |
+| 11-15 developers | $7,000 | $467-636   |
+| 16-20 developers | $9,000 | $450-563   |
 
 *Travel expenses additional for on-site delivery outside [your area]*
 
@@ -319,16 +348,19 @@ An intensive, hands-on workshop where your team builds a production-ready API to
 **Your Team:** 12 developers × $130k average salary = $75/hour
 
 **Current Costs (estimated):**
+
 - Architecture debates: 3 hrs/week × 12 devs × 50 weeks = $135,000/year
 - Extended onboarding: 2 months × 4 new hires × 50% productivity = $43,000/year
 - Technical debt: 2 hrs/week × 12 devs × 50 weeks = $90,000/year
 
 **Workshop Investment:**
+
 - Training fee: $7,000
 - Developer time: 12 × 8 hours × $75 = $7,200
 - **Total: $14,200**
 
 **Expected Improvement (conservative):**
+
 - 50% reduction in debate time: $67,500 saved
 - 40% faster onboarding: $17,200 saved
 - 25% less tech debt work: $22,500 saved
@@ -338,10 +370,13 @@ An intensive, hands-on workshop where your team builds a production-ready API to
 
 ### What Leaders Say
 
-> "We went from 'everyone has their own way' to 'we have a way' in one day. Code reviews are faster, onboarding is easier, and the team actually enjoyed the training."
+> "We went from 'everyone has their own way' to 'we have a way' in one day. Code
+> reviews are faster, onboarding is easier, and the team actually enjoyed the
+> training."
 > — *VP of Engineering, SaaS Company*
 
-> "The ROI was obvious within the first month. Developers stopped reinventing patterns and started shipping features."
+> "The ROI was obvious within the first month. Developers stopped reinventing
+> patterns and started shipping features."
 > — *Director of Development, Financial Services*
 
 ### Scheduling
@@ -364,6 +399,7 @@ An intensive, hands-on workshop where your team builds a production-ready API to
 [Calendar Link]
 
 Or contact directly:
+
 - **Email:** [email]
 - **Phone:** [phone]
 - **LinkedIn:** [profile]
@@ -372,11 +408,11 @@ Or contact directly:
 
 ### Quick Comparison: Training Options
 
-| Option | Time | Cost | Retention | Team Alignment |
-|--------|------|------|-----------|----------------|
-| Online courses | 20+ hrs each | $50-500/person | Low (10-20%) | None |
-| Conference talks | 1 hr | $500-2000 | Medium (30%) | Limited |
-| Books/docs | 10+ hrs each | $50/person | Low (10%) | None |
-| **This Workshop** | 8 hrs total | $500-700/person | High (70%+) | Complete |
+| Option            | Time         | Cost            | Retention    | Team Alignment |
+|-------------------|--------------|-----------------|--------------|----------------|
+| Online courses    | 20+ hrs each | $50-500/person  | Low (10-20%) | None           |
+| Conference talks  | 1 hr         | $500-2000       | Medium (30%) | Limited        |
+| Books/docs        | 10+ hrs each | $50/person      | Low (10%)    | None           |
+| **This Workshop** | 8 hrs total  | $500-700/person | High (70%+)  | Complete       |
 
 The difference: **Hands-on practice together** beats passive learning alone.

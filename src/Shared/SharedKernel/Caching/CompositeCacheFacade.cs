@@ -11,22 +11,27 @@ internal sealed class CompositeCacheFacade(
     IL2Cache? l2 = null)
     : ICacheFacade
 {
-    private readonly CacheOptions _opts = options.Value;
-    private readonly ILogger<CompositeCacheFacade> _logger = logger;
-
     // Simple per-key async lock to avoid recomputation stampede
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
+    private readonly ILogger<CompositeCacheFacade> _logger = logger;
+    private readonly CacheOptions _opts = options.Value;
 
-    public async Task<T?> GetOrAddAsync<T>(CacheKey key, Func<CancellationToken, Task<T?>> factory, CacheEntryOptions? options = null, CancellationToken ct = default)
+    public async Task<T?> GetOrAddAsync<T>(CacheKey key, Func<CancellationToken, Task<T?>> factory,
+        CacheEntryOptions? options = null, CancellationToken ct = default)
     {
         if (!_opts.Enabled)
+        {
             return await factory(ct);
+        }
 
         var cacheKey = key.ToString();
 
         // 1) L1
         var (hit1, v1) = await l1.TryGetAsync<T>(cacheKey, ct);
-        if (hit1) return v1;
+        if (hit1)
+        {
+            return v1;
+        }
 
         // 2) L2
         if (_opts.Tier.Equals("L1L2", StringComparison.OrdinalIgnoreCase) && l2 is not null)
@@ -46,16 +51,23 @@ internal sealed class CompositeCacheFacade(
         {
             // Re-check after acquiring the lock
             var (hitAfter, vAfter) = await l1.TryGetAsync<T>(cacheKey, ct);
-            if (hitAfter) return vAfter;
+            if (hitAfter)
+            {
+                return vAfter;
+            }
 
             var value = await factory(ct);
             var eff = EffectiveOptions(options);
             if (value is not null)
             {
                 if (_opts.Tier.Equals("L1L2", StringComparison.OrdinalIgnoreCase) && l2 is not null)
+                {
                     await l2.SetAsync(cacheKey, value, eff, ct);
+                }
+
                 await l1.SetAsync(cacheKey, value, eff, ct);
             }
+
             return value;
         }
         finally
@@ -65,13 +77,21 @@ internal sealed class CompositeCacheFacade(
         }
     }
 
-    public async Task SetAsync<T>(CacheKey key, T value, CacheEntryOptions? options = null, CancellationToken ct = default)
+    public async Task SetAsync<T>(CacheKey key, T value, CacheEntryOptions? options = null,
+        CancellationToken ct = default)
     {
-        if (!_opts.Enabled) return;
+        if (!_opts.Enabled)
+        {
+            return;
+        }
+
         var k = key.ToString();
         var eff = EffectiveOptions(options);
         if (_opts.Tier.Equals("L1L2", StringComparison.OrdinalIgnoreCase) && l2 is not null)
+        {
             await l2.SetAsync(k, value, eff, ct);
+        }
+
         await l1.SetAsync(k, value, eff, ct);
     }
 
@@ -79,7 +99,10 @@ internal sealed class CompositeCacheFacade(
     {
         var k = key.ToString();
         await l1.RemoveAsync(k, ct);
-        if (l2 is not null) await l2.RemoveAsync(k, ct);
+        if (l2 is not null)
+        {
+            await l2.RemoveAsync(k, ct);
+        }
     }
 
     public Task RemoveByTagAsync(string tag, CancellationToken ct = default)
@@ -97,6 +120,7 @@ internal sealed class CompositeCacheFacade(
         {
             o.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(_opts.DefaultTTLSeconds);
         }
+
         // Apply jitter to avoid thundering herd
         if (o.AbsoluteExpirationRelativeToNow is { } ttl && ttl > TimeSpan.Zero && o.JitterPercent > 0)
         {
@@ -105,6 +129,7 @@ internal sealed class CompositeCacheFacade(
             var adjusted = TimeSpan.FromMilliseconds(ttl.TotalMilliseconds * (1 + jitter));
             o.AbsoluteExpirationRelativeToNow = adjusted > TimeSpan.Zero ? adjusted : ttl;
         }
+
         return o;
     }
 }

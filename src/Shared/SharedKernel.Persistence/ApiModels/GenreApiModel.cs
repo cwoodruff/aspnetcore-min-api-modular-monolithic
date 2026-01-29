@@ -9,10 +9,12 @@ public sealed class GenreApiModel : BaseApiModel, IConvertModel<Genre>
 
     public ICollection<TrackApiModel> Tracks { get; set; } = new List<TrackApiModel>();
 
-    public Genre Convert() =>
-        new()
+    public Genre Convert()
+    {
+        return new Genre
         {
             Id = Id,
             Name = Name
         };
+    }
 }

@@ -6,7 +6,9 @@
 
 ## Overview
 
-gRPC is a high-performance RPC framework using Protocol Buffers for serialization. It's ideal for microservice-to-microservice communication, low-latency scenarios, and strongly-typed contracts.
+gRPC is a high-performance RPC framework using Protocol Buffers for
+serialization. It's ideal for microservice-to-microservice communication,
+low-latency scenarios, and strongly-typed contracts.
 
 **Duration:** 45-60 minutes
 **Prerequisites:** Basic Minimal API knowledge, understanding of RPC concepts
@@ -16,6 +18,7 @@ gRPC is a high-performance RPC framework using Protocol Buffers for serializatio
 ## Learning Objectives
 
 By the end of this guide, you will:
+
 - Understand when to use gRPC vs REST
 - Create .proto files and generate C# code
 - Implement gRPC services
@@ -28,15 +31,15 @@ By the end of this guide, you will:
 
 ### Comparison
 
-| Aspect | REST | gRPC |
-|--------|------|------|
-| Protocol | HTTP/1.1 or HTTP/2 | HTTP/2 only |
-| Serialization | JSON (text) | Protocol Buffers (binary) |
-| Contract | OpenAPI (optional) | .proto (required) |
-| Streaming | Limited | Native support |
-| Browser support | Full | Limited (needs proxy) |
-| Performance | Good | Excellent |
-| Debugging | Easy | Requires tooling |
+| Aspect          | REST               | gRPC                      |
+|-----------------|--------------------|---------------------------|
+| Protocol        | HTTP/1.1 or HTTP/2 | HTTP/2 only               |
+| Serialization   | JSON (text)        | Protocol Buffers (binary) |
+| Contract        | OpenAPI (optional) | .proto (required)         |
+| Streaming       | Limited            | Native support            |
+| Browser support | Full               | Limited (needs proxy)     |
+| Performance     | Good               | Excellent                 |
+| Debugging       | Easy               | Requires tooling          |
 
 ### When to Use gRPC
 
@@ -652,16 +655,16 @@ builder.Services.AddGrpc(options =>
 
 ### Status Codes Mapping
 
-| Exception | gRPC Status Code |
-|-----------|-----------------|
-| Validation error | `InvalidArgument` |
-| Not found | `NotFound` |
-| Unauthorized | `Unauthenticated` |
-| Forbidden | `PermissionDenied` |
-| Conflict | `AlreadyExists` |
-| Timeout | `DeadlineExceeded` |
-| Rate limited | `ResourceExhausted` |
-| Internal error | `Internal` |
+| Exception        | gRPC Status Code    |
+|------------------|---------------------|
+| Validation error | `InvalidArgument`   |
+| Not found        | `NotFound`          |
+| Unauthorized     | `Unauthenticated`   |
+| Forbidden        | `PermissionDenied`  |
+| Conflict         | `AlreadyExists`     |
+| Timeout          | `DeadlineExceeded`  |
+| Rate limited     | `ResourceExhausted` |
+| Internal error   | `Internal`          |
 
 ---
 
@@ -774,12 +777,12 @@ app.MapGrpcService<AlbumGrpcService>().EnableGrpcWeb();
 
 ### gRPC Patterns
 
-| Pattern | Use Case |
-|---------|----------|
-| Unary | Simple request/response |
+| Pattern          | Use Case                          |
+|------------------|-----------------------------------|
+| Unary            | Simple request/response           |
 | Server streaming | Large datasets, real-time updates |
-| Client streaming | Batch uploads |
-| Bidirectional | Real-time sync, chat |
+| Client streaming | Batch uploads                     |
+| Bidirectional    | Real-time sync, chat              |
 
 ### Best Practices
 

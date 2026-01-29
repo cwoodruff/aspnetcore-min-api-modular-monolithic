@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -14,7 +15,7 @@ public class PlaylistEndpointsTests(WebApplicationFactory<Program> factory)
     {
         var client = _factory.CreateClient();
         var response = await client.GetAsync("/api/music/playlists/1");
-        response.StatusCode.Should().Be(System.Net.HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -26,10 +27,10 @@ public class PlaylistEndpointsTests(WebApplicationFactory<Program> factory)
         client.UseBearer(token);
 
         var response = await client.GetAsync("/api/music/playlists/1");
-        response.StatusCode.Should().NotBe(System.Net.HttpStatusCode.Unauthorized);
-        response.StatusCode.Should().NotBe(System.Net.HttpStatusCode.Forbidden);
+        response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
 
-        if (response.StatusCode == System.Net.HttpStatusCode.OK)
+        if (response.StatusCode == HttpStatusCode.OK)
         {
             await using var stream = await response.Content.ReadAsStreamAsync();
             using var doc = await JsonDocument.ParseAsync(stream);
@@ -49,6 +50,6 @@ public class PlaylistEndpointsTests(WebApplicationFactory<Program> factory)
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
         var response = await client.GetAsync("/api/music/playlists/");
-        response.StatusCode.Should().NotBe(System.Net.HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
     }
 }

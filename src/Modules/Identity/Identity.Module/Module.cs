@@ -25,7 +25,7 @@ public static class IdentityModule
             // Delegate to endpoint classes
             group.MapIdentityHealthEndpoints();
             group.MapIdentityDataHealthEndpoints();
-            AuthEndpoints.MapIdentityAuthEndpoints(group);
+            group.MapIdentityAuthEndpoints();
         }
     }
 }

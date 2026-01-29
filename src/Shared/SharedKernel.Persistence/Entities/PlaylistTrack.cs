@@ -1,6 +1,6 @@
 ﻿namespace SharedKernel.Persistence.Entities;
 
-public partial class PlaylistTrack
+public class PlaylistTrack
 {
     public int PlaylistId { get; set; }
 

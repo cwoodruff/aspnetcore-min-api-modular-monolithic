@@ -34,8 +34,9 @@ public sealed class TrackApiModel : BaseApiModel, IConvertModel<Track>
     public string? MediaTypeName { get; set; }
     public string? GenreName { get; set; }
 
-    public Track Convert() =>
-        new()
+    public Track Convert()
+    {
+        return new Track
         {
             Id = Id,
             Name = Name,
@@ -47,4 +48,5 @@ public sealed class TrackApiModel : BaseApiModel, IConvertModel<Track>
             Bytes = Bytes,
             UnitPrice = UnitPrice
         };
+    }
 }

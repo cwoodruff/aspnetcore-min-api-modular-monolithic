@@ -1,7 +1,6 @@
 using FluentValidation;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
 using SharedKernel.Persistence.Extensions;
 using SharedKernel.Persistence.Repositories;
 
@@ -13,16 +12,16 @@ public class AlbumService(
     ICacheKeyComposer keys,
     IValidator<AlbumApiModel> validator) : IAlbumService
 {
-    private readonly IValidator<AlbumApiModel> _validator = validator;
     private static readonly string[] AlbumTags = ["music:album", "music:album:by-id"];
+    private readonly IValidator<AlbumApiModel> _validator = validator;
 
     public async Task<AlbumApiModel?> GetAlbumByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "album",
-            version: "v1",
-            discriminator: $"by-id:{id}");
+            "music",
+            "album",
+            "v1",
+            $"by-id:{id}");
 
         return await cache.GetOrAddAsync<AlbumApiModel?>(key, async _ =>
         {
@@ -44,10 +43,10 @@ public class AlbumService(
     public async Task<IEnumerable<object>> GetAllAlbumsAsync(CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "album",
-            version: "v1",
-            discriminator: "all");
+            "music",
+            "album",
+            "v1",
+            "all");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -70,10 +69,10 @@ public class AlbumService(
     public async Task<IEnumerable<object>> GetAlbumsByArtistIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "album",
-            version: "v1",
-            discriminator: $"by-artist:{id}");
+            "music",
+            "album",
+            "v1",
+            $"by-artist:{id}");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -126,10 +125,10 @@ public class AlbumService(
             // Invalidate cache
             await cache.RemoveByTagAsync(AlbumTags[0], ct);
             var key = keys.Compose(
-                moduleName: "music",
-                entity: "album",
-                version: "v1",
-                discriminator: $"by-id:{model.Id}");
+                "music",
+                "album",
+                "v1",
+                $"by-id:{model.Id}");
             await cache.RemoveAsync(key, ct);
         }
 

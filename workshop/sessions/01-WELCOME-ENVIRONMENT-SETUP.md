@@ -7,13 +7,16 @@
 
 ## Overview
 
-This session prepares your development environment and introduces you to the workshop solution structure. You'll verify installations, clone the starter solution, and understand the foundational components you'll be building upon.
+This session prepares your development environment and introduces you to the
+workshop solution structure. You'll verify installations, clone the starter
+solution, and understand the foundational components you'll be building upon.
 
 ---
 
 ## Learning Objectives
 
 By the end of this session, you will:
+
 - Have a working .NET 10 development environment
 - Successfully build and run the starter solution
 - Understand the project structure and module organization
@@ -25,15 +28,16 @@ By the end of this session, you will:
 
 ### Required Software
 
-| Software | Minimum Version | Verify Command |
-|----------|-----------------|----------------|
-| .NET SDK | 10.0 | `dotnet --version` |
-| Git | 2.30+ | `git --version` |
-| SQLite (optional) | 3.x | `sqlite3 --version` |
+| Software          | Minimum Version | Verify Command      |
+|-------------------|-----------------|---------------------|
+| .NET SDK          | 10.0            | `dotnet --version`  |
+| Git               | 2.30+           | `git --version`     |
+| SQLite (optional) | 3.x             | `sqlite3 --version` |
 
 ### Recommended IDEs
 
 Choose one of the following:
+
 - **JetBrains Rider** (recommended for this workshop)
 - **Visual Studio 2022** (17.0+)
 - **VS Code** with C# Dev Kit extension
@@ -68,7 +72,8 @@ Expected output: `git version 2.x.x`
 sqlite3 --version
 ```
 
-SQLite comes bundled with the solution's EF Core provider, so this is optional for database browsing.
+SQLite comes bundled with the solution's EF Core provider, so this is optional
+for database browsing.
 
 ---
 
@@ -159,7 +164,9 @@ public interface IModule
 ```
 
 Every module in the system implements this interface, enabling:
-- **Self-contained service registration** - Each module registers its own dependencies
+
+- **Self-contained service registration** - Each module registers its own
+  dependencies
 - **Endpoint mapping** - Each module defines its own API routes
 - **Clean composition** - The host simply iterates through modules
 
@@ -204,18 +211,18 @@ static IReadOnlyList<IModule> GetModules()
 
 The workshop uses the Chinook database - a sample music store database:
 
-| Entity | Description | Module |
-|--------|-------------|--------|
-| Album | Music albums | Music |
-| Artist | Artists/bands | Music |
-| Track | Individual songs | Music |
-| Playlist | User playlists | Music |
-| Customer | Store customers | Administration |
-| Employee | Store employees | Administration |
-| Genre | Music genres | Administration |
-| MediaType | File formats | Administration |
-| Invoice | Customer orders | Orders |
-| InvoiceLine | Order line items | Orders |
+| Entity      | Description      | Module         |
+|-------------|------------------|----------------|
+| Album       | Music albums     | Music          |
+| Artist      | Artists/bands    | Music          |
+| Track       | Individual songs | Music          |
+| Playlist    | User playlists   | Music          |
+| Customer    | Store customers  | Administration |
+| Employee    | Store employees  | Administration |
+| Genre       | Music genres     | Administration |
+| MediaType   | File formats     | Administration |
+| Invoice     | Customer orders  | Orders         |
+| InvoiceLine | Order line items | Orders         |
 
 ### 3.5 Entity Example
 
@@ -350,30 +357,34 @@ dotnet build
 ### Port Already in Use
 
 Modify `launchSettings.json` or use:
+
 ```bash
 dotnet run --project src/ModularMonolith.Api --urls "http://localhost:5044"
 ```
 
 ### Database Not Found
 
-The auto-discovery logic in `PersistenceRegistration.cs` walks up the directory tree looking for the `data/` folder. If you've moved the project, ensure `data/chinook.db` exists relative to the solution root.
+The auto-discovery logic in `PersistenceRegistration.cs` walks up the directory
+tree looking for the `data/` folder. If you've moved the project, ensure
+`data/chinook.db` exists relative to the solution root.
 
 ---
 
 ## Quick Reference
 
-| Command | Purpose |
-|---------|---------|
-| `dotnet build` | Build the solution |
-| `dotnet run --project src/ModularMonolith.Api` | Run the API |
-| `dotnet test` | Run all tests |
-| `dotnet restore` | Restore NuGet packages |
+| Command                                        | Purpose                |
+|------------------------------------------------|------------------------|
+| `dotnet build`                                 | Build the solution     |
+| `dotnet run --project src/ModularMonolith.Api` | Run the API            |
+| `dotnet test`                                  | Run all tests          |
+| `dotnet restore`                               | Restore NuGet packages |
 
 ---
 
 ## Next Session
 
 In **Session 2: Architecture Overview & Module Contract**, you will:
+
 - Deep dive into Modular Monolithic architecture
 - Understand the benefits vs. microservices
 - Configure the host for module composition

@@ -24,25 +24,25 @@ dotnet watch --project src/ModularMonolith.Api
 
 ## API URLs
 
-| Endpoint | URL |
-|----------|-----|
-| Swagger UI | http://localhost:5043/swagger |
-| Root Health | http://localhost:5043/ |
-| Reporting Health | http://localhost:5043/api/reporting/health |
-| Music Health | http://localhost:5043/api/music/health |
-| Login | POST http://localhost:5043/api/identity/login |
-| JWKS | http://localhost:5043/api/identity/.well-known/jwks.json |
+| Endpoint         | URL                                                      |
+|------------------|----------------------------------------------------------|
+| Swagger UI       | http://localhost:5043/swagger                            |
+| Root Health      | http://localhost:5043/                                   |
+| Reporting Health | http://localhost:5043/api/reporting/health               |
+| Music Health     | http://localhost:5043/api/music/health                   |
+| Login            | POST http://localhost:5043/api/identity/login            |
+| JWKS             | http://localhost:5043/api/identity/.well-known/jwks.json |
 
 ---
 
 ## Demo Users
 
-| Username | Password | Permissions |
-|----------|----------|-------------|
-| demo | demo123! | music.read |
-| admin | admin123! | music.*, orders.*, administration.* |
-| usermo | usermo123! | music.read, orders.read |
-| report | report123! | report.view |
+| Username | Password   | Permissions                         |
+|----------|------------|-------------------------------------|
+| demo     | demo123!   | music.read                          |
+| admin    | admin123!  | music.*, orders.*, administration.* |
+| usermo   | usermo123! | music.read, orders.read             |
+| report   | report123! | report.view                         |
 
 ---
 
@@ -89,6 +89,7 @@ public static class MyModule
 ## Endpoint Patterns
 
 ### GET (Read)
+
 ```csharp
 group.MapGet("/items/{id:int}", [Authorize] async (
     int id,
@@ -106,6 +107,7 @@ group.MapGet("/items/{id:int}", [Authorize] async (
 ```
 
 ### POST (Create)
+
 ```csharp
 group.MapPost("/items", [Authorize] async (
     CreateRequest request,
@@ -361,17 +363,17 @@ public class MyTests : IClassFixture<WebApplicationFactory<Program>>
 
 ## HTTP Status Codes
 
-| Code | Meaning | When to Use |
-|------|---------|-------------|
-| 200 | OK | Successful GET/PUT |
-| 201 | Created | Successful POST |
-| 204 | No Content | Successful DELETE |
-| 400 | Bad Request | Validation errors |
-| 401 | Unauthorized | Missing/invalid token |
-| 403 | Forbidden | Insufficient permissions |
-| 404 | Not Found | Resource doesn't exist |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Server Error | Unexpected errors |
+| Code | Meaning           | When to Use              |
+|------|-------------------|--------------------------|
+| 200  | OK                | Successful GET/PUT       |
+| 201  | Created           | Successful POST          |
+| 204  | No Content        | Successful DELETE        |
+| 400  | Bad Request       | Validation errors        |
+| 401  | Unauthorized      | Missing/invalid token    |
+| 403  | Forbidden         | Insufficient permissions |
+| 404  | Not Found         | Resource doesn't exist   |
+| 429  | Too Many Requests | Rate limit exceeded      |
+| 500  | Server Error      | Unexpected errors        |
 
 ---
 

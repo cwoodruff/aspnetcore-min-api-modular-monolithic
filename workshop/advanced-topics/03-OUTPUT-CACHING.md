@@ -6,7 +6,9 @@
 
 ## Overview
 
-Output Caching caches HTTP responses at the server level, reducing load on your application by serving cached responses directly. This complements service-level caching by operating at the HTTP layer.
+Output Caching caches HTTP responses at the server level, reducing load on your
+application by serving cached responses directly. This complements service-level
+caching by operating at the HTTP layer.
 
 **Duration:** 30-45 minutes
 **Prerequisites:** Basic Minimal API knowledge, understanding of HTTP caching
@@ -16,6 +18,7 @@ Output Caching caches HTTP responses at the server level, reducing load on your 
 ## Learning Objectives
 
 By the end of this guide, you will:
+
 - Understand the difference between output caching and service caching
 - Configure output caching middleware
 - Create custom caching policies
@@ -28,14 +31,14 @@ By the end of this guide, you will:
 
 ### Comparison
 
-| Aspect | Output Caching | Service Caching |
-|--------|---------------|-----------------|
-| Layer | HTTP response | Business logic |
-| What's cached | Entire response (headers + body) | Data objects |
-| Cache key | URL + variations | Custom keys |
-| Invalidation | By tag or path | By key or tag |
-| Best for | Read-heavy public endpoints | Complex queries, computed data |
-| Transparency | Response headers indicate cache | Hidden from client |
+| Aspect        | Output Caching                   | Service Caching                |
+|---------------|----------------------------------|--------------------------------|
+| Layer         | HTTP response                    | Business logic                 |
+| What's cached | Entire response (headers + body) | Data objects                   |
+| Cache key     | URL + variations                 | Custom keys                    |
+| Invalidation  | By tag or path                   | By key or tag                  |
+| Best for      | Read-heavy public endpoints      | Complex queries, computed data |
+| Transparency  | Response headers indicate cache  | Hidden from client             |
 
 ### When to Use Each
 
@@ -462,7 +465,8 @@ builder.Services.AddOutputCache(options =>
 
 ## 8. Cache Locking
 
-Prevent cache stampede (multiple simultaneous requests regenerating the same cached item):
+Prevent cache stampede (multiple simultaneous requests regenerating the same
+cached item):
 
 ```csharp
 builder.Services.AddOutputCache(options =>
@@ -721,14 +725,14 @@ app.Run();
 
 ### Output Caching Quick Reference
 
-| Configuration | Purpose |
-|--------------|---------|
-| `.Expire(TimeSpan)` | Set cache duration |
-| `.Tag("name")` | Add tag for invalidation |
-| `.SetVaryByQuery("param")` | Vary cache by query parameter |
-| `.SetVaryByHeader("header")` | Vary cache by header |
-| `.SetVaryByRouteValue("key")` | Vary cache by route value |
-| `.SetLocking(true)` | Prevent cache stampede |
+| Configuration                 | Purpose                       |
+|-------------------------------|-------------------------------|
+| `.Expire(TimeSpan)`           | Set cache duration            |
+| `.Tag("name")`                | Add tag for invalidation      |
+| `.SetVaryByQuery("param")`    | Vary cache by query parameter |
+| `.SetVaryByHeader("header")`  | Vary cache by header          |
+| `.SetVaryByRouteValue("key")` | Vary cache by route value     |
+| `.SetLocking(true)`           | Prevent cache stampede        |
 
 ### Invalidation Patterns
 
@@ -745,7 +749,8 @@ await Task.WhenAll(
 ### Best Practices
 
 1. **Use tags liberally** — Makes invalidation granular
-2. **Combine with service caching** — Output cache for HTTP, service cache for data
+2. **Combine with service caching** — Output cache for HTTP, service cache for
+   data
 3. **Set appropriate expirations** — Balance freshness vs. performance
 4. **Use locking for expensive operations** — Prevent thundering herd
 5. **Monitor cache hit rates** — Tune policies based on actual usage

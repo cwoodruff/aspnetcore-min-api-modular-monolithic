@@ -40,8 +40,9 @@ public sealed class EmployeeApiModel : BaseApiModel, IConvertModel<Employee>
 
     public string? ReportsToNavigation { get; set; }
 
-    public Employee Convert() =>
-        new()
+    public Employee Convert()
+    {
+        return new Employee
         {
             Id = Id,
             LastName = LastName ?? string.Empty,
@@ -59,4 +60,5 @@ public sealed class EmployeeApiModel : BaseApiModel, IConvertModel<Employee>
             Fax = Fax ?? string.Empty,
             Email = Email ?? string.Empty
         };
+    }
 }

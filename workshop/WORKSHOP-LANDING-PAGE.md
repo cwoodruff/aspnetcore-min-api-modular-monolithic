@@ -8,9 +8,15 @@
 
 ### Master Modern API Architecture Without the Microservices Complexity
 
-Learn to build scalable, maintainable APIs using ASP.NET Core Minimal APIs and the Modular Monolithic pattern. This architecture gives you clean module boundaries and the flexibility to evolve toward microservices—without the operational overhead from day one.
+Learn to build scalable, maintainable APIs using ASP.NET Core Minimal APIs and
+the Modular Monolithic pattern. This architecture gives you clean module
+boundaries and the flexibility to evolve toward microservices—without the
+operational overhead from day one.
 
-In this intensive workshop, you'll go beyond tutorials and build a real-world API with authentication, caching, validation, and testing—all following production-ready patterns used by teams at companies like Shopify, Basecamp, and GitHub.
+In this intensive workshop, you'll go beyond tutorials and build a real-world
+API with authentication, caching, validation, and testing—all following
+production-ready patterns used by teams at companies like Shopify, Basecamp, and
+GitHub.
 
 ---
 
@@ -18,9 +24,12 @@ In this intensive workshop, you'll go beyond tutorials and build a real-world AP
 
 By the end of this workshop, you'll have built a complete modular API featuring:
 
-- **5 Independent Modules** — Music, Orders, Administration, Reporting, and Identity
-- **JWT Authentication** — Secure token issuance with RS256 signing and refresh rotation
-- **Policy-Based Authorization** — Fine-grained permissions per module and tenant
+- **5 Independent Modules** — Music, Orders, Administration, Reporting, and
+  Identity
+- **JWT Authentication** — Secure token issuance with RS256 signing and refresh
+  rotation
+- **Policy-Based Authorization** — Fine-grained permissions per module and
+  tenant
 - **Multi-Tier Caching** — Cache-aside pattern with tag-based invalidation
 - **Input Validation** — FluentValidation with proper error responses
 - **Rate Limiting** — Protect your API from abuse
@@ -31,12 +40,14 @@ By the end of this workshop, you'll have built a complete modular API featuring:
 ## What You'll Learn
 
 ### Architecture & Design
+
 - When to choose Modular Monolith over Microservices (and vice versa)
 - The IModule contract pattern for clean module composition
 - Keeping modules independent while sharing infrastructure
 - Preparing for future extraction to microservices
 
 ### Authentication & Security
+
 - Implementing JWT Bearer authentication from scratch
 - RS256 signing with JWKS endpoint for key distribution
 - Building policy-based authorization with custom handlers
@@ -44,6 +55,7 @@ By the end of this workshop, you'll have built a complete modular API featuring:
 - Rate limiting strategies for API protection
 
 ### Data Access & Performance
+
 - Repository pattern with Entity Framework Core
 - DbContext pooling for high throughput
 - Service layer patterns that encapsulate business logic
@@ -51,6 +63,7 @@ By the end of this workshop, you'll have built a complete modular API featuring:
 - Tag-based cache invalidation on writes
 
 ### Code Quality & Testing
+
 - FluentValidation for clean, testable validation
 - RFC 7807 Problem Details for error responses
 - Integration testing with WebApplicationFactory
@@ -89,25 +102,27 @@ This workshop is designed for:
 
 **Format:** Hands-on coding with instructor guidance
 
-**Approach:** You'll start with a prepared base solution and progressively build features. This lets you focus on learning patterns rather than typing boilerplate.
+**Approach:** You'll start with a prepared base solution and progressively build
+features. This lets you focus on learning patterns rather than typing
+boilerplate.
 
 ### Schedule Overview
 
-| Time | Topic |
-|------|-------|
-| **8:00 AM** | Welcome & Setup |
-| **8:30 AM** | Architecture Deep-Dive & Module Contract |
-| **9:30 AM** | Building Your First Module |
-| **10:30 AM** | *Break* |
-| **10:45 AM** | Authentication & Authorization |
-| **12:00 PM** | *Lunch* |
-| **12:45 PM** | Repository Pattern & Data Access |
-| **1:45 PM** | Service Layer with Caching |
-| **2:45 PM** | *Break* |
-| **3:00 PM** | FluentValidation |
-| **3:45 PM** | Rate Limiting & Security |
-| **4:30 PM** | Testing & Wrap-Up |
-| **5:00 PM** | End |
+| Time         | Topic                                    |
+|--------------|------------------------------------------|
+| **8:00 AM**  | Welcome & Setup                          |
+| **8:30 AM**  | Architecture Deep-Dive & Module Contract |
+| **9:30 AM**  | Building Your First Module               |
+| **10:30 AM** | *Break*                                  |
+| **10:45 AM** | Authentication & Authorization           |
+| **12:00 PM** | *Lunch*                                  |
+| **12:45 PM** | Repository Pattern & Data Access         |
+| **1:45 PM**  | Service Layer with Caching               |
+| **2:45 PM**  | *Break*                                  |
+| **3:00 PM**  | FluentValidation                         |
+| **3:45 PM**  | Rate Limiting & Security                 |
+| **4:30 PM**  | Testing & Wrap-Up                        |
+| **5:00 PM**  | End                                      |
 
 ---
 
@@ -123,20 +138,22 @@ This workshop is designed for:
 
 ## Why Modular Monolith?
 
-> *"Start with a modular monolith, evolve to microservices if and when you need to."*
+> *"Start with a modular monolith, evolve to microservices if and when you need
+to."*
 > — Martin Fowler
 
 The Modular Monolithic architecture offers the best of both worlds:
 
-| Traditional Monolith | Modular Monolith | Microservices |
-|---------------------|------------------|---------------|
-| Fast to start | Fast to start | Slower to start |
-| No boundaries | Clear boundaries | Strong boundaries |
-| Hard to scale teams | Scales with teams | Scales with teams |
-| Simple deployment | Simple deployment | Complex deployment |
-| Hard to evolve | Easy to evolve | Maximum flexibility |
+| Traditional Monolith | Modular Monolith  | Microservices       |
+|----------------------|-------------------|---------------------|
+| Fast to start        | Fast to start     | Slower to start     |
+| No boundaries        | Clear boundaries  | Strong boundaries   |
+| Hard to scale teams  | Scales with teams | Scales with teams   |
+| Simple deployment    | Simple deployment | Complex deployment  |
+| Hard to evolve       | Easy to evolve    | Maximum flexibility |
 
 **Perfect for:**
+
 - Teams of 3-20 developers
 - Projects with evolving requirements
 - Organizations not ready for microservices operational overhead
@@ -160,6 +177,7 @@ The Modular Monolithic architecture offers the best of both worlds:
 Here's a taste of what you'll build:
 
 ### Module Contract
+
 ```csharp
 public interface IModule
 {
@@ -170,6 +188,7 @@ public interface IModule
 ```
 
 ### Service with Caching
+
 ```csharp
 public async Task<AlbumModel?> GetByIdAsync(int id, CancellationToken ct)
 {
@@ -186,6 +205,7 @@ public async Task<AlbumModel?> GetByIdAsync(int id, CancellationToken ct)
 ```
 
 ### Minimal API Endpoint
+
 ```csharp
 group.MapGet("/albums/{id}", [Authorize] async (
     int id,
@@ -205,13 +225,16 @@ group.MapGet("/albums/{id}", [Authorize] async (
 
 ## Testimonials
 
-> *"Finally, an architecture workshop that's practical! I was able to apply these patterns to our project the very next week."*
+> *"Finally, an architecture workshop that's practical! I was able to apply
+these patterns to our project the very next week."*
 > — Senior Developer, Enterprise Software Company
 
-> *"The modular monolith approach was exactly what our team needed. We got clean boundaries without the microservices tax."*
+> *"The modular monolith approach was exactly what our team needed. We got clean
+boundaries without the microservices tax."*
 > — Tech Lead, SaaS Startup
 
-> *"Best .NET workshop I've attended. The hands-on approach made everything click."*
+> *"Best .NET workshop I've attended. The hands-on approach made everything
+click."*
 > — Backend Engineer, Financial Services
 
 ---
@@ -219,13 +242,17 @@ group.MapGet("/albums/{id}", [Authorize] async (
 ## Frequently Asked Questions
 
 **Q: Is this workshop suitable for beginners?**
-A: This workshop is designed for intermediate developers. You should be comfortable with C# and have some ASP.NET Core experience. We won't cover C# basics.
+A: This workshop is designed for intermediate developers. You should be
+comfortable with C# and have some ASP.NET Core experience. We won't cover C#
+basics.
 
 **Q: Do I need to bring my own laptop?**
-A: Yes, please bring a laptop with the prerequisites installed. We'll send setup instructions before the workshop.
+A: Yes, please bring a laptop with the prerequisites installed. We'll send setup
+instructions before the workshop.
 
 **Q: Will I get the source code?**
-A: Absolutely! You'll receive the complete starter solution, reference implementation, and all documentation.
+A: Absolutely! You'll receive the complete starter solution, reference
+implementation, and all documentation.
 
 **Q: Can my team attend together?**
 A: Yes! Team attendance is encouraged. Contact us for group pricing.
@@ -255,7 +282,8 @@ A: Yes, we offer private workshops. Contact us for corporate training options.
 
 ### Private Team Training
 
-Bring this workshop to your organization with customized content for your team's needs.
+Bring this workshop to your organization with customized content for your team's
+needs.
 
 - On-site or virtual delivery
 - Customizable content and duration
@@ -284,4 +312,6 @@ Bring this workshop to your organization with customized content for your team's
 
 ---
 
-*This workshop is based on a production-ready reference implementation available on GitHub. Attendees receive full access to the codebase, documentation, and ongoing updates.*
+*This workshop is based on a production-ready reference implementation available
+on GitHub. Attendees receive full access to the codebase, documentation, and
+ongoing updates.*

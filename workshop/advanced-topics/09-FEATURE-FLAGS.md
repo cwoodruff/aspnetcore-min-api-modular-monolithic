@@ -6,7 +6,9 @@
 
 ## Overview
 
-Feature flags enable you to toggle functionality on/off without deploying new code. They're essential for continuous deployment, A/B testing, gradual rollouts, and managing incomplete features in production.
+Feature flags enable you to toggle functionality on/off without deploying new
+code. They're essential for continuous deployment, A/B testing, gradual
+rollouts, and managing incomplete features in production.
 
 **Duration:** 30-45 minutes
 **Prerequisites:** Basic Minimal API knowledge, understanding of configuration
@@ -16,6 +18,7 @@ Feature flags enable you to toggle functionality on/off without deploying new co
 ## Learning Objectives
 
 By the end of this guide, you will:
+
 - Understand feature flag patterns and use cases
 - Implement Microsoft.FeatureManagement
 - Create custom feature filters
@@ -28,14 +31,14 @@ By the end of this guide, you will:
 
 ### Use Cases
 
-| Use Case | Description |
-|----------|-------------|
+| Use Case                    | Description                                         |
+|-----------------------------|-----------------------------------------------------|
 | **Trunk-based development** | Merge incomplete features, toggle off in production |
-| **Gradual rollout** | Enable for 10%, then 50%, then 100% of users |
-| **A/B testing** | Show different experiences to different user groups |
-| **Kill switch** | Instantly disable problematic features |
-| **Beta features** | Enable for specific users or tenants |
-| **Operational toggles** | Disable expensive features during high load |
+| **Gradual rollout**         | Enable for 10%, then 50%, then 100% of users        |
+| **A/B testing**             | Show different experiences to different user groups |
+| **Kill switch**             | Instantly disable problematic features              |
+| **Beta features**           | Enable for specific users or tenants                |
+| **Operational toggles**     | Disable expensive features during high load         |
 
 ### Flag Types
 
@@ -831,13 +834,13 @@ public class FeatureFlagTests
 
 ### Feature Filter Types
 
-| Filter | Use Case |
-|--------|----------|
-| Boolean | Simple on/off |
-| Percentage | Gradual rollout |
-| Targeting | User/group based |
-| TimeWindow | Time-limited features |
-| Custom | Tenant, subscription, environment |
+| Filter     | Use Case                          |
+|------------|-----------------------------------|
+| Boolean    | Simple on/off                     |
+| Percentage | Gradual rollout                   |
+| Targeting  | User/group based                  |
+| TimeWindow | Time-limited features             |
+| Custom     | Tenant, subscription, environment |
 
 ### Best Practices
 

@@ -6,16 +6,20 @@
 
 ## Overview
 
-OpenTelemetry provides a vendor-neutral standard for collecting telemetry data (traces, metrics, logs) from your applications. It enables distributed tracing across microservices and provides insights into application performance.
+OpenTelemetry provides a vendor-neutral standard for collecting telemetry data (
+traces, metrics, logs) from your applications. It enables distributed tracing
+across microservices and provides insights into application performance.
 
 **Duration:** 45-60 minutes
-**Prerequisites:** Basic Minimal API knowledge, understanding of observability concepts
+**Prerequisites:** Basic Minimal API knowledge, understanding of observability
+concepts
 
 ---
 
 ## Learning Objectives
 
 By the end of this guide, you will:
+
 - Understand traces, metrics, and logs in OpenTelemetry
 - Configure automatic instrumentation for ASP.NET Core
 - Add custom spans and attributes
@@ -28,11 +32,11 @@ By the end of this guide, you will:
 
 ### Three Pillars of Observability
 
-| Pillar | Purpose | Example |
-|--------|---------|---------|
-| **Traces** | Follow request flow | Request → Service A → Database → Service B |
-| **Metrics** | Aggregate measurements | Request count, response time, CPU usage |
-| **Logs** | Event records | Error messages, audit events |
+| Pillar      | Purpose                | Example                                    |
+|-------------|------------------------|--------------------------------------------|
+| **Traces**  | Follow request flow    | Request → Service A → Database → Service B |
+| **Metrics** | Aggregate measurements | Request count, response time, CPU usage    |
+| **Logs**    | Event records          | Error messages, audit events               |
 
 ### Key Concepts
 
@@ -762,17 +766,18 @@ app.Run();
 
 ### OpenTelemetry Components
 
-| Component | Purpose |
-|-----------|---------|
-| Traces | Distributed request tracking |
-| Metrics | Aggregate measurements |
-| Baggage | Cross-service context |
-| Exporters | Send data to backends |
+| Component | Purpose                      |
+|-----------|------------------------------|
+| Traces    | Distributed request tracking |
+| Metrics   | Aggregate measurements       |
+| Baggage   | Cross-service context        |
+| Exporters | Send data to backends        |
 
 ### Best Practices
 
 1. **Use automatic instrumentation** — Start with built-in instrumentations
-2. **Add custom spans for business logic** — Important operations deserve tracking
+2. **Add custom spans for business logic** — Important operations deserve
+   tracking
 3. **Include meaningful attributes** — IDs, counts, statuses
 4. **Sample appropriately** — 100% sampling can be expensive in production
 5. **Correlate with logs** — Include trace IDs in log messages
@@ -780,10 +785,10 @@ app.Run();
 
 ### Useful Exporters
 
-| Backend | Exporter Package |
-|---------|-----------------|
-| Jaeger | `OpenTelemetry.Exporter.OpenTelemetryProtocol` |
-| Zipkin | `OpenTelemetry.Exporter.Zipkin` |
-| Azure Monitor | `Azure.Monitor.OpenTelemetry.Exporter` |
-| Prometheus | `OpenTelemetry.Exporter.Prometheus.AspNetCore` |
-| Console | `OpenTelemetry.Exporter.Console` |
+| Backend       | Exporter Package                               |
+|---------------|------------------------------------------------|
+| Jaeger        | `OpenTelemetry.Exporter.OpenTelemetryProtocol` |
+| Zipkin        | `OpenTelemetry.Exporter.Zipkin`                |
+| Azure Monitor | `Azure.Monitor.OpenTelemetry.Exporter`         |
+| Prometheus    | `OpenTelemetry.Exporter.Prometheus.AspNetCore` |
+| Console       | `OpenTelemetry.Exporter.Console`               |

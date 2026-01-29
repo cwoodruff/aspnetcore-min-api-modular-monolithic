@@ -7,13 +7,16 @@
 
 ## Overview
 
-This session dives deep into the Modular Monolithic architecture pattern. You'll understand why this pattern is valuable, how the IModule contract enables clean composition, and how the host application orchestrates all modules.
+This session dives deep into the Modular Monolithic architecture pattern. You'll
+understand why this pattern is valuable, how the IModule contract enables clean
+composition, and how the host application orchestrates all modules.
 
 ---
 
 ## Learning Objectives
 
 By the end of this session, you will:
+
 - Understand Modular Monolithic architecture benefits and trade-offs
 - Know when to choose this pattern over alternatives
 - Implement the IModule contract pattern
@@ -26,20 +29,21 @@ By the end of this session, you will:
 
 ### 1.1 Architecture Comparison
 
-| Aspect | Traditional Monolith | Modular Monolith | Microservices |
-|--------|---------------------|------------------|---------------|
-| **Deployment** | Single unit | Single unit | Independent services |
-| **Boundaries** | None/weak | Strong (compile-time) | Strong (runtime) |
-| **Communication** | Direct method calls | Direct method calls | Network (HTTP/messaging) |
-| **Data** | Shared database | Shared DB (logical separation) | Per-service database |
-| **Complexity** | Low | Medium | High |
-| **Team Scaling** | Limited | Good | Excellent |
-| **Latency** | Lowest | Low | Higher (network) |
-| **Operational Cost** | Low | Low | High |
+| Aspect               | Traditional Monolith | Modular Monolith               | Microservices            |
+|----------------------|----------------------|--------------------------------|--------------------------|
+| **Deployment**       | Single unit          | Single unit                    | Independent services     |
+| **Boundaries**       | None/weak            | Strong (compile-time)          | Strong (runtime)         |
+| **Communication**    | Direct method calls  | Direct method calls            | Network (HTTP/messaging) |
+| **Data**             | Shared database      | Shared DB (logical separation) | Per-service database     |
+| **Complexity**       | Low                  | Medium                         | High                     |
+| **Team Scaling**     | Limited              | Good                           | Excellent                |
+| **Latency**          | Lowest               | Low                            | Higher (network)         |
+| **Operational Cost** | Low                  | Low                            | High                     |
 
 ### 1.2 When to Choose Modular Monolith
 
 **Ideal Scenarios:**
+
 - Starting a new project with uncertain domain boundaries
 - Team size: 3-15 developers
 - Need rapid development with clean architecture
@@ -47,6 +51,7 @@ By the end of this session, you will:
 - Performance-critical applications (no network overhead)
 
 **Not Ideal When:**
+
 - Different modules need different scaling profiles
 - Independent deployment of modules is required
 - Teams need complete autonomy with technology choices
@@ -87,11 +92,11 @@ public interface IModule
 
 ### 2.2 Contract Responsibilities
 
-| Method | Purpose | When Called |
-|--------|---------|-------------|
-| `Name` | Module identifier for logging/monitoring | Build/Runtime |
-| `RegisterServices` | Register DI services | App startup (before Build) |
-| `MapEndpoints` | Define API routes | App startup (after Build) |
+| Method             | Purpose                                  | When Called                |
+|--------------------|------------------------------------------|----------------------------|
+| `Name`             | Module identifier for logging/monitoring | Build/Runtime              |
+| `RegisterServices` | Register DI services                     | App startup (before Build) |
+| `MapEndpoints`     | Define API routes                        | App startup (after Build)  |
 
 ### 2.3 Design Principles
 
@@ -684,19 +689,20 @@ public static class YourModule
 
 ### URL Patterns by Module
 
-| Module | Base URL | Example Endpoints |
-|--------|----------|-------------------|
-| Music | `/api/music` | `/albums`, `/artists`, `/tracks` |
-| Orders | `/api/orders` | `/invoices`, `/invoice-lines` |
-| Administration | `/api/admin` | `/customers`, `/employees`, `/genres` |
-| Reporting | `/api/reporting` | `/health`, `/data-health` |
-| Identity | `/api/identity` | `/login`, `/refresh`, `/userinfo` |
+| Module         | Base URL         | Example Endpoints                     |
+|----------------|------------------|---------------------------------------|
+| Music          | `/api/music`     | `/albums`, `/artists`, `/tracks`      |
+| Orders         | `/api/orders`    | `/invoices`, `/invoice-lines`         |
+| Administration | `/api/admin`     | `/customers`, `/employees`, `/genres` |
+| Reporting      | `/api/reporting` | `/health`, `/data-health`             |
+| Identity       | `/api/identity`  | `/login`, `/refresh`, `/userinfo`     |
 
 ---
 
 ## Next Session
 
 In **Session 3: Building Your First Module**, you will:
+
 - Create health and data-health endpoints
 - Understand endpoint metadata configuration
 - Implement the complete Reporting module

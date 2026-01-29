@@ -3,7 +3,7 @@ using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class Employee : BaseEntity, IConvertModel<EmployeeApiModel>
+public class Employee : BaseEntity, IConvertModel<EmployeeApiModel>
 {
     public string? LastName { get; set; }
 
@@ -39,8 +39,9 @@ public partial class Employee : BaseEntity, IConvertModel<EmployeeApiModel>
 
     public virtual Employee? ReportsToNavigation { get; set; }
 
-    public EmployeeApiModel Convert() =>
-        new()
+    public EmployeeApiModel Convert()
+    {
+        return new EmployeeApiModel
         {
             Id = Id,
             LastName = LastName,
@@ -58,4 +59,5 @@ public partial class Employee : BaseEntity, IConvertModel<EmployeeApiModel>
             Fax = Fax,
             Email = Email
         };
+    }
 }

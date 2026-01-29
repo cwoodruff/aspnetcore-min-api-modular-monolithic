@@ -9,10 +9,12 @@ public sealed class PlaylistApiModel : BaseApiModel, IConvertModel<Playlist>
 
     public ICollection<TrackApiModel> Tracks { get; set; } = new List<TrackApiModel>();
 
-    public Playlist Convert() =>
-        new()
+    public Playlist Convert()
+    {
+        return new Playlist
         {
             Id = Id,
             Name = Name
         };
+    }
 }

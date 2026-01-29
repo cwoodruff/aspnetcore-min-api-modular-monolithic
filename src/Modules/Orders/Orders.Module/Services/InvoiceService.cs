@@ -1,7 +1,6 @@
 using FluentValidation;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
 using SharedKernel.Persistence.Extensions;
 using SharedKernel.Persistence.Repositories;
 
@@ -13,16 +12,16 @@ public class InvoiceService(
     ICacheKeyComposer keys,
     IValidator<InvoiceApiModel> validator) : IInvoiceService
 {
-    private readonly IValidator<InvoiceApiModel> _validator = validator;
     private static readonly string[] InvoiceTags = ["orders:invoice", "orders:invoice:by-id"];
+    private readonly IValidator<InvoiceApiModel> _validator = validator;
 
     public async Task<object?> GetInvoiceByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "orders",
-            entity: "invoice",
-            version: "v1",
-            discriminator: $"by-id:{id}");
+            "orders",
+            "invoice",
+            "v1",
+            $"by-id:{id}");
 
         return await cache.GetOrAddAsync<object?>(key, async _ =>
         {
@@ -44,10 +43,10 @@ public class InvoiceService(
     public async Task<IEnumerable<object>> GetAllInvoicesAsync(CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "orders",
-            entity: "invoice",
-            version: "v1",
-            discriminator: "all");
+            "orders",
+            "invoice",
+            "v1",
+            "all");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -71,10 +70,10 @@ public class InvoiceService(
     public async Task<IEnumerable<object>> GetInvoicesByCustomerIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "orders",
-            entity: "invoice",
-            version: "v1",
-            discriminator: $"by-customer:{id}");
+            "orders",
+            "invoice",
+            "v1",
+            $"by-customer:{id}");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -128,10 +127,10 @@ public class InvoiceService(
             // Invalidate cache
             await cache.RemoveByTagAsync(InvoiceTags[0], ct);
             var key = keys.Compose(
-                moduleName: "orders",
-                entity: "invoice",
-                version: "v1",
-                discriminator: $"by-id:{model.Id}");
+                "orders",
+                "invoice",
+                "v1",
+                $"by-id:{model.Id}");
             await cache.RemoveAsync(key, ct);
         }
 

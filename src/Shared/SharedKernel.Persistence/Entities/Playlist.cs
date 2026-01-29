@@ -3,7 +3,7 @@ using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class Playlist : BaseEntity, IConvertModel<PlaylistApiModel>
+public class Playlist : BaseEntity, IConvertModel<PlaylistApiModel>
 {
     public string? Name { get; set; }
 
@@ -11,10 +11,12 @@ public partial class Playlist : BaseEntity, IConvertModel<PlaylistApiModel>
 
     public virtual ICollection<PlaylistTrack> PlaylistTracks { get; set; } = new List<PlaylistTrack>();
 
-    public PlaylistApiModel Convert() =>
-        new()
+    public PlaylistApiModel Convert()
+    {
+        return new PlaylistApiModel
         {
             Id = Id,
             Name = Name
         };
+    }
 }

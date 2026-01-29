@@ -36,18 +36,15 @@ public static class IdentityAuthExtensions
         services.AddSingleton<IAuthorizationHandler, TenantAuthorizationHandler>();
 
         // Authorization policies (by permissions)
-        services.AddAuthorization(options =>
-        {
-            PolicyRegistry.Register(options);
-        });
+        services.AddAuthorization(options => { PolicyRegistry.Register(options); });
 
         // Authentication: JWT Bearer
         services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-        .AddJwtBearer();
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer();
 
         services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
             .Configure<IKeyMaterialService, IOptions<JwtAuthOptions>>((options, keys, jwtOptsAccessor) =>
@@ -81,15 +78,18 @@ public static class IdentityAuthExtensions
                         // Normalize Authorization header in case Swagger/UI or clients send 'Bearer Bearer <token>'
                         // We tolerate a duplicated scheme prefix by trimming one extra occurrence.
                         var authHeader = ctx.Request.Headers.Authorization.ToString();
-                        if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                        if (!string.IsNullOrWhiteSpace(authHeader) &&
+                            authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
                         {
                             var token = authHeader.Substring("Bearer ".Length).Trim();
                             if (token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
                             {
                                 token = token.Substring("Bearer ".Length).Trim();
                             }
+
                             ctx.Token = token;
                         }
+
                         return Task.CompletedTask;
                     },
                     OnTokenValidated = ctx =>
@@ -101,7 +101,8 @@ public static class IdentityAuthExtensions
                             return Task.CompletedTask;
                         }
 
-                        var sub = principal.FindFirst("sub")?.Value ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                        var sub = principal.FindFirst("sub")?.Value ??
+                                  principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                         if (string.IsNullOrWhiteSpace(sub))
                         {
                             ctx.Fail("Missing required 'sub' claim");
@@ -113,7 +114,7 @@ public static class IdentityAuthExtensions
                         return Task.CompletedTask;
                     },
                     OnAuthenticationFailed = ctx => Task.CompletedTask,
-                    OnChallenge = ctx => Task.CompletedTask,
+                    OnChallenge = ctx => Task.CompletedTask
                 };
             });
 

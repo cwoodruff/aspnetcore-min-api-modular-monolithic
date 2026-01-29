@@ -3,7 +3,8 @@ namespace SharedKernel.Caching;
 public interface ICacheFacade
 {
     // Cache-aside helper
-    Task<T?> GetOrAddAsync<T>(CacheKey key, Func<CancellationToken, Task<T?>> factory, CacheEntryOptions? options = null, CancellationToken ct = default);
+    Task<T?> GetOrAddAsync<T>(CacheKey key, Func<CancellationToken, Task<T?>> factory,
+        CacheEntryOptions? options = null, CancellationToken ct = default);
 
     Task SetAsync<T>(CacheKey key, T value, CacheEntryOptions? options = null, CancellationToken ct = default);
 

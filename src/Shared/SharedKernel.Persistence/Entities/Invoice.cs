@@ -3,7 +3,7 @@ using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class Invoice : BaseEntity, IConvertModel<InvoiceApiModel>
+public class Invoice : BaseEntity, IConvertModel<InvoiceApiModel>
 {
     public int? CustomerId { get; set; }
 
@@ -25,8 +25,9 @@ public partial class Invoice : BaseEntity, IConvertModel<InvoiceApiModel>
 
     public virtual ICollection<InvoiceLine> InvoiceLines { get; set; } = new List<InvoiceLine>();
 
-    public InvoiceApiModel Convert() =>
-        new()
+    public InvoiceApiModel Convert()
+    {
+        return new InvoiceApiModel
         {
             Id = Id,
             CustomerId = CustomerId,
@@ -38,4 +39,5 @@ public partial class Invoice : BaseEntity, IConvertModel<InvoiceApiModel>
             BillingPostalCode = BillingPostalCode,
             Total = Total
         };
+    }
 }

@@ -3,7 +3,7 @@ using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class Track : BaseEntity, IConvertModel<TrackApiModel>
+public class Track : BaseEntity, IConvertModel<TrackApiModel>
 {
     public string? Name { get; set; }
 
@@ -33,8 +33,9 @@ public partial class Track : BaseEntity, IConvertModel<TrackApiModel>
 
     public virtual ICollection<PlaylistTrack> PlaylistTracks { get; set; } = new List<PlaylistTrack>();
 
-    public TrackApiModel Convert() =>
-        new()
+    public TrackApiModel Convert()
+    {
+        return new TrackApiModel
         {
             Id = Id,
             Name = Name,
@@ -46,4 +47,5 @@ public partial class Track : BaseEntity, IConvertModel<TrackApiModel>
             Bytes = Bytes,
             UnitPrice = UnitPrice
         };
+    }
 }

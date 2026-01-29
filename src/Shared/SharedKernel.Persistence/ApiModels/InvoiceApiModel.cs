@@ -25,8 +25,9 @@ public sealed class InvoiceApiModel : BaseApiModel, IConvertModel<Invoice>
 
     public ICollection<InvoiceLineApiModel> InvoiceLines { get; set; } = new List<InvoiceLineApiModel>();
 
-    public Invoice Convert() =>
-        new()
+    public Invoice Convert()
+    {
+        return new Invoice
         {
             Id = Id,
             CustomerId = CustomerId,
@@ -38,4 +39,5 @@ public sealed class InvoiceApiModel : BaseApiModel, IConvertModel<Invoice>
             BillingPostalCode = BillingPostalCode,
             Total = Total
         };
+    }
 }

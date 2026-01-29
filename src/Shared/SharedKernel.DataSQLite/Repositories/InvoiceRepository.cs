@@ -8,12 +8,15 @@ namespace SharedKernel.DataSQLite.Repositories;
 
 public class InvoiceRepository(AppDbContext context) : BaseRepository<Invoice>(context), IInvoiceRepository
 {
-    public async Task<List<Invoice>> GetByCustomerId(int id) =>
-        await _context.Invoices.Where(a => a.CustomerId == id)
-                .AsNoTracking().ToListAsync();
+    public async Task<List<Invoice>> GetByCustomerId(int id)
+    {
+        return await _context.Invoices.Where(a => a.CustomerId == id)
+            .AsNoTracking().ToListAsync();
+    }
 
-    public async Task<InvoiceApiModel> GetById(int id) =>
-        await _context.Invoices
+    public async Task<InvoiceApiModel> GetById(int id)
+    {
+        return await _context.Invoices
             .Where(i => i.Id == id)
             .Select(i => new InvoiceApiModel
             {
@@ -26,22 +29,24 @@ public class InvoiceRepository(AppDbContext context) : BaseRepository<Invoice>(c
                 BillingCountry = i.BillingCountry,
                 BillingPostalCode = i.BillingPostalCode,
                 Total = i.Total,
-                Customer = i.Customer == null ? null : new CustomerApiModel
-                {
-                    Id = i.Customer.Id,
-                    FirstName = i.Customer.FirstName,
-                    LastName = i.Customer.LastName,
-                    Company = i.Customer.Company,
-                    Email = i.Customer.Email,
-                    Phone = i.Customer.Phone,
-                    SupportRepId = i.Customer.SupportRepId,
-                    SupportRepName = i.Customer.SupportRep != null
-                        ? (i.Customer.SupportRep.FirstName + " " + i.Customer.SupportRep.LastName)
-                        : null,
-                    // Keep nested objects shallow
-                    Invoices = new List<InvoiceApiModel>(),
-                    SupportRep = null
-                },
+                Customer = i.Customer == null
+                    ? null
+                    : new CustomerApiModel
+                    {
+                        Id = i.Customer.Id,
+                        FirstName = i.Customer.FirstName,
+                        LastName = i.Customer.LastName,
+                        Company = i.Customer.Company,
+                        Email = i.Customer.Email,
+                        Phone = i.Customer.Phone,
+                        SupportRepId = i.Customer.SupportRepId,
+                        SupportRepName = i.Customer.SupportRep != null
+                            ? (i.Customer.SupportRep.FirstName + " " + i.Customer.SupportRep.LastName)
+                            : null,
+                        // Keep nested objects shallow
+                        Invoices = new List<InvoiceApiModel>(),
+                        SupportRep = null
+                    },
                 InvoiceLines = i.InvoiceLines.Select(il => new InvoiceLineApiModel
                 {
                     Id = il.Id,
@@ -56,4 +61,5 @@ public class InvoiceRepository(AppDbContext context) : BaseRepository<Invoice>(c
             })
             .AsNoTracking()
             .SingleAsync();
+    }
 }

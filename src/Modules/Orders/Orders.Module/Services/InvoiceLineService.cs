@@ -1,7 +1,6 @@
 using FluentValidation;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
 using SharedKernel.Persistence.Extensions;
 using SharedKernel.Persistence.Repositories;
 
@@ -13,16 +12,16 @@ public class InvoiceLineService(
     ICacheKeyComposer keys,
     IValidator<InvoiceLineApiModel> validator) : IInvoiceLineService
 {
-    private readonly IValidator<InvoiceLineApiModel> _validator = validator;
     private static readonly string[] InvoiceLineTags = ["orders:invoiceline", "orders:invoiceline:by-id"];
+    private readonly IValidator<InvoiceLineApiModel> _validator = validator;
 
     public async Task<object?> GetInvoiceLineByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "orders",
-            entity: "invoiceline",
-            version: "v1",
-            discriminator: $"by-id:{id}");
+            "orders",
+            "invoiceline",
+            "v1",
+            $"by-id:{id}");
 
         return await cache.GetOrAddAsync<object?>(key, async _ =>
         {
@@ -44,10 +43,10 @@ public class InvoiceLineService(
     public async Task<IEnumerable<object>> GetAllInvoiceLinesAsync(CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "orders",
-            entity: "invoiceline",
-            version: "v1",
-            discriminator: "all");
+            "orders",
+            "invoiceline",
+            "v1",
+            "all");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -71,10 +70,10 @@ public class InvoiceLineService(
     public async Task<IEnumerable<object>> GetInvoiceLinesByInvoiceIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "orders",
-            entity: "invoiceline",
-            version: "v1",
-            discriminator: $"by-invoice:{id}");
+            "orders",
+            "invoiceline",
+            "v1",
+            $"by-invoice:{id}");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -98,10 +97,10 @@ public class InvoiceLineService(
     public async Task<IEnumerable<object>> GetInvoiceLinesByTrackIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "orders",
-            entity: "invoiceline",
-            version: "v1",
-            discriminator: $"by-track:{id}");
+            "orders",
+            "invoiceline",
+            "v1",
+            $"by-track:{id}");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -155,10 +154,10 @@ public class InvoiceLineService(
             // Invalidate cache
             await cache.RemoveByTagAsync(InvoiceLineTags[0], ct);
             var key = keys.Compose(
-                moduleName: "orders",
-                entity: "invoiceline",
-                version: "v1",
-                discriminator: $"by-id:{model.Id}");
+                "orders",
+                "invoiceline",
+                "v1",
+                $"by-id:{model.Id}");
             await cache.RemoveAsync(key, ct);
         }
 

@@ -1,9 +1,12 @@
 # ModularMonolith.Api (ASP.NET Core 10 Minimal APIs)
 
-Production-ready modular monolith starter using ASP.NET Core 10 (net10.0) and Minimal APIs. It demonstrates module
-composition via a simple IModule contract, clear boundaries, and integration tests.
+Production-ready modular monolith starter using ASP.NET Core 10 (net10.0) and
+Minimal APIs. It demonstrates module
+composition via a simple IModule contract, clear boundaries, and integration
+tests.
 
-Looking to recreate this solution from scratch? See the step-by-step guide in docs/Walkthrough.md.
+Looking to recreate this solution from scratch? See the step-by-step guide in
+docs/Walkthrough.md.
 
 ## Solution layout
 
@@ -54,19 +57,25 @@ public interface IModule
 }
 ```
 
-Each module exposes a public static <ModuleName>Module with a nested public sealed class Modules : IModule that registers services and maps endpoints (note the plural "Modules", e.g., MusicModule.Modules). Only the IModule is public outside the module; all other types should remain internal by default.
+Each module exposes a public static <ModuleName>Module with a nested public
+sealed class Modules : IModule that registers services and maps endpoints (note
+the plural "Modules", e.g., MusicModule.Modules). Only the IModule is public
+outside the module; all other types should remain internal by default.
 
 ## Service layer architecture
 
-Each module implements a service layer that encapsulates business logic, validation, and caching:
+Each module implements a service layer that encapsulates business logic,
+validation, and caching:
 
 ### Service responsibilities
+
 - **Input validation** - FluentValidation before persistence operations
 - **Cache management** - Cache-aside pattern with tag-based invalidation
 - **Repository orchestration** - Coordinate data access
 - **Error handling** - Graceful degradation with null/empty returns
 
 ### Service pattern example
+
 ```csharp
 public sealed class CustomerService(
     ICustomerRepository repo,
@@ -104,16 +113,17 @@ public sealed class CustomerService(
 
 ### Services by module
 
-| Module | Services |
-|--------|----------|
+| Module         | Services                                                         |
+|----------------|------------------------------------------------------------------|
 | Administration | CustomerService, EmployeeService, GenreService, MediaTypeService |
-| Music | ArtistService, AlbumService, TrackService, PlaylistService |
-| Orders | InvoiceService, InvoiceLineService |
-| Identity | TokenService, InMemoryUserStore, InMemoryRefreshTokenStore |
+| Music          | ArtistService, AlbumService, TrackService, PlaylistService       |
+| Orders         | InvoiceService, InvoiceLineService                               |
+| Identity       | TokenService, InMemoryUserStore, InMemoryRefreshTokenStore       |
 
 ## Validation with FluentValidation
 
-All input validation uses FluentValidation with validators in `SharedKernel.Persistence/Validation/`:
+All input validation uses FluentValidation with validators in
+`SharedKernel.Persistence/Validation/`:
 
 ```csharp
 public class CustomerValidator : AbstractValidator<CustomerApiModel>
@@ -130,15 +140,18 @@ public class CustomerValidator : AbstractValidator<CustomerApiModel>
 ```
 
 Validators are auto-registered via assembly scanning:
+
 ```csharp
 services.AddValidatorsFromAssemblyContaining<CustomerValidator>();
 ```
 
-See [docs/validation-strategy.md](docs/validation-strategy.md) for complete documentation.
+See [docs/validation-strategy.md](docs/validation-strategy.md) for complete
+documentation.
 
 ## Endpoints
 
-The host discovers all modules and composes their endpoints under conventional groups:
+The host discovers all modules and composes their endpoints under conventional
+groups:
 
 - GET /api/music/health
 - GET /api/music/data-health
@@ -170,10 +183,14 @@ A root endpoint GET / returns similar metadata with module: "root".
 
 - Build: `dotnet build ModularMonolith.Api.sln`
 - Run: `dotnet run --project src/ModularMonolith.Api`
-- Swagger UI: http://localhost:5043/swagger (or the https port from launch settings)
+- Swagger UI: http://localhost:5043/swagger (or the https port from launch
+  settings)
 - Tests: `dotnet test ModularMonolith.Api.sln`
-  - Test coverage examples include root health, per-module health endpoints, and authenticated flows (e.g., obtaining a JWT and calling protected Music endpoints).
-  - The host exposes a public partial Program class to support Microsoft.AspNetCore.Mvc.Testing’s WebApplicationFactory.
+    - Test coverage examples include root health, per-module health endpoints,
+      and authenticated flows (e.g., obtaining a JWT and calling protected Music
+      endpoints).
+    - The host exposes a public partial Program class to support
+      Microsoft.AspNetCore.Mvc.Testing’s WebApplicationFactory.
 
 ### Example curl commands
 
@@ -195,132 +212,206 @@ docker build -t modular-monolith-api .
 docker run -p 8080:8080 modular-monolith-api
 ```
 
-- Dev ports vs Docker ports: When running locally via launchSettings.json the app listens on http://localhost:5043 and https://localhost:7043. In the container, ASPNETCORE_URLS is set to http://+:8080, so expose/browse http://localhost:8080.
+- Dev ports vs Docker ports: When running locally via launchSettings.json the
+  app listens on http://localhost:5043 and https://localhost:7043. In the
+  container, ASPNETCORE_URLS is set to http://+:8080, so
+  expose/browse http://localhost:8080.
 
 Then browse http://localhost:8080/swagger
 
 ## Notes
 
 ### Rate limiting
-- Minimal in-app rate limiting is enabled (Option A). The API host registers a named policy `global:public-anon` with a fixed window of 60 requests per 60 seconds and applies it to the root endpoint (`GET /`).
-- Central scaffolding still lives under `src/Shared/SharedKernel/TrafficControl` for future expansion, but wiring is now active via `AddRateLimiter(...)` and `UseRateLimiter()` in `Program.cs`.
-- To protect additional endpoints, add `.RequireRateLimiting("global:public-anon")` (or other policies you add) to the desired endpoint mapping. To exempt an endpoint, use `.DisableRateLimiting()`.
+
+- Minimal in-app rate limiting is enabled (Option A). The API host registers a
+  named policy `global:public-anon` with a fixed window of 60 requests per 60
+  seconds and applies it to the root endpoint (`GET /`).
+- Central scaffolding still lives under `src/Shared/SharedKernel/TrafficControl`
+  for future expansion, but wiring is now active via `AddRateLimiter(...)` and
+  `UseRateLimiter()` in `Program.cs`.
+- To protect additional endpoints, add
+  `.RequireRateLimiting("global:public-anon")` (or other policies you add) to
+  the desired endpoint mapping. To exempt an endpoint, use
+  `.DisableRateLimiting()`.
 - Example:
+
 ```
 app.MapGet("/api/reporting/exports", Handler)
    .RequireRateLimiting("global:public-anon");
 ```
 
 ### Logging and observability
-- Uses built-in ASP.NET Core logging by default. No Serilog or OpenTelemetry is wired out-of-the-box; you can add them later according to your needs.
+
+- Uses built-in ASP.NET Core logging by default. No Serilog or OpenTelemetry is
+  wired out-of-the-box; you can add them later according to your needs.
 
 ### Using Swagger & OpenAPI
 
 #### Identity endpoints summary
-- POST /api/identity/login — Issues an access token and refresh token for valid credentials. AllowAnonymous.
-- POST /api/identity/refresh — Exchanges a valid refresh token for a new access token. AllowAnonymous.
-- POST /api/identity/logout — Revokes a refresh token for the current user. Requires Authorization.
-- GET /api/identity/userinfo — Returns basic claims (sub, name, email, roles, permissions). Requires Authorization.
-- GET /api/identity/.well-known/jwks.json — Exposes the JWKS document for the signing key. AllowAnonymous.
+
+- POST /api/identity/login — Issues an access token and refresh token for valid
+  credentials. AllowAnonymous.
+- POST /api/identity/refresh — Exchanges a valid refresh token for a new access
+  token. AllowAnonymous.
+- POST /api/identity/logout — Revokes a refresh token for the current user.
+  Requires Authorization.
+- GET /api/identity/userinfo — Returns basic claims (sub, name, email, roles,
+  permissions). Requires Authorization.
+- GET /api/identity/.well-known/jwks.json — Exposes the JWKS document for the
+  signing key. AllowAnonymous.
 - Swagger UI is enabled by default at /swagger when you run the API host.
 - The OpenAPI document is generated with title "Modular Monolith API" (v1).
 - JWT Bearer auth is integrated into Swagger:
-  - Click the "Authorize" button in Swagger UI and paste the access token only (do NOT include the `Bearer ` prefix). Swagger will add it automatically.
-  - Obtain a token via `POST /api/identity/login` with one of the demo users below.
-- Once authorized, protected endpoints (e.g., Music Albums) can be executed directly from Swagger UI.
+    - Click the "Authorize" button in Swagger UI and paste the access token
+      only (do NOT include the `Bearer ` prefix). Swagger will add it
+      automatically.
+    - Obtain a token via `POST /api/identity/login` with one of the demo users
+      below.
+- Once authorized, protected endpoints (e.g., Music Albums) can be executed
+  directly from Swagger UI.
 
 #### Demo users and module access
-Use these credentials with `POST /api/identity/login` to receive an access_token:
+
+Use these credentials with `POST /api/identity/login` to receive an
+access_token:
 
 - demo / demo123! — Music module only
-  - permissions: [music.read]
-  - roles: [User]
-  - tenant: tenant-1
+    - permissions: [music.read]
+    - roles: [User]
+    - tenant: tenant-1
 - usermo / usermo123! — Music and Orders modules
-  - permissions: [music.read, orders.read]
-  - roles: [User]
-  - tenant: tenant-1
+    - permissions: [music.read, orders.read]
+    - roles: [User]
+    - tenant: tenant-1
 - report / report123! — Reporting module only
-  - permissions: [report.view]
-  - roles: [User]
-  - tenant: tenant-1
+    - permissions: [report.view]
+    - roles: [User]
+    - tenant: tenant-1
 - admin / admin123! — All modules (administrator)
-  - permissions: [music.read, music.write, orders.read, orders.write, admin.users.manage, report.view]
-  - roles: [Admin]
-  - tenant: tenant-1
+    -
+    permissions: [music.read, music.write, orders.read, orders.write, admin.users.manage, report.view]
+    - roles: [Admin]
+    - tenant: tenant-1
 
 #### JWT for Music endpoints
+
 - Where JWT is processed in code:
-  - Global authentication/authorization is configured in `src/Modules/Identity/Identity.Module/Extensions/IdentityAuthExtensions.cs`.
-  - Music endpoints opt-in to authorization using `.RequireAuthorization(...)` in each endpoint mapping.
-  - Example: `GET /api/music/albums/{id}` is protected by `music.read` and `tenant.scoped` policies in `src/Modules/Music/Music.Module/Endpoints/AlbumEndpoints.cs`.
+    - Global authentication/authorization is configured in
+      `src/Modules/Identity/Identity.Module/Extensions/IdentityAuthExtensions.cs`.
+    - Music endpoints opt-in to authorization using `.RequireAuthorization(...)`
+      in each endpoint mapping.
+    - Example: `GET /api/music/albums/{id}` is protected by `music.read` and
+      `tenant.scoped` policies in
+      `src/Modules/Music/Music.Module/Endpoints/AlbumEndpoints.cs`.
 - How to use JWT in Swagger for Music endpoints:
-  1) Call `POST /api/identity/login` to receive an `access_token`.
-  2) In Swagger UI, click the Authorize button and enter: `<access_token>`.
-  3) For tenant-scoped endpoints, set a tenant hint (current routes do not include a {tenant} segment by default):
-     - Preferred: Header `X-Tenant-Id: <your-tenant>`.
-     - Optional: A route value may be used if a module defines such a template in the future (e.g., `/api/music/{tenant}/albums/{id}` — hypothetical, not defined by default).
-  4) Invoke Music endpoints. You will see:
-     - 200 OK when the token includes `permissions: ["music.read"]` and tenant scope matches.
-     - 403 Forbidden if missing permission or tenant mismatch.
-     - 401 Unauthorized if no/invalid token is provided.
+    1) Call `POST /api/identity/login` to receive an `access_token`.
+    2) In Swagger UI, click the Authorize button and enter: `<access_token>`.
+    3) For tenant-scoped endpoints, set a tenant hint (current routes do not
+       include a {tenant} segment by default):
+        - Preferred: Header `X-Tenant-Id: <your-tenant>`.
+        - Optional: A route value may be used if a module defines such a
+          template in the future (e.g., `/api/music/{tenant}/albums/{id}` —
+          hypothetical, not defined by default).
+    4) Invoke Music endpoints. You will see:
+        - 200 OK when the token includes `permissions: ["music.read"]` and
+          tenant scope matches.
+        - 403 Forbidden if missing permission or tenant mismatch.
+        - 401 Unauthorized if no/invalid token is provided.
 
 ### New: Music Albums Endpoint (GET /api/music/albums/{id})
+
 - Path: GET /api/music/albums/{id}
 - Module: Music
 - Authorization: Requires a valid JWT with the permission claim "music.read".
-- Caching: Uses the central cache facade (ICacheFacade) with a namespaced key composed by CacheKeyComposer.
-  - Key shape example: {env}:{app}:music:album:v1::::by-id:{id}
-  - Default TTL: 20 minutes (with jitter to avoid stampede). Adjust via Caching:* configuration if needed.
+- Caching: Uses the central cache facade (ICacheFacade) with a namespaced key
+  composed by CacheKeyComposer.
+    - Key shape example: {env}:{app}:music:album:v1::::by-id:{id}
+    - Default TTL: 20 minutes (with jitter to avoid stampede). Adjust via
+      Caching:* configuration if needed.
 - Data source: SQLite (chinook.db) via AppDbContext; includes Artist info.
 
 How it works
-- On request, the endpoint composes a cache key (module=music, entity=album, version=v1, discriminator=by-id:{id}).
-- It calls cache.GetOrAddAsync(key, factory) where factory queries the database if the cache is missed.
-- Non-existent IDs return 404 (not cached). Existing albums are cached for faster subsequent reads.
-- The endpoint is protected; include Authorization: Bearer <token> header. Obtain a token via POST /api/identity/login with demo credentials: {"username":"demo","password":"demo123!"}.
+
+- On request, the endpoint composes a cache key (module=music, entity=album,
+  version=v1, discriminator=by-id:{id}).
+- It calls cache.GetOrAddAsync(key, factory) where factory queries the database
+  if the cache is missed.
+- Non-existent IDs return 404 (not cached). Existing albums are cached for
+  faster subsequent reads.
+- The endpoint is protected; include Authorization: Bearer <token> header.
+  Obtain a token via POST /api/identity/login with demo credentials: {"
+  username":"demo","password":"demo123!"}.
 
 Example
+
 1) Get token
+
 ```
 curl -s -X POST http://localhost:5043/api/identity/login \
   -H "Content-Type: application/json" \
   -d '{"username":"demo","password":"demo123!"}'
 ```
+
 Response contains access_token.
 
 2) Fetch album 1 using token
+
 ```
 TOKEN="<paste-access-token>"
 curl -H "Authorization: Bearer $TOKEN" http://localhost:5043/api/music/albums/1
 ```
 
 Notes
-- To change caching behavior globally or per environment, use appsettings or environment variables under the Caching:* section. The cache is L1-only by default; you can enable L2 (e.g., Redis) later without code changes.
-- If you later add write endpoints that mutate album data, evict the corresponding cache key(s) or bump the version prefix (v1→v2) to ensure readers don’t see stale data.
+
+- To change caching behavior globally or per environment, use appsettings or
+  environment variables under the Caching:* section. The cache is L1-only by
+  default; you can enable L2 (e.g., Redis) later without code changes.
+- If you later add write endpoints that mutate album data, evict the
+  corresponding cache key(s) or bump the version prefix (v1→v2) to ensure
+  readers don’t see stale data.
 
 - Swagger is enabled with tags per module.
-- CORS policy named "Default" allows common localhost dev origins: http(s)://localhost:3000, 4200, 5173.
-- ProblemDetails middleware is enabled via UseExceptionHandler and AddProblemDetails.
-- No cross-module references; only the host references the modules and SharedKernel.
+- CORS policy named "Default" allows common localhost dev origins: http(s):
+  //localhost:3000, 4200, 5173.
+- ProblemDetails middleware is enabled via UseExceptionHandler and
+  AddProblemDetails.
+- No cross-module references; only the host references the modules and
+  SharedKernel.
 
 ## Data and persistence
 
-- EF Core plan (single SQLite DbContext shared by all modules): see docs/EFCore-Plan.md
-- Database file location: The app prefers src/ModularMonolith.Api/data/chinook.db (under the host content root) and falls back to repo-root /data/chinook.db if not found. At startup, Program.cs auto-detects the file and populates ConnectionStrings:AppDatabase when not provided.
+- EF Core plan (single SQLite DbContext shared by all modules): see
+  docs/EFCore-Plan.md
+- Database file location: The app prefers
+  src/ModularMonolith.Api/data/chinook.db (under the host content root) and
+  falls back to repo-root /data/chinook.db if not found. At startup, Program.cs
+  auto-detects the file and populates ConnectionStrings:AppDatabase when not
+  provided.
 
 ### DbContext pooling and Repository pattern
 
 #### Connection string configuration
-- You can set the SQLite connection via appsettings (ConnectionStrings:AppDatabase), environment variables (ConnectionStrings__AppDatabase), or rely on auto-discovery in Program.cs which sets the key at runtime when not provided.
+
+- You can set the SQLite connection via appsettings (ConnectionStrings:
+  AppDatabase), environment variables (ConnectionStrings__AppDatabase), or rely
+  on auto-discovery in Program.cs which sets the key at runtime when not
+  provided.
 
 ### Caching configuration
-- Tier: Caching:Tier can be "L1" (default, in-memory only) or "L1L2" (adds an optional distributed cache if available/configured).
-- Provider: Caching:Provider can be "InMemory" by default; use your own registration for Redis/others and the facade will detect IDistributedCache.
-- Defaults: CacheEntryOptions support AbsoluteExpirationRelativeToNow, SlidingExpiration, Jitter (±10% by default) to avoid stampedes.
-- Cache key composition: Keys include environment and service name components, derived from configuration keys ASPNETCORE_ENVIRONMENT/DOTNET_ENVIRONMENT and ServiceName (defaults to "mmapi"). See SharedKernel/Caching/CacheKeyComposer.cs.
+
+- Tier: Caching:Tier can be "L1" (default, in-memory only) or "L1L2" (adds an
+  optional distributed cache if available/configured).
+- Provider: Caching:Provider can be "InMemory" by default; use your own
+  registration for Redis/others and the facade will detect IDistributedCache.
+- Defaults: CacheEntryOptions support AbsoluteExpirationRelativeToNow,
+  SlidingExpiration, Jitter (±10% by default) to avoid stampedes.
+- Cache key composition: Keys include environment and service name components,
+  derived from configuration keys ASPNETCORE_ENVIRONMENT/DOTNET_ENVIRONMENT and
+  ServiceName (defaults to "mmapi"). See
+  SharedKernel/Caching/CacheKeyComposer.cs.
 
 ### Service-level caching
+
 All module services implement caching using the cache-aside pattern:
 
 ```csharp
@@ -336,21 +427,33 @@ return await cache.GetOrAddAsync<CustomerApiModel?>(key, async _ => await repo.G
 await cache.RemoveByTagAsync(CustomerTags[0], ct);
 ```
 
-See [docs/caching-strategy.md](docs/caching-strategy.md) for complete documentation including service-level patterns.
+See [docs/caching-strategy.md](docs/caching-strategy.md) for complete
+documentation including service-level patterns.
 
-This solution uses the Repository pattern with DbContext pooling for high throughput:
+This solution uses the Repository pattern with DbContext pooling for high
+throughput:
 
-- Repository interfaces: Defined in `src/Shared/SharedKernel.Persistence/Repositories/` (e.g., `IAlbumRepository`, `IArtistRepository`, etc.).
-- Repository implementations: Defined in `src/Shared/SharedKernel.DataSQLite/Repositories/` with a `BaseRepository<T>` providing common CRUD operations.
-- How the DbContext is registered: `AddDbContextPool<AppDbContext>(..., poolSize: 128)` in `src/Shared/SharedKernel.Persistence/PersistenceRegistration.cs`.
-- Why pooling matters: The 128 AppDbContext instances resolved from DI are reused, reducing allocations and connection overhead.
-- How modules consume data: Inject repository interfaces (e.g., `IAlbumRepository`) or `IAppDbContext`/`AppDbContext` directly in endpoint handlers.
+- Repository interfaces: Defined in
+  `src/Shared/SharedKernel.Persistence/Repositories/` (e.g., `IAlbumRepository`,
+  `IArtistRepository`, etc.).
+- Repository implementations: Defined in
+  `src/Shared/SharedKernel.DataSQLite/Repositories/` with a `BaseRepository<T>`
+  providing common CRUD operations.
+- How the DbContext is registered:
+  `AddDbContextPool<AppDbContext>(..., poolSize: 128)` in
+  `src/Shared/SharedKernel.Persistence/PersistenceRegistration.cs`.
+- Why pooling matters: The 128 AppDbContext instances resolved from DI are
+  reused, reducing allocations and connection overhead.
+- How modules consume data: Inject repository interfaces (e.g.,
+  `IAlbumRepository`) or `IAppDbContext`/`AppDbContext` directly in endpoint
+  handlers.
 
 ### How modules access data
 
 Modules access data via repository interfaces or the DbContext directly:
 
 **Option 1: Repository pattern (preferred)**
+
 - Inject repository interfaces in endpoint handlers:
   ```csharp
   group.MapGet("/albums/{id}", async (int id, IAlbumRepository repo, CancellationToken ct) =>
@@ -361,6 +464,7 @@ Modules access data via repository interfaces or the DbContext directly:
   ```
 
 **Option 2: Direct DbContext access**
+
 - For health checks or custom queries, inject `AppDbContext` directly:
   ```csharp
   group.MapGet("/data-health", async (AppDbContext db, CancellationToken ct) =>
@@ -371,7 +475,9 @@ Modules access data via repository interfaces or the DbContext directly:
   ```
 
 **Option 3: IAppDbContext abstraction**
-- For services that need EF Core but want to avoid concrete DbContext dependency:
+
+- For services that need EF Core but want to avoid concrete DbContext
+  dependency:
   ```csharp
   public sealed class MyService(IAppDbContext db)
   {
@@ -381,6 +487,7 @@ Modules access data via repository interfaces or the DbContext directly:
   ```
 
 Notes:
+
 - Repository interfaces are in `SharedKernel.Persistence/Repositories/`
 - Repository implementations are in `SharedKernel.DataSQLite/Repositories/`
 - The host registers all repositories in Program.cs
@@ -391,35 +498,49 @@ Notes:
 Detailed documentation is available in the `/docs` folder:
 
 ### Architecture & Implementation
-- [Services Architecture](docs/services-architecture.md) - Service layer patterns, caching integration, and validation
-- [Validation Strategy](docs/validation-strategy.md) - FluentValidation implementation and patterns
-- [Caching Strategy](docs/caching-strategy.md) - Multi-tier caching with tag-based invalidation
-- [EF Core Plan](docs/EFCore-Plan.md) - Database architecture and repository pattern
-- [Walkthrough](docs/Walkthrough.md) - Step-by-step guide to recreate the solution
+
+- [Services Architecture](docs/services-architecture.md) - Service layer
+  patterns, caching integration, and validation
+- [Validation Strategy](docs/validation-strategy.md) - FluentValidation
+  implementation and patterns
+- [Caching Strategy](docs/caching-strategy.md) - Multi-tier caching with
+  tag-based invalidation
+- [EF Core Plan](docs/EFCore-Plan.md) - Database architecture and repository
+  pattern
+- [Walkthrough](docs/Walkthrough.md) - Step-by-step guide to recreate the
+  solution
 
 ### Security
-- [Authentication & Authorization](docs/authn-authz-plan.md) - JWT bearer authentication and policy-based authorization
-- [OWASP Threats & Mitigations](docs/owasp-top-threats-and-mitigations.md) - Security best practices
-- [Secure Headers Plan](docs/secure-headers-plan.md) - HTTP security headers configuration
+
+- [Authentication & Authorization](docs/authn-authz-plan.md) - JWT bearer
+  authentication and policy-based authorization
+- [OWASP Threats & Mitigations](docs/owasp-top-threats-and-mitigations.md) -
+  Security best practices
+- [Secure Headers Plan](docs/secure-headers-plan.md) - HTTP security headers
+  configuration
 - [HTTPS Enforcement](docs/https-enforcement-plan.md) - TLS configuration guide
 
 ### Traffic Control
-- [Rate Limiting Plan](docs/rate-limiting-plan.md) - Centralized rate limiting and throttling
+
+- [Rate Limiting Plan](docs/rate-limiting-plan.md) - Centralized rate limiting
+  and throttling
 
 ## Test Coverage
 
-The solution includes comprehensive integration tests in `tests/ModularMonolith.Api.Tests/`:
+The solution includes comprehensive integration tests in
+`tests/ModularMonolith.Api.Tests/`:
 
-| Test Category | Description |
-|---------------|-------------|
-| Health endpoints | Module health and data-health endpoint tests |
-| Identity endpoints | Login, refresh, logout, userinfo, JWKS tests |
-| Write operations | POST/PUT/DELETE endpoint tests with authorization |
-| Rate limiting | 429 response behavior tests |
-| Caching behavior | Cache consistency and stampede prevention tests |
-| Error scenarios | Invalid JSON, validation errors, edge cases |
+| Test Category      | Description                                       |
+|--------------------|---------------------------------------------------|
+| Health endpoints   | Module health and data-health endpoint tests      |
+| Identity endpoints | Login, refresh, logout, userinfo, JWKS tests      |
+| Write operations   | POST/PUT/DELETE endpoint tests with authorization |
+| Rate limiting      | 429 response behavior tests                       |
+| Caching behavior   | Cache consistency and stampede prevention tests   |
+| Error scenarios    | Invalid JSON, validation errors, edge cases       |
 
 Run tests with coverage:
+
 ```bash
 dotnet test --collect:"XPlat Code Coverage"
 ```

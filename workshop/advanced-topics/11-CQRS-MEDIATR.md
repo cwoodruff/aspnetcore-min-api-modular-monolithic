@@ -6,7 +6,9 @@
 
 ## Overview
 
-CQRS (Command Query Responsibility Segregation) separates read and write operations into distinct models. MediatR provides an elegant in-process messaging pattern to implement CQRS in .NET applications.
+CQRS (Command Query Responsibility Segregation) separates read and write
+operations into distinct models. MediatR provides an elegant in-process
+messaging pattern to implement CQRS in .NET applications.
 
 **Duration:** 60-90 minutes
 **Prerequisites:** Intermediate C#, understanding of design patterns
@@ -16,6 +18,7 @@ CQRS (Command Query Responsibility Segregation) separates read and write operati
 ## Learning Objectives
 
 By the end of this guide, you will:
+
 - Understand CQRS principles and benefits
 - Implement commands and queries with MediatR
 - Add cross-cutting concerns with behaviors
@@ -45,12 +48,12 @@ CQRS Architecture:
 
 ### When to Use CQRS
 
-| Use CQRS When | Avoid CQRS When |
-|---------------|-----------------|
-| Complex domain logic | Simple CRUD operations |
-| Different read/write patterns | Small applications |
-| Scaling reads independently | Team unfamiliar with pattern |
-| Event sourcing | Tight deadlines |
+| Use CQRS When                 | Avoid CQRS When              |
+|-------------------------------|------------------------------|
+| Complex domain logic          | Simple CRUD operations       |
+| Different read/write patterns | Small applications           |
+| Scaling reads independently   | Team unfamiliar with pattern |
+| Event sourcing                | Tight deadlines              |
 
 ---
 
@@ -849,13 +852,13 @@ public class ValidationBehaviorTests
 
 ### CQRS Components
 
-| Component | Purpose |
-|-----------|---------|
-| Command | Write operation (changes state) |
-| Query | Read operation (returns data) |
-| Handler | Implements command/query logic |
-| Behavior | Cross-cutting concerns (pipeline) |
-| Notification | Domain events |
+| Component    | Purpose                           |
+|--------------|-----------------------------------|
+| Command      | Write operation (changes state)   |
+| Query        | Read operation (returns data)     |
+| Handler      | Implements command/query logic    |
+| Behavior     | Cross-cutting concerns (pipeline) |
+| Notification | Domain events                     |
 
 ### Pipeline Behavior Order
 

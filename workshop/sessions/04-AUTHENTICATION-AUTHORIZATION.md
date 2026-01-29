@@ -7,13 +7,16 @@
 
 ## Overview
 
-This session covers JWT Bearer authentication, token generation with RS256 signing, policy-based authorization, and multi-tenant access control. You'll understand the complete Identity module implementation.
+This session covers JWT Bearer authentication, token generation with RS256
+signing, policy-based authorization, and multi-tenant access control. You'll
+understand the complete Identity module implementation.
 
 ---
 
 ## Learning Objectives
 
 By the end of this session, you will:
+
 - Understand JWT token structure and RS256 signing
 - Implement token generation and validation
 - Create permission-based authorization policies
@@ -30,6 +33,7 @@ By the end of this session, you will:
 JWTs consist of three parts (Header.Payload.Signature):
 
 **Header:**
+
 ```json
 {
   "alg": "RS256",
@@ -39,6 +43,7 @@ JWTs consist of three parts (Header.Payload.Signature):
 ```
 
 **Payload (Claims):**
+
 ```json
 {
   "sub": "user-1",
@@ -72,7 +77,9 @@ JWTs consist of three parts (Header.Payload.Signature):
 
 ### 2.1 JWT Options Configuration
 
-**File: `src/Modules/Identity/Identity.Module/Extensions/IdentityAuthExtensions.cs` (partial)**
+**File:
+`src/Modules/Identity/Identity.Module/Extensions/IdentityAuthExtensions.cs` (
+partial)**
 
 ```csharp
 public sealed class JwtAuthOptions
@@ -357,7 +364,9 @@ public static class PolicyRegistry
 
 ### 3.3 Tenant Authorization Handler
 
-**File: `src/Modules/Identity/Identity.Module/Authorization/TenantAuthorizationHandler.cs`**
+**File:
+`src/Modules/Identity/Identity.Module/Authorization/TenantAuthorizationHandler.cs`
+**
 
 ```csharp
 using System.Security.Claims;
@@ -410,7 +419,8 @@ public sealed class TenantAuthorizationHandler(
 
 ### 4.1 Complete Auth Registration
 
-**File: `src/Modules/Identity/Identity.Module/Extensions/IdentityAuthExtensions.cs`**
+**File:
+`src/Modules/Identity/Identity.Module/Extensions/IdentityAuthExtensions.cs`**
 
 ```csharp
 using System.IdentityModel.Tokens.Jwt;
@@ -626,13 +636,13 @@ public static class AlbumEndpoints
 
 ### 5.2 Authorization Patterns
 
-| Pattern | Usage |
-|---------|-------|
-| `[Authorize]` | Attribute on handler - requires any authenticated user |
-| `.RequireAuthorization()` | Fluent - requires any authenticated user |
-| `.RequireAuthorization("policy")` | Fluent - requires specific policy |
-| `.AllowAnonymous()` | Allows unauthenticated access |
-| Multiple policies | Chain with `.RequireAuthorization("p1").RequireAuthorization("p2")` |
+| Pattern                           | Usage                                                               |
+|-----------------------------------|---------------------------------------------------------------------|
+| `[Authorize]`                     | Attribute on handler - requires any authenticated user              |
+| `.RequireAuthorization()`         | Fluent - requires any authenticated user                            |
+| `.RequireAuthorization("policy")` | Fluent - requires specific policy                                   |
+| `.AllowAnonymous()`               | Allows unauthenticated access                                       |
+| Multiple policies                 | Chain with `.RequireAuthorization("p1").RequireAuthorization("p2")` |
 
 ---
 
@@ -647,6 +657,7 @@ curl -X POST http://localhost:5043/api/identity/login \
 ```
 
 Response:
+
 ```json
 {
   "access_token": "eyJhbGciOiJSUzI1NiIs...",
@@ -672,7 +683,8 @@ curl http://localhost:5043/api/music/albums/1
 
 ### 4. Test Wrong Permission (403)
 
-Login as a user without `music.read` permission and try to access the albums endpoint.
+Login as a user without `music.read` permission and try to access the albums
+endpoint.
 
 ---
 
@@ -693,10 +705,10 @@ Before moving to Session 5, verify:
 
 ### Demo Users
 
-| Username | Password | Permissions |
-|----------|----------|-------------|
-| demo | demo123! | music.read, orders.read, administration.read |
-| admin | admin123! | All permissions |
+| Username | Password  | Permissions                                  |
+|----------|-----------|----------------------------------------------|
+| demo     | demo123!  | music.read, orders.read, administration.read |
+| admin    | admin123! | All permissions                              |
 
 ### Common Authorization Patterns
 
@@ -719,6 +731,7 @@ Before moving to Session 5, verify:
 ## Next Session
 
 In **Session 5: Repository Pattern & Data Access**, you will:
+
 - Implement the base repository with generic CRUD
 - Create entity-specific repositories
 - Understand EF Core patterns for SQLite

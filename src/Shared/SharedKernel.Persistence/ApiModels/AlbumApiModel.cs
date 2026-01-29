@@ -11,11 +11,13 @@ public sealed class AlbumApiModel : BaseApiModel, IConvertModel<Album>
     public ArtistApiModel? Artist { get; set; } = null!;
     public ICollection<TrackApiModel> Tracks { get; set; } = new List<TrackApiModel>();
 
-    public Album Convert() =>
-        new()
+    public Album Convert()
+    {
+        return new Album
         {
             Id = Id,
             ArtistId = ArtistId,
             Title = Title ?? string.Empty
         };
+    }
 }

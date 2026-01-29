@@ -3,16 +3,18 @@ using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class Artist : BaseEntity, IConvertModel<ArtistApiModel>
+public class Artist : BaseEntity, IConvertModel<ArtistApiModel>
 {
     public string? Name { get; set; }
 
     public virtual ICollection<Album> Albums { get; set; } = new List<Album>();
 
-    public ArtistApiModel Convert() =>
-        new()
+    public ArtistApiModel Convert()
+    {
+        return new ArtistApiModel
         {
             Id = Id,
             Name = Name
         };
+    }
 }

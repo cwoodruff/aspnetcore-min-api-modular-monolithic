@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Music.Modules.Services;
+using SharedKernel.TrafficControl;
 
 namespace Music.Modules.Endpoints;
 
@@ -28,7 +29,7 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Music")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/tracks
         group.MapGet("tracks/", [Authorize] async (
@@ -47,7 +48,7 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Music")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/tracks/artist/{id}
         group.MapGet("tracks/artist/{id:int}", [Authorize] async (
@@ -67,7 +68,7 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Music")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/tracks/playlist/{id}
         group.MapGet("tracks/playlist/{id:int}", [Authorize] async (
@@ -87,7 +88,7 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Music")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/tracks/album/{id}
         group.MapGet("tracks/album/{id:int}", [Authorize] async (
@@ -107,7 +108,7 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Music")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/tracks/genre/{id}
         group.MapGet("tracks/genre/{id:int}", [Authorize] async (
@@ -127,7 +128,7 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Music")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/tracks/mediatype/{id}
         group.MapGet("tracks/mediatype/{id:int}", [Authorize] async (
@@ -147,7 +148,7 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Music")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/music/tracks/invoice/{id}
         group.MapGet("tracks/invoice/{id:int}", [Authorize] async (
@@ -167,6 +168,6 @@ public static class TrackEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Music")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

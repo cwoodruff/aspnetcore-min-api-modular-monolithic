@@ -8,73 +8,98 @@
 
 ### Opening (15 seconds)
 
-> "Hi [Name], this is [Your Name]. I help recruiting firms differentiate themselves with technical training events that attract .NET developers. Do you have two minutes?"
+> "Hi [Name], this is [Your Name]. I help recruiting firms differentiate
+> themselves with technical training events that attract .NET developers. Do you
+> have two minutes?"
 
 **If yes, continue. If no:**
 
-> "No problem. When would be a better time to chat? I have something that's helped firms like [Competitor/Similar Firm] add qualified candidates to their pipeline."
+> "No problem. When would be a better time to chat? I have something that's
+> helped firms like [Competitor/Similar Firm] add qualified candidates to their
+> pipeline."
 
 ### Discovery (60 seconds)
 
-> "I work with staffing firms who tell me that engaging senior .NET developers is getting harder. The usual approach—job postings, LinkedIn messages, networking events—isn't cutting through the noise anymore.
+> "I work with staffing firms who tell me that engaging senior .NET developers
+> is getting harder. The usual approach—job postings, LinkedIn messages,
+> networking events—isn't cutting through the noise anymore.
 >
 > Is that something you're experiencing with your .NET candidates?"
 
 **Listen for pain points. Common responses:**
+
 - "Yes, developers don't respond to outreach"
 - "We can't get them to events"
 - "They see us as just another recruiter"
 
 ### Value Proposition (45 seconds)
 
-> "What I've found works is giving developers something they actually want—real technical training—not a sales pitch disguised as content.
+> "What I've found works is giving developers something they actually want—real
+> technical training—not a sales pitch disguised as content.
 >
-> I've developed a full-day, hands-on workshop on modern API architecture with ASP.NET Core. Firms are using it to:
+> I've developed a full-day, hands-on workshop on modern API architecture with
+> ASP.NET Core. Firms are using it to:
 > - Get 8 hours of face time with developers instead of 45 minutes at a meetup
 > - Position themselves as a technical resource, not just a staffing vendor
 > - Build relationships that convert to placements months later
 >
-> One firm hosted this last quarter. From 22 attendees, they added 18 to their active pipeline and made 3 placements within 4 months."
+> One firm hosted this last quarter. From 22 attendees, they added 18 to their
+> active pipeline and made 3 placements within 4 months."
 
 ### Qualifying Questions (60 seconds)
 
 > "A few quick questions to see if this might be a fit:
 >
 > 1. Do you have a database of .NET developers you market to?
-> 2. Do you have access to a training space—either your office or a venue you could rent?
+> 2. Do you have access to a training space—either your office or a venue you
+     could rent?
 > 3. What's your typical approach for engaging passive candidates right now?"
 
 ### The Ask (30 seconds)
 
 **If qualified:**
 
-> "It sounds like this could work well for you. The next step would be a 20-minute call where I can walk you through the curriculum and partnership options. I have time [Day] at [Time] or [Day] at [Time]—which works better?"
+> "It sounds like this could work well for you. The next step would be a
+> 20-minute call where I can walk you through the curriculum and partnership
+> options. I have time [Day] at [Time] or [Day] at [Time]—which works better?"
 
 **If not qualified:**
 
-> "Based on what you've shared, this might not be the right fit timing-wise. Can I send you some information and follow up in [timeframe] when things might be different?"
+> "Based on what you've shared, this might not be the right fit timing-wise. Can
+> I send you some information and follow up in [timeframe] when things might be
+> different?"
 
 ### Handling Objections
 
 **"We don't have budget for this."**
 
-> "I understand. We have a revenue-share model where you charge attendees $199-299 and split the revenue. Your only investment is the venue and marketing. Would that work better for your situation?"
+> "I understand. We have a revenue-share model where you charge attendees $
+> 199-299 and split the revenue. Your only investment is the venue and marketing.
+> Would that work better for your situation?"
 
 **"We've tried events before and they didn't work."**
 
-> "What kind of events? ... The difference here is the value proposition. Developers come for 8 hours of hands-on training they'd pay $500+ for elsewhere. They're not coming for free pizza hoping to network—they're committed. That changes the quality of interaction completely."
+> "What kind of events? ... The difference here is the value proposition.
+> Developers come for 8 hours of hands-on training they'd pay $500+ for elsewhere.
+> They're not coming for free pizza hoping to network—they're committed. That
+> changes the quality of interaction completely."
 
 **"Our developers are remote/distributed."**
 
-> "We can do virtual delivery as well. The format works great over Zoom with breakout rooms. Would a virtual workshop be more practical for your candidate base?"
+> "We can do virtual delivery as well. The format works great over Zoom with
+> breakout rooms. Would a virtual workshop be more practical for your candidate
+> base?"
 
 **"I need to talk to my manager/team."**
 
-> "Absolutely. Would it help if I sent you a one-page overview you could share? And when should I follow up—end of this week or early next?"
+> "Absolutely. Would it help if I sent you a one-page overview you could share?
+> And when should I follow up—end of this week or early next?"
 
 ### Closing
 
-> "Great, I'll send you a calendar invite for [Date/Time]. Before we hang up—what's the best email to send that to? And is there anything specific you'd want me to address on that call?"
+> "Great, I'll send you a calendar invite for [Date/Time]. Before we hang
+> up—what's the best email to send that to? And is there anything specific you'd
+> want me to address on that call?"
 
 ---
 
@@ -86,21 +111,29 @@
 
 Hi [Name],
 
-I noticed [Firm Name] specializes in placing .NET developers. I'm reaching out because I've been helping recruiting firms solve a problem you might be facing: getting quality time with senior developers who ignore traditional outreach.
+I noticed [Firm Name] specializes in placing .NET developers. I'm reaching out
+because I've been helping recruiting firms solve a problem you might be facing:
+getting quality time with senior developers who ignore traditional outreach.
 
-**The approach:** Host a free, full-day technical workshop that developers actually want to attend.
+**The approach:** Host a free, full-day technical workshop that developers
+actually want to attend.
 
 **Why it works:**
+
 - 8 hours of genuine interaction (not 45 minutes of awkward networking)
 - Developers come for real training, not a sales pitch
 - You capture every registrant's contact info
 - You're positioned as a technical partner, not "just another recruiter"
 
-**Recent results:** One firm hosted this workshop with 22 attendees. They added 18 qualified candidates to their pipeline and made 3 placements within 4 months—$45K in placement fees from a $4K investment.
+**Recent results:** One firm hosted this workshop with 22 attendees. They added
+18 qualified candidates to their pipeline and made 3 placements within 4
+months—$45K in placement fees from a $4K investment.
 
-The workshop covers ASP.NET Core Minimal APIs with Modular Monolithic architecture—exactly what senior developers want to learn right now.
+The workshop covers ASP.NET Core Minimal APIs with Modular Monolithic
+architecture—exactly what senior developers want to learn right now.
 
-Would a 20-minute call this week make sense to see if this could work for [Firm Name]?
+Would a 20-minute call this week make sense to see if this could work
+for [Firm Name]?
 
 [Your Name]
 [Phone]
@@ -114,7 +147,8 @@ Would a 20-minute call this week make sense to see if this could work for [Firm 
 
 Hi [Name],
 
-Following up on my note from [Day]. I know your inbox is probably full, so I'll keep this short.
+Following up on my note from [Day]. I know your inbox is probably full, so I'll
+keep this short.
 
 The workshop I mentioned has three partnership models:
 
@@ -122,7 +156,8 @@ The workshop I mentioned has three partnership models:
 2. **Revenue share** — Charge $199-299, split the revenue, lower upfront cost
 3. **Premium event** — Charge $399-499, smaller/senior audience
 
-Most firms start with Option 1 to build relationships, then move to Option 2 for ongoing events.
+Most firms start with Option 1 to build relationships, then move to Option 2 for
+ongoing events.
 
 Worth a quick call to explore?
 
@@ -138,9 +173,12 @@ Hi [Name],
 
 I'll keep this brief—I know you're busy.
 
-If engaging .NET developers differently isn't a priority right now, no worries. But if it is and timing just hasn't been right, I'm happy to reconnect whenever works.
+If engaging .NET developers differently isn't a priority right now, no worries.
+But if it is and timing just hasn't been right, I'm happy to reconnect whenever
+works.
 
-Either way, here's a one-page overview of the workshop partnership in case it's useful down the road: [Link or Attachment]
+Either way, here's a one-page overview of the workshop partnership in case it's
+useful down the road: [Link or Attachment]
 
 Best,
 [Your Name]
@@ -153,7 +191,8 @@ Best,
 
 Hi [Name],
 
-Great speaking with you today. As promised, here's a summary of what we discussed:
+Great speaking with you today. As promised, here's a summary of what we
+discussed:
 
 **Workshop:** ASP.NET Core Minimal API with Modular Monolithic Architecture
 **Duration:** Full day (8 AM - 5 PM)
@@ -162,12 +201,14 @@ Great speaking with you today. As promised, here's a summary of what we discusse
 **Partnership Model We Discussed:** [Sponsored / Revenue Share / Premium]
 
 **Your Investment:**
+
 - [Venue / Your office]
 - Marketing to your candidate database
 - Registration management
 - Catering/refreshments
 
 **We Provide:**
+
 - Complete training curriculum
 - Expert instruction
 - All participant materials
@@ -175,11 +216,13 @@ Great speaking with you today. As promised, here's a summary of what we discusse
 - Post-workshop attendee feedback
 
 **Next Steps:**
+
 1. Confirm date (suggested: [Date options])
 2. Finalize venue details
 3. Begin promotion (4-6 weeks out)
 
-I've attached the one-page overview for your team. Let me know if you have any questions or want to lock in a date.
+I've attached the one-page overview for your team. Let me know if you have any
+questions or want to lock in a date.
 
 [Your Name]
 
@@ -310,13 +353,13 @@ I've attached the one-page overview for your team. Let me know if you have any q
 
 ### Why This Works for Recruiting Firms
 
-| Traditional Approach | Workshop Approach |
-|---------------------|-------------------|
-| 45-min networking event | 8-hour deep engagement |
+| Traditional Approach            | Workshop Approach                |
+|---------------------------------|----------------------------------|
+| 45-min networking event         | 8-hour deep engagement           |
 | Developers skeptical of motives | Developers grateful for training |
-| "Another recruiter" perception | "Technical partner" perception |
-| Low follow-up response | 40-60% respond to outreach |
-| Transactional relationship | Relationship built on value |
+| "Another recruiter" perception  | "Technical partner" perception   |
+| Low follow-up response          | 40-60% respond to outreach       |
+| Transactional relationship      | Relationship built on value      |
 
 ### ROI Calculation
 
@@ -330,4 +373,6 @@ I've attached the one-page overview for your team. Let me know if you have any q
 
 ### Competitive Differentiator
 
-> "While other firms are sending LinkedIn InMails, you're spending a full day teaching developers skills they can use on Monday. That's a different relationship entirely."
+> "While other firms are sending LinkedIn InMails, you're spending a full day
+> teaching developers skills they can use on Monday. That's a different
+> relationship entirely."

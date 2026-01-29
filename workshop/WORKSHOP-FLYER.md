@@ -8,7 +8,9 @@
 
 ### The Smart Path to Scalable APIs
 
-Skip the microservices complexity. Learn the architecture pattern that gives you clean module boundaries, easy team scaling, and a clear path to microservices—when you actually need them.
+Skip the microservices complexity. Learn the architecture pattern that gives you
+clean module boundaries, easy team scaling, and a clear path to
+microservices—when you actually need them.
 
 ---
 
@@ -25,11 +27,11 @@ Skip the microservices complexity. Learn the architecture pattern that gives you
 
 ### You'll Learn:
 
-| Architecture | Security | Performance |
-|-------------|----------|-------------|
-| Module composition | JWT Bearer auth | Repository pattern |
-| Clean boundaries | Authorization policies | Cache-aside pattern |
-| Service layer patterns | Rate limiting | Tag-based invalidation |
+| Architecture           | Security               | Performance            |
+|------------------------|------------------------|------------------------|
+| Module composition     | JWT Bearer auth        | Repository pattern     |
+| Clean boundaries       | Authorization policies | Cache-aside pattern    |
+| Service layer patterns | Rate limiting          | Tag-based invalidation |
 
 ---
 
@@ -51,6 +53,7 @@ Skip the microservices complexity. Learn the architecture pattern that gives you
 **Format:** Hands-on coding (bring your laptop!)
 
 **Tech Stack:**
+
 - ASP.NET Core 10 Minimal APIs
 - Entity Framework Core + SQLite
 - FluentValidation
@@ -69,12 +72,12 @@ Skip the microservices complexity. Learn the architecture pattern that gives you
 
 ### Schedule
 
-| Morning | Afternoon |
-|---------|-----------|
-| 8:00 Setup & Architecture | 12:45 Repository Pattern |
-| 9:30 First Module | 1:45 Service Layer + Caching |
-| 10:45 Authentication | 3:00 Validation |
-| | 3:45 Rate Limiting & Testing |
+| Morning                   | Afternoon                    |
+|---------------------------|------------------------------|
+| 8:00 Setup & Architecture | 12:45 Repository Pattern     |
+| 9:30 First Module         | 1:45 Service Layer + Caching |
+| 10:45 Authentication      | 3:00 Validation              |
+|                           | 3:45 Rate Limiting & Testing |
 
 *Includes morning break, lunch, and afternoon break*
 
@@ -92,4 +95,5 @@ Skip the microservices complexity. Learn the architecture pattern that gives you
 
 ---
 
-*"Start with a modular monolith, evolve to microservices if and when you need to."* — Martin Fowler
+*"Start with a modular monolith, evolve to microservices if and when you need
+to."* — Martin Fowler

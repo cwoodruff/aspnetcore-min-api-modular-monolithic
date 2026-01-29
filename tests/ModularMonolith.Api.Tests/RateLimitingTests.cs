@@ -1,12 +1,13 @@
 using System.Net;
+using System.Text;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace ModularMonolith.Api.Tests;
 
 /// <summary>
-/// Tests for rate limiting behavior (429 responses).
-/// The default policy is 60 requests per 60 seconds per IP.
+///     Tests for rate limiting behavior (429 responses).
+///     The default policy is 60 requests per 60 seconds per IP.
 /// </summary>
 public class RateLimitingTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
@@ -23,7 +24,7 @@ public class RateLimitingTests(WebApplicationFactory<Program> factory)
         var tasks = new List<Task<HttpResponseMessage>>();
         const int totalRequests = 65;
 
-        for (int i = 0; i < totalRequests; i++)
+        for (var i = 0; i < totalRequests; i++)
         {
             tasks.Add(client.GetAsync("/"));
         }
@@ -46,7 +47,7 @@ public class RateLimitingTests(WebApplicationFactory<Program> factory)
 
         // Send enough requests to trigger rate limiting
         var tasks = new List<Task<HttpResponseMessage>>();
-        for (int i = 0; i < 70; i++)
+        for (var i = 0; i < 70; i++)
         {
             tasks.Add(client.GetAsync("/"));
         }
@@ -72,11 +73,11 @@ public class RateLimitingTests(WebApplicationFactory<Program> factory)
         var tasks = new List<Task<HttpResponseMessage>>();
         const int totalRequests = 65;
 
-        for (int i = 0; i < totalRequests; i++)
+        for (var i = 0; i < totalRequests; i++)
         {
             var content = new StringContent(
                 """{"username":"invalid","password":"invalid"}""",
-                System.Text.Encoding.UTF8,
+                Encoding.UTF8,
                 "application/json");
             tasks.Add(client.PostAsync("/api/identity/login", content));
         }
@@ -104,7 +105,7 @@ public class RateLimitingTests(WebApplicationFactory<Program> factory)
         var tasks = new List<Task<HttpResponseMessage>>();
         const int totalRequests = 70;
 
-        for (int i = 0; i < totalRequests; i++)
+        for (var i = 0; i < totalRequests; i++)
         {
             tasks.Add(client.GetAsync("/api/music/albums/1"));
         }
@@ -127,7 +128,7 @@ public class RateLimitingTests(WebApplicationFactory<Program> factory)
         var tasks = new List<Task<HttpResponseMessage>>();
         const int totalRequests = 10;
 
-        for (int i = 0; i < totalRequests; i++)
+        for (var i = 0; i < totalRequests; i++)
         {
             tasks.Add(client.GetAsync("/"));
         }

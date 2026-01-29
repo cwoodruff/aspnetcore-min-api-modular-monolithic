@@ -1,17 +1,14 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
-using SharedKernel.Caching;
 
 namespace ModularMonolith.Api.Tests;
 
 /// <summary>
-/// Tests for caching behavior.
-/// Verifies that endpoints use cache correctly and invalidate on writes.
+///     Tests for caching behavior.
+///     Verifies that endpoints use cache correctly and invalidate on writes.
 /// </summary>
 public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
@@ -77,7 +74,8 @@ public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
         // Create a new genre
         var uniqueName = $"CacheTest_{Guid.NewGuid():N}";
         var payload = JsonSerializer.Serialize(new { name = uniqueName });
-        var createResponse = await client.PostAsync("/api/admin/genres", new StringContent(payload, Encoding.UTF8, "application/json"));
+        var createResponse = await client.PostAsync("/api/admin/genres",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
 
         // Should not be 401 since we have valid credentials
         createResponse.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
@@ -94,7 +92,8 @@ public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
         // Try to update a genre
         var updatedName = $"Updated_{Guid.NewGuid():N}";
         var updatePayload = JsonSerializer.Serialize(new { name = updatedName });
-        var updateResponse = await client.PutAsync("/api/admin/genres/1", new StringContent(updatePayload, Encoding.UTF8, "application/json"));
+        var updateResponse = await client.PutAsync("/api/admin/genres/1",
+            new StringContent(updatePayload, Encoding.UTF8, "application/json"));
 
         // Should not be 401 since we have valid credentials
         updateResponse.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);

@@ -9,10 +9,12 @@ public sealed class ArtistApiModel : BaseApiModel, IConvertModel<Artist>
 
     public ICollection<AlbumApiModel> Albums { get; set; } = new List<AlbumApiModel>();
 
-    public Artist Convert() =>
-        new()
+    public Artist Convert()
+    {
+        return new Artist
         {
             Id = Id,
             Name = Name ?? string.Empty
         };
+    }
 }

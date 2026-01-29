@@ -1,7 +1,6 @@
 using FluentValidation;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
 using SharedKernel.Persistence.Extensions;
 using SharedKernel.Persistence.Repositories;
 
@@ -13,16 +12,16 @@ public class TrackService(
     ICacheKeyComposer keys,
     IValidator<TrackApiModel> validator) : ITrackService
 {
-    private readonly IValidator<TrackApiModel> _validator = validator;
     private static readonly string[] TrackTags = ["music:track", "music:track:by-id"];
+    private readonly IValidator<TrackApiModel> _validator = validator;
 
     public async Task<object?> GetTrackByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "track",
-            version: "v1",
-            discriminator: $"by-id:{id}");
+            "music",
+            "track",
+            "v1",
+            $"by-id:{id}");
 
         return await cache.GetOrAddAsync<object?>(key, async _ =>
         {
@@ -44,10 +43,10 @@ public class TrackService(
     public async Task<IEnumerable<object>> GetAllTracksAsync(CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "track",
-            version: "v1",
-            discriminator: "all");
+            "music",
+            "track",
+            "v1",
+            "all");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -71,10 +70,10 @@ public class TrackService(
     public async Task<IEnumerable<object>> GetTracksByArtistIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "track",
-            version: "v1",
-            discriminator: $"by-artist:{id}");
+            "music",
+            "track",
+            "v1",
+            $"by-artist:{id}");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -98,10 +97,10 @@ public class TrackService(
     public async Task<IEnumerable<object>> GetTracksByPlaylistIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "track",
-            version: "v1",
-            discriminator: $"by-playlist:{id}");
+            "music",
+            "track",
+            "v1",
+            $"by-playlist:{id}");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -125,10 +124,10 @@ public class TrackService(
     public async Task<IEnumerable<object>> GetTracksByAlbumIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "track",
-            version: "v1",
-            discriminator: $"by-album:{id}");
+            "music",
+            "track",
+            "v1",
+            $"by-album:{id}");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -152,10 +151,10 @@ public class TrackService(
     public async Task<IEnumerable<object>> GetTracksByGenreIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "track",
-            version: "v1",
-            discriminator: $"by-genre:{id}");
+            "music",
+            "track",
+            "v1",
+            $"by-genre:{id}");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -179,10 +178,10 @@ public class TrackService(
     public async Task<IEnumerable<object>> GetTracksByMediaTypeIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "track",
-            version: "v1",
-            discriminator: $"by-mediatype:{id}");
+            "music",
+            "track",
+            "v1",
+            $"by-mediatype:{id}");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -206,10 +205,10 @@ public class TrackService(
     public async Task<IEnumerable<object>> GetTracksByInvoiceIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "track",
-            version: "v1",
-            discriminator: $"by-invoice:{id}");
+            "music",
+            "track",
+            "v1",
+            $"by-invoice:{id}");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -262,10 +261,10 @@ public class TrackService(
             // Invalidate cache
             await cache.RemoveByTagAsync(TrackTags[0], ct);
             var key = keys.Compose(
-                moduleName: "music",
-                entity: "track",
-                version: "v1",
-                discriminator: $"by-id:{model.Id}");
+                "music",
+                "track",
+                "v1",
+                $"by-id:{model.Id}");
             await cache.RemoveAsync(key, ct);
         }
 

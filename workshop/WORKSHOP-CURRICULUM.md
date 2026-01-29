@@ -2,13 +2,17 @@
 
 **Duration:** Full Day (8:00 AM - 5:00 PM)
 **Level:** Intermediate to Advanced
-**Prerequisites:** Basic C#, familiarity with ASP.NET Core, understanding of REST APIs
+**Prerequisites:** Basic C#, familiarity with ASP.NET Core, understanding of
+REST APIs
 
 ---
 
 ## Workshop Overview
 
-In this hands-on workshop, participants will learn to build a production-ready ASP.NET Core 10 Minimal API using Modular Monolithic architecture. Starting from a prepared base solution, attendees will implement module composition, authentication, caching, validation, and testing patterns.
+In this hands-on workshop, participants will learn to build a production-ready
+ASP.NET Core 10 Minimal API using Modular Monolithic architecture. Starting from
+a prepared base solution, attendees will implement module composition,
+authentication, caching, validation, and testing patterns.
 
 ### Learning Objectives
 
@@ -26,26 +30,28 @@ By the end of this workshop, participants will be able to:
 
 ## Schedule at a Glance
 
-| Time | Duration | Session |
-|------|----------|---------|
-| 8:00 AM - 8:30 AM | 30 min | **Welcome & Environment Setup** |
-| 8:30 AM - 9:30 AM | 60 min | **Module 1: Architecture Overview & Module Contract** |
-| 9:30 AM - 10:30 AM | 60 min | **Module 2: Building Your First Module** |
-| 10:30 AM - 10:45 AM | 15 min | **☕ Morning Break** |
-| 10:45 AM - 12:00 PM | 75 min | **Module 3: Authentication & Authorization** |
-| 12:00 PM - 12:45 PM | 45 min | **🍽️ Lunch Break** |
-| 12:45 PM - 1:45 PM | 60 min | **Module 4: Repository Pattern & Data Access** |
-| 1:45 PM - 2:45 PM | 60 min | **Module 5: Service Layer with Caching** |
-| 2:45 PM - 3:00 PM | 15 min | **☕ Afternoon Break** |
-| 3:00 PM - 3:45 PM | 45 min | **Module 6: FluentValidation** |
-| 3:45 PM - 4:30 PM | 45 min | **Module 7: Rate Limiting & Security** |
-| 4:30 PM - 5:00 PM | 30 min | **Module 8: Testing & Wrap-Up** |
+| Time                | Duration | Session                                               |
+|---------------------|----------|-------------------------------------------------------|
+| 8:00 AM - 8:30 AM   | 30 min   | **Welcome & Environment Setup**                       |
+| 8:30 AM - 9:30 AM   | 60 min   | **Module 1: Architecture Overview & Module Contract** |
+| 9:30 AM - 10:30 AM  | 60 min   | **Module 2: Building Your First Module**              |
+| 10:30 AM - 10:45 AM | 15 min   | **☕ Morning Break**                                   |
+| 10:45 AM - 12:00 PM | 75 min   | **Module 3: Authentication & Authorization**          |
+| 12:00 PM - 12:45 PM | 45 min   | **🍽️ Lunch Break**                                   |
+| 12:45 PM - 1:45 PM  | 60 min   | **Module 4: Repository Pattern & Data Access**        |
+| 1:45 PM - 2:45 PM   | 60 min   | **Module 5: Service Layer with Caching**              |
+| 2:45 PM - 3:00 PM   | 15 min   | **☕ Afternoon Break**                                 |
+| 3:00 PM - 3:45 PM   | 45 min   | **Module 6: FluentValidation**                        |
+| 3:45 PM - 4:30 PM   | 45 min   | **Module 7: Rate Limiting & Security**                |
+| 4:30 PM - 5:00 PM   | 30 min   | **Module 8: Testing & Wrap-Up**                       |
 
 ---
 
 ## Base Solution (Pre-Built)
 
-Participants start with a prepared solution containing the foundational infrastructure. This allows focus on architectural patterns rather than boilerplate setup.
+Participants start with a prepared solution containing the foundational
+infrastructure. This allows focus on architectural patterns rather than
+boilerplate setup.
 
 ### What's Included in the Base Solution
 
@@ -99,6 +105,7 @@ Participants start with a prepared solution containing the foundational infrastr
 **Duration:** 30 minutes
 
 ### Objectives
+
 - Verify development environment
 - Clone and open the starter solution
 - Understand the workshop structure
@@ -106,18 +113,22 @@ Participants start with a prepared solution containing the foundational infrastr
 ### Activities
 
 #### 1.1 Environment Check (10 min)
+
 Verify installations:
+
 ```bash
 dotnet --version    # Should be 9.0+ or 10.0
 git --version
 ```
 
 IDE options:
+
 - JetBrains Rider (recommended)
 - Visual Studio 2022
 - VS Code with C# Dev Kit
 
 #### 1.2 Clone Starter Solution (5 min)
+
 ```bash
 git clone <workshop-repo-url> workshop-starter
 cd workshop-starter
@@ -126,12 +137,14 @@ dotnet build
 ```
 
 #### 1.3 Explore the Base Solution (15 min)
+
 - Review solution structure
 - Examine the Chinook database schema
 - Review entity models and DTOs
 - Understand the IModule contract
 
 ### Instructor Notes
+
 - Ensure all participants can build the solution
 - Have USB drives with offline copies for network issues
 - Display the solution structure diagram
@@ -143,6 +156,7 @@ dotnet build
 **Duration:** 60 minutes
 
 ### Objectives
+
 - Understand Modular Monolithic architecture benefits
 - Learn the IModule contract pattern
 - Configure the host to discover and compose modules
@@ -153,16 +167,17 @@ dotnet build
 
 **Modular Monolith vs Microservices vs Traditional Monolith**
 
-| Aspect | Traditional Monolith | Modular Monolith | Microservices |
-|--------|---------------------|------------------|---------------|
-| Deployment | Single unit | Single unit | Independent |
-| Boundaries | None/weak | Strong (compile-time) | Strong (runtime) |
-| Communication | Direct calls | Direct calls | Network (HTTP/messaging) |
-| Data | Shared DB | Shared DB (logical separation) | Per-service DB |
-| Complexity | Low | Medium | High |
-| Team scaling | Limited | Good | Excellent |
+| Aspect        | Traditional Monolith | Modular Monolith               | Microservices            |
+|---------------|----------------------|--------------------------------|--------------------------|
+| Deployment    | Single unit          | Single unit                    | Independent              |
+| Boundaries    | None/weak            | Strong (compile-time)          | Strong (runtime)         |
+| Communication | Direct calls         | Direct calls                   | Network (HTTP/messaging) |
+| Data          | Shared DB            | Shared DB (logical separation) | Per-service DB           |
+| Complexity    | Low                  | Medium                         | High                     |
+| Team scaling  | Limited              | Good                           | Excellent                |
 
 **When to choose Modular Monolith:**
+
 - Starting a new project with uncertain boundaries
 - Team size 3-15 developers
 - Need rapid development with clean architecture
@@ -182,6 +197,7 @@ public interface IModule
 ```
 
 **Key principles:**
+
 - Modules are self-contained
 - Only IModule is public; internals remain internal
 - Modules don't reference each other directly
@@ -221,6 +237,7 @@ static IReadOnlyList<IModule> GetModules() =>
 ```
 
 ### Checkpoint
+
 - [ ] Participants understand modular monolith benefits
 - [ ] Program.cs configured for module composition
 - [ ] Solution builds successfully
@@ -232,6 +249,7 @@ static IReadOnlyList<IModule> GetModules() =>
 **Duration:** 60 minutes
 
 ### Objectives
+
 - Create a complete module following the pattern
 - Implement health endpoints
 - Understand endpoint grouping and metadata
@@ -284,6 +302,7 @@ public static class ReportingModule
 ```
 
 **Update Program.cs:**
+
 ```csharp
 static IReadOnlyList<IModule> GetModules() =>
 [
@@ -292,6 +311,7 @@ static IReadOnlyList<IModule> GetModules() =>
 ```
 
 **Test it:**
+
 ```bash
 dotnet run --project src/ModularMonolith.Api
 curl http://localhost:5043/api/reporting/health
@@ -327,11 +347,13 @@ group.MapGet("/data-health", async (AppDbContext db, CancellationToken ct) =>
 **File: src/Modules/Music/Music.Module/Module.cs**
 
 Participants implement:
+
 - Health endpoint at `/api/music/health`
 - Data-health endpoint at `/api/music/data-health`
 - Add module to GetModules() in Program.cs
 
 ### Checkpoint
+
 - [ ] Reporting module working with health endpoints
 - [ ] Music module created with health endpoints
 - [ ] Both modules compose correctly in Program.cs
@@ -347,6 +369,7 @@ Participants implement:
 **Duration:** 75 minutes
 
 ### Objectives
+
 - Implement JWT bearer authentication
 - Create login and token refresh endpoints
 - Define authorization policies
@@ -357,11 +380,13 @@ Participants implement:
 #### 4.1 JWT Authentication Overview (15 min)
 
 **Token anatomy:**
+
 - Header: algorithm, type, key ID
 - Payload: claims (sub, name, roles, permissions, tenant, exp)
 - Signature: RS256 signed
 
 **Our token design:**
+
 ```json
 {
   "sub": "user-1",
@@ -594,6 +619,7 @@ public static class IdentityAuthExtensions
 ```
 
 ### Checkpoint
+
 - [ ] Login endpoint returns JWT
 - [ ] JWKS endpoint returns public key
 - [ ] Protected endpoints require valid token
@@ -609,6 +635,7 @@ public static class IdentityAuthExtensions
 **Duration:** 60 minutes
 
 ### Objectives
+
 - Implement the repository pattern
 - Create base repository with common operations
 - Build entity-specific repositories with complex queries
@@ -750,6 +777,7 @@ builder.Services
 ```
 
 ### Checkpoint
+
 - [ ] Base repository provides CRUD operations
 - [ ] Genre repository works with simple entity
 - [ ] Artist repository handles complex relationships
@@ -761,6 +789,7 @@ builder.Services
 **Duration:** 60 minutes
 
 ### Objectives
+
 - Build service layer that wraps repositories
 - Implement cache-aside pattern
 - Apply tag-based cache invalidation
@@ -770,17 +799,20 @@ builder.Services
 #### 6.1 Cache Architecture Overview (10 min)
 
 **Cache-aside pattern:**
+
 1. Check cache for key
 2. On miss, load from database
 3. Store result in cache
 4. Return data
 
 **Our caching infrastructure:**
+
 - `ICacheFacade` - Main abstraction
 - `ICacheKeyComposer` - Structured key generation
 - `CacheEntryOptions` - TTL and tags
 
 **Cache key structure:**
+
 ```
 {env}:{app}:{module}:{entity}:{version}:{discriminator}
 Example: prod:mmapi:music:artist:v1:by-id:42
@@ -948,6 +980,7 @@ public record CreateGenreRequest(string Name);
 Participants implement ArtistService following the same pattern.
 
 ### Checkpoint
+
 - [ ] Genre service with caching works
 - [ ] Cache invalidation on writes
 - [ ] Endpoints use services (not repositories directly)
@@ -963,6 +996,7 @@ Participants implement ArtistService following the same pattern.
 **Duration:** 45 minutes
 
 ### Objectives
+
 - Integrate FluentValidation
 - Create validators for API models
 - Handle validation errors with ProblemDetails
@@ -1068,6 +1102,7 @@ group.MapPost("/genres", [Authorize] async (
 ```
 
 ### Checkpoint
+
 - [ ] Validators created and registered
 - [ ] Service validates before persistence
 - [ ] Endpoints return proper validation errors
@@ -1079,6 +1114,7 @@ group.MapPost("/genres", [Authorize] async (
 **Duration:** 45 minutes
 
 ### Objectives
+
 - Configure rate limiting middleware
 - Apply policies to endpoints
 - Understand security headers
@@ -1166,6 +1202,7 @@ builder.Services.AddCors(options =>
 ```
 
 ### Checkpoint
+
 - [ ] Rate limiting configured and working
 - [ ] Policies applied to appropriate endpoints
 - [ ] CORS configured for development
@@ -1177,6 +1214,7 @@ builder.Services.AddCors(options =>
 **Duration:** 30 minutes
 
 ### Objectives
+
 - Write integration tests with WebApplicationFactory
 - Review key concepts
 - Q&A
@@ -1256,7 +1294,8 @@ public async Task GetGenres_WithoutToken_ReturnsUnauthorized()
 
 **Key Takeaways:**
 
-1. **Modular Monolith** provides clear boundaries without microservices complexity
+1. **Modular Monolith** provides clear boundaries without microservices
+   complexity
 2. **IModule contract** enables clean composition and module isolation
 3. **Service layer** encapsulates business logic, caching, and validation
 4. **Repository pattern** abstracts data access and enables testing
@@ -1264,11 +1303,13 @@ public async Task GetGenres_WithoutToken_ReturnsUnauthorized()
 6. **Rate limiting** protects your API from abuse
 
 **Next Steps:**
+
 - Explore the complete solution in the main branch
 - Review the `/docs` folder for detailed documentation
 - Consider adding: logging, OpenTelemetry, Redis caching
 
 **Resources:**
+
 - [ASP.NET Core Minimal APIs](https://docs.microsoft.com/aspnet/core/fundamentals/minimal-apis)
 - [FluentValidation](https://docs.fluentvalidation.net/)
 - [Modular Monolith Pattern](https://www.kamilgrzybek.com/design/modular-monolith-primer/)
@@ -1313,21 +1354,25 @@ find workshop-starter/tests -name "*.cs" ! -name "GlobalUsings.cs" -delete
 ### Common Issues
 
 **Build Errors:**
+
 - Ensure .NET 10 SDK is installed
 - Run `dotnet restore` before building
 - Check project references in solution
 
 **Authentication Issues:**
+
 - Verify JWT configuration in appsettings.json
 - Check token expiration
 - Ensure JWKS endpoint is accessible
 
 **Database Issues:**
+
 - Verify chinook.db exists in data/ folder
 - Check connection string in appsettings.json
 - Ensure SQLite provider is installed
 
 **Rate Limiting:**
+
 - Rate limits reset after window expires
 - Use different IP or wait for reset during testing
 - Check if policy is applied to endpoint
@@ -1337,6 +1382,7 @@ find workshop-starter/tests -name "*.cs" ! -name "GlobalUsings.cs" -delete
 ## Appendix C: Complete Code References
 
 The complete implementation is available in the main branch:
+
 - Repository pattern: `src/Shared/SharedKernel.DataSQLite/Repositories/`
 - Services: `src/Modules/*/Services/`
 - Validators: `src/Shared/SharedKernel.Persistence/Validation/`
@@ -1348,6 +1394,7 @@ The complete implementation is available in the main branch:
 ## Feedback
 
 Please provide feedback on this workshop:
+
 - What worked well?
 - What could be improved?
 - What additional topics would you like covered?

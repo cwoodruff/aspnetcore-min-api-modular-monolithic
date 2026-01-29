@@ -7,13 +7,16 @@
 
 ## Overview
 
-This session covers input validation using FluentValidation. You'll learn to create validators for API models, register them with dependency injection, and handle validation errors with proper problem details responses.
+This session covers input validation using FluentValidation. You'll learn to
+create validators for API models, register them with dependency injection, and
+handle validation errors with proper problem details responses.
 
 ---
 
 ## Learning Objectives
 
 By the end of this session, you will:
+
 - Create validators using FluentValidation
 - Apply common validation rules
 - Register validators with DI
@@ -26,16 +29,17 @@ By the end of this session, you will:
 
 ### 1.1 Why FluentValidation?
 
-| Benefit | Description |
-|---------|-------------|
-| **Separation** | Validation logic separate from models |
-| **Testability** | Validators are easily unit tested |
-| **Readability** | Fluent API for rule definition |
-| **Flexibility** | Complex conditional rules supported |
+| Benefit         | Description                           |
+|-----------------|---------------------------------------|
+| **Separation**  | Validation logic separate from models |
+| **Testability** | Validators are easily unit tested     |
+| **Readability** | Fluent API for rule definition        |
+| **Flexibility** | Complex conditional rules supported   |
 
 ### 1.2 Package Reference
 
 FluentValidation is included via NuGet:
+
 ```xml
 <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.x" />
 ```
@@ -119,16 +123,16 @@ public class GenreValidator : AbstractValidator<GenreApiModel>
 
 ### 2.4 Common Validation Rules
 
-| Rule | Usage | Example |
-|------|-------|---------|
-| `NotNull()` | Required field | `RuleFor(x => x.Name).NotNull()` |
-| `NotEmpty()` | Not null and not whitespace | `RuleFor(x => x.Name).NotEmpty()` |
-| `MinimumLength(n)` | Min string length | `RuleFor(x => x.Name).MinimumLength(3)` |
-| `MaximumLength(n)` | Max string length | `RuleFor(x => x.Name).MaximumLength(100)` |
-| `EmailAddress()` | Valid email format | `RuleFor(x => x.Email).EmailAddress()` |
-| `Matches(regex)` | Regex pattern | `RuleFor(x => x.Phone).Matches(@"\d{10}")` |
-| `GreaterThan(n)` | Numeric comparison | `RuleFor(x => x.Age).GreaterThan(0)` |
-| `InclusiveBetween(a, b)` | Range | `RuleFor(x => x.Age).InclusiveBetween(1, 120)` |
+| Rule                     | Usage                       | Example                                        |
+|--------------------------|-----------------------------|------------------------------------------------|
+| `NotNull()`              | Required field              | `RuleFor(x => x.Name).NotNull()`               |
+| `NotEmpty()`             | Not null and not whitespace | `RuleFor(x => x.Name).NotEmpty()`              |
+| `MinimumLength(n)`       | Min string length           | `RuleFor(x => x.Name).MinimumLength(3)`        |
+| `MaximumLength(n)`       | Max string length           | `RuleFor(x => x.Name).MaximumLength(100)`      |
+| `EmailAddress()`         | Valid email format          | `RuleFor(x => x.Email).EmailAddress()`         |
+| `Matches(regex)`         | Regex pattern               | `RuleFor(x => x.Phone).Matches(@"\d{10}")`     |
+| `GreaterThan(n)`         | Numeric comparison          | `RuleFor(x => x.Age).GreaterThan(0)`           |
+| `InclusiveBetween(a, b)` | Range                       | `RuleFor(x => x.Age).InclusiveBetween(1, 120)` |
 
 ---
 
@@ -136,7 +140,8 @@ public class GenreValidator : AbstractValidator<GenreApiModel>
 
 ### 3.1 Assembly Scanning Registration
 
-**File: `src/Shared/SharedKernel.Persistence/PersistenceRegistration.cs` (partial)**
+**File: `src/Shared/SharedKernel.Persistence/PersistenceRegistration.cs` (
+partial)**
 
 ```csharp
 using FluentValidation;
@@ -163,6 +168,7 @@ services.AddValidatorsFromAssemblyContaining<CustomerValidator>();
 ```
 
 This registers:
+
 - All classes inheriting `AbstractValidator<T>`
 - As `IValidator<T>` interfaces
 - With `Scoped` lifetime (default)
@@ -303,6 +309,7 @@ The `Results.ValidationProblem()` returns RFC 7807 format:
 ```
 
 This adds 400 response documentation to Swagger:
+
 - Response type: `ValidationProblemDetails`
 - Status code: 400
 
@@ -352,16 +359,16 @@ public class YourModelValidator : AbstractValidator<YourApiModel>
 
 ### Validation Rules Quick Reference
 
-| Rule | Description |
-|------|-------------|
-| `.NotNull()` | Not null |
-| `.NotEmpty()` | Not null/empty/whitespace |
-| `.Length(min, max)` | String length range |
-| `.EmailAddress()` | Valid email format |
-| `.Matches(regex)` | Regex pattern |
-| `.Must(predicate)` | Custom validation |
-| `.When(condition)` | Conditional rule |
-| `.WithMessage(msg)` | Custom error message |
+| Rule                | Description               |
+|---------------------|---------------------------|
+| `.NotNull()`        | Not null                  |
+| `.NotEmpty()`       | Not null/empty/whitespace |
+| `.Length(min, max)` | String length range       |
+| `.EmailAddress()`   | Valid email format        |
+| `.Matches(regex)`   | Regex pattern             |
+| `.Must(predicate)`  | Custom validation         |
+| `.When(condition)`  | Conditional rule          |
+| `.WithMessage(msg)` | Custom error message      |
 
 ### Handling in Endpoints
 
@@ -385,6 +392,7 @@ catch (ValidationException ex)
 ## Next Session
 
 In **Session 8: Rate Limiting & Security**, you will:
+
 - Configure rate limiting middleware
 - Create custom rate limit policies
 - Apply policies to endpoints

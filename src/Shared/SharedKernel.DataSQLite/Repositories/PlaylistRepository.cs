@@ -8,9 +8,11 @@ namespace SharedKernel.DataSQLite.Repositories;
 
 public class PlaylistRepository(AppDbContext context) : BaseRepository<Playlist>(context), IPlaylistRepository
 {
-    public async Task<List<Playlist>> GetByTrackId(int id) =>
-        await _context.PlaylistTracks.Where(p => p.TrackId == id).Select(p => p.Playlist!)
+    public async Task<List<Playlist>> GetByTrackId(int id)
+    {
+        return await _context.PlaylistTracks.Where(p => p.TrackId == id).Select(p => p.Playlist!)
             .AsNoTracking().ToListAsync();
+    }
 
     public async Task<PlaylistApiModel> GetById(int id)
     {

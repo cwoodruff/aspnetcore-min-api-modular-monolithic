@@ -1,7 +1,6 @@
 using FluentValidation;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
 using SharedKernel.Persistence.Extensions;
 using SharedKernel.Persistence.Repositories;
 
@@ -13,16 +12,16 @@ public class PlaylistService(
     ICacheKeyComposer keys,
     IValidator<PlaylistApiModel> validator) : IPlaylistService
 {
-    private readonly IValidator<PlaylistApiModel> _validator = validator;
     private static readonly string[] PlaylistTags = ["music:playlist", "music:playlist:by-id"];
+    private readonly IValidator<PlaylistApiModel> _validator = validator;
 
     public async Task<PlaylistApiModel?> GetPlaylistByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "playlist",
-            version: "v1",
-            discriminator: $"by-id:{id}");
+            "music",
+            "playlist",
+            "v1",
+            $"by-id:{id}");
 
         return await cache.GetOrAddAsync<PlaylistApiModel?>(key, async _ =>
         {
@@ -44,10 +43,10 @@ public class PlaylistService(
     public async Task<IEnumerable<object>> GetAllPlaylistsAsync(CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "playlist",
-            version: "v1",
-            discriminator: "all");
+            "music",
+            "playlist",
+            "v1",
+            "all");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -101,10 +100,10 @@ public class PlaylistService(
             // Invalidate cache
             await cache.RemoveByTagAsync(PlaylistTags[0], ct);
             var key = keys.Compose(
-                moduleName: "music",
-                entity: "playlist",
-                version: "v1",
-                discriminator: $"by-id:{model.Id}");
+                "music",
+                "playlist",
+                "v1",
+                $"by-id:{model.Id}");
             await cache.RemoveAsync(key, ct);
         }
 

@@ -83,7 +83,8 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.Property(e => e.State).HasColumnType("nvarchar(40)");
             entity.Property(e => e.Title).HasColumnType("nvarchar(30)");
 
-            entity.HasOne(d => d.ReportsToNavigation).WithMany(p => p.InverseReportsToNavigation).HasForeignKey(d => d.ReportsTo);
+            entity.HasOne(d => d.ReportsToNavigation).WithMany(p => p.InverseReportsToNavigation)
+                .HasForeignKey(d => d.ReportsTo);
         });
 
         modelBuilder.Entity<Genre>(entity =>

@@ -3,7 +3,7 @@ using SharedKernel.Persistence.Converters;
 
 namespace SharedKernel.Persistence.Entities;
 
-public partial class InvoiceLine : BaseEntity, IConvertModel<InvoiceLineApiModel>
+public class InvoiceLine : BaseEntity, IConvertModel<InvoiceLineApiModel>
 {
     public int? InvoiceId { get; set; }
 
@@ -17,8 +17,9 @@ public partial class InvoiceLine : BaseEntity, IConvertModel<InvoiceLineApiModel
 
     public virtual Track? Track { get; set; }
 
-    public InvoiceLineApiModel Convert() =>
-        new()
+    public InvoiceLineApiModel Convert()
+    {
+        return new InvoiceLineApiModel
         {
             Id = Id,
             InvoiceId = InvoiceId,
@@ -26,4 +27,5 @@ public partial class InvoiceLine : BaseEntity, IConvertModel<InvoiceLineApiModel
             UnitPrice = UnitPrice,
             Quantity = Quantity
         };
+    }
 }

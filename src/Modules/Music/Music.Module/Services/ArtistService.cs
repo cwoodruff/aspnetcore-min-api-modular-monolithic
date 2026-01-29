@@ -1,7 +1,6 @@
 using FluentValidation;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
 using SharedKernel.Persistence.Extensions;
 using SharedKernel.Persistence.Repositories;
 
@@ -13,16 +12,16 @@ public class ArtistService(
     ICacheKeyComposer keys,
     IValidator<ArtistApiModel> validator) : IArtistService
 {
-    private readonly IValidator<ArtistApiModel> _validator = validator;
     private static readonly string[] ArtistTags = ["music:artist", "music:artist:by-id"];
+    private readonly IValidator<ArtistApiModel> _validator = validator;
 
     public async Task<ArtistApiModel?> GetArtistByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "artist",
-            version: "v1",
-            discriminator: $"by-id:{id}");
+            "music",
+            "artist",
+            "v1",
+            $"by-id:{id}");
 
         return await cache.GetOrAddAsync<ArtistApiModel?>(key, async _ =>
         {
@@ -44,10 +43,10 @@ public class ArtistService(
     public async Task<IEnumerable<object>> GetAllArtistsAsync(CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "music",
-            entity: "artist",
-            version: "v1",
-            discriminator: "all");
+            "music",
+            "artist",
+            "v1",
+            "all");
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
@@ -100,10 +99,10 @@ public class ArtistService(
             // Invalidate cache
             await cache.RemoveByTagAsync(ArtistTags[0], ct);
             var key = keys.Compose(
-                moduleName: "music",
-                entity: "artist",
-                version: "v1",
-                discriminator: $"by-id:{model.Id}");
+                "music",
+                "artist",
+                "v1",
+                $"by-id:{model.Id}");
             await cache.RemoveAsync(key, ct);
         }
 

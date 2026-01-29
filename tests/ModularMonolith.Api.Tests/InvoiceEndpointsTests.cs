@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -14,7 +15,7 @@ public class InvoiceEndpointsTests(WebApplicationFactory<Program> factory)
     {
         var client = _factory.CreateClient();
         var response = await client.GetAsync("/api/orders/invoices/1");
-        response.StatusCode.Should().Be(System.Net.HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -26,10 +27,10 @@ public class InvoiceEndpointsTests(WebApplicationFactory<Program> factory)
         client.UseBearer(token);
 
         var response = await client.GetAsync("/api/orders/invoices/1");
-        response.StatusCode.Should().NotBe(System.Net.HttpStatusCode.Unauthorized);
-        response.StatusCode.Should().NotBe(System.Net.HttpStatusCode.Forbidden);
+        response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
 
-        if (response.StatusCode == System.Net.HttpStatusCode.OK)
+        if (response.StatusCode == HttpStatusCode.OK)
         {
             await using var stream = await response.Content.ReadAsStreamAsync();
             using var doc = await JsonDocument.ParseAsync(stream);
@@ -49,7 +50,7 @@ public class InvoiceEndpointsTests(WebApplicationFactory<Program> factory)
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
         var response = await client.GetAsync("/api/orders/invoices/");
-        response.StatusCode.Should().NotBe(System.Net.HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
     }
 
     [Theory]
@@ -62,7 +63,7 @@ public class InvoiceEndpointsTests(WebApplicationFactory<Program> factory)
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
         var response = await client.GetAsync(url);
-        response.StatusCode.Should().NotBe(System.Net.HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -73,7 +74,7 @@ public class InvoiceEndpointsTests(WebApplicationFactory<Program> factory)
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
         var response = await client.GetAsync("/api/orders/invoices/999999");
-        response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -85,6 +86,6 @@ public class InvoiceEndpointsTests(WebApplicationFactory<Program> factory)
         client.UseBearer(token);
         client.DefaultRequestHeaders.Add("X-Tenant-Id", "tenant-other");
         var response = await client.GetAsync("/api/orders/invoices/1");
-        response.StatusCode.Should().Be(System.Net.HttpStatusCode.Forbidden);
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 }

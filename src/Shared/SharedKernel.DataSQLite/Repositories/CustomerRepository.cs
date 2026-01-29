@@ -8,14 +8,17 @@ namespace SharedKernel.DataSQLite.Repositories;
 
 public class CustomerRepository(AppDbContext context) : BaseRepository<Customer>(context), ICustomerRepository
 {
-    public async Task<List<Customer>> GetBySupportRepId(int id) =>
-        await _context.Customers
+    public async Task<List<Customer>> GetBySupportRepId(int id)
+    {
+        return await _context.Customers
             .Where(a => a.SupportRepId == id)
             .AsNoTracking()
             .ToListAsync();
+    }
 
-    public async Task<CustomerApiModel> GetById(int id) =>
-        await _context.Customers
+    public async Task<CustomerApiModel> GetById(int id)
+    {
+        return await _context.Customers
             .Where(c => c.Id == id)
             .Select(c => new CustomerApiModel
             {
@@ -25,14 +28,16 @@ public class CustomerRepository(AppDbContext context) : BaseRepository<Customer>
                 // ... other fields ...
                 SupportRepId = c.SupportRepId,
                 SupportRepName = c.SupportRep != null ? c.SupportRep.FirstName + " " + c.SupportRep.LastName : null,
-                SupportRep = c.SupportRep == null ? null : new EmployeeApiModel
-                {
-                    Id = c.SupportRep.Id,
-                    FirstName = c.SupportRep.FirstName,
-                    LastName = c.SupportRep.LastName,
-                    Title = c.SupportRep.Title,
-                    // No Customers collection here
-                },
+                SupportRep = c.SupportRep == null
+                    ? null
+                    : new EmployeeApiModel
+                    {
+                        Id = c.SupportRep.Id,
+                        FirstName = c.SupportRep.FirstName,
+                        LastName = c.SupportRep.LastName,
+                        Title = c.SupportRep.Title
+                        // No Customers collection here
+                    },
                 Invoices = c.Invoices.Select(i => new InvoiceApiModel
                 {
                     Id = i.Id,
@@ -49,4 +54,5 @@ public class CustomerRepository(AppDbContext context) : BaseRepository<Customer>
             })
             .AsNoTracking()
             .SingleAsync();
+    }
 }

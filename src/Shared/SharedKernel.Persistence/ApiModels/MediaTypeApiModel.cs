@@ -9,10 +9,12 @@ public sealed class MediaTypeApiModel : BaseApiModel, IConvertModel<MediaType>
 
     public ICollection<TrackApiModel> Tracks { get; set; } = new List<TrackApiModel>();
 
-    public MediaType Convert() =>
-        new()
+    public MediaType Convert()
+    {
+        return new MediaType
         {
             Id = Id,
             Name = Name
         };
+    }
 }

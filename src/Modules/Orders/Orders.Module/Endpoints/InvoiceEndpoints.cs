@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Orders.Modules.Services;
+using SharedKernel.TrafficControl;
 
 namespace Orders.Modules.Endpoints;
 
@@ -28,7 +29,7 @@ public static class InvoiceEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/orders/invoices
         group.MapGet("invoices/", [Authorize] async (
@@ -47,7 +48,7 @@ public static class InvoiceEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/orders/invoices/customer/{id}
         group.MapGet("invoices/customer/{id:int}", [Authorize] async (
@@ -67,6 +68,6 @@ public static class InvoiceEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

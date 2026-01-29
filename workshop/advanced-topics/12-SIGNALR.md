@@ -6,7 +6,9 @@
 
 ## Overview
 
-SignalR enables real-time bidirectional communication between server and clients. It's perfect for notifications, live updates, chat features, and collaborative applications.
+SignalR enables real-time bidirectional communication between server and
+clients. It's perfect for notifications, live updates, chat features, and
+collaborative applications.
 
 **Duration:** 45-60 minutes
 **Prerequisites:** Basic Minimal API knowledge, understanding of WebSockets
@@ -16,6 +18,7 @@ SignalR enables real-time bidirectional communication between server and clients
 ## Learning Objectives
 
 By the end of this guide, you will:
+
 - Understand SignalR communication patterns
 - Create hubs and handle connections
 - Implement authentication for real-time connections
@@ -28,16 +31,17 @@ By the end of this guide, you will:
 
 ### Use Cases
 
-| Feature | Traditional Polling | SignalR |
-|---------|--------------------| --------|
-| Notifications | Every 30s request | Instant push |
-| Live dashboards | Stale data | Real-time updates |
-| Chat | Delayed messages | Instant delivery |
-| Collaborative editing | Conflicts | Sync in real-time |
+| Feature               | Traditional Polling | SignalR           |
+|-----------------------|---------------------|-------------------|
+| Notifications         | Every 30s request   | Instant push      |
+| Live dashboards       | Stale data          | Real-time updates |
+| Chat                  | Delayed messages    | Instant delivery  |
+| Collaborative editing | Conflicts           | Sync in real-time |
 
 ### Transport Protocols
 
 SignalR automatically negotiates the best transport:
+
 1. **WebSockets** — Best performance, bidirectional
 2. **Server-Sent Events** — Good fallback, server→client only
 3. **Long Polling** — Works everywhere, higher latency
@@ -741,12 +745,12 @@ public class NotificationHubTests
 
 ### Hub Methods Comparison
 
-| Pattern | Use Case |
-|---------|----------|
-| `Clients.All` | Broadcast to everyone |
-| `Clients.Group(name)` | Feature-specific updates |
-| `Clients.User(id)` | User-specific notifications |
-| `Clients.Others` | Exclude sender |
+| Pattern               | Use Case                    |
+|-----------------------|-----------------------------|
+| `Clients.All`         | Broadcast to everyone       |
+| `Clients.Group(name)` | Feature-specific updates    |
+| `Clients.User(id)`    | User-specific notifications |
+| `Clients.Others`      | Exclude sender              |
 
 ### Best Practices
 

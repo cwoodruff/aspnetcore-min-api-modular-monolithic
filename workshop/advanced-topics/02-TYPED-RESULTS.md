@@ -6,7 +6,9 @@
 
 ## Overview
 
-Typed Results provide compile-time safety and automatic OpenAPI documentation for your Minimal API endpoints. Instead of returning generic `IResult`, you declare exactly what types your endpoint can return.
+Typed Results provide compile-time safety and automatic OpenAPI documentation
+for your Minimal API endpoints. Instead of returning generic `IResult`, you
+declare exactly what types your endpoint can return.
 
 **Duration:** 30-45 minutes
 **Prerequisites:** Basic Minimal API knowledge, understanding of OpenAPI/Swagger
@@ -16,6 +18,7 @@ Typed Results provide compile-time safety and automatic OpenAPI documentation fo
 ## Learning Objectives
 
 By the end of this guide, you will:
+
 - Understand the difference between `IResult` and `Results<T1, T2, ...>`
 - Implement typed results for accurate OpenAPI schemas
 - Use `TypedResults` factory methods
@@ -38,6 +41,7 @@ app.MapGet("/albums/{id}", async (int id, IAlbumService service) =>
 ```
 
 **Issues:**
+
 - OpenAPI shows generic response types
 - No compile-time validation of return types
 - Client code generators can't create proper types
@@ -58,6 +62,7 @@ app.MapGet("/albums/{id}", async Task<Results<Ok<AlbumModel>, NotFound>>
 ```
 
 **Benefits:**
+
 - Automatic OpenAPI documentation
 - Compile-time type checking
 - Self-documenting code
@@ -634,13 +639,13 @@ public class AlbumEndpointsTests
 
 ### Best Practices
 
-| Practice | Reason |
-|----------|--------|
-| Use typed results for all public endpoints | Better documentation and type safety |
-| Keep return types to 4 or fewer | Readability and maintainability |
-| Use `ValidationProblem` for validation errors | Consistent RFC 7807 format |
-| Use `ProblemHttpResult` for other errors | Consistent error response format |
-| Add summaries and descriptions | Better generated documentation |
+| Practice                                      | Reason                               |
+|-----------------------------------------------|--------------------------------------|
+| Use typed results for all public endpoints    | Better documentation and type safety |
+| Keep return types to 4 or fewer               | Readability and maintainability      |
+| Use `ValidationProblem` for validation errors | Consistent RFC 7807 format           |
+| Use `ProblemHttpResult` for other errors      | Consistent error response format     |
+| Add summaries and descriptions                | Better generated documentation       |
 
 ### Quick Reference
 

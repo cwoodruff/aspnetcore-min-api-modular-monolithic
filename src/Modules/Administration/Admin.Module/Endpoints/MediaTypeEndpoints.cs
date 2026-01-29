@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using SharedKernel.Persistence.Repositories;
+using SharedKernel.TrafficControl;
 
 namespace Admin.Modules.Endpoints;
 
@@ -29,7 +29,7 @@ public static class MediaTypeEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/admin/media-types
         group.MapGet("media-types/", [Authorize] async (
@@ -48,6 +48,6 @@ public static class MediaTypeEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

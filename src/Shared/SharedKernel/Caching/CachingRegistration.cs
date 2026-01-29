@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace SharedKernel.Caching;
 
@@ -37,9 +39,9 @@ public static class CachingRegistration
         services.AddSingleton<ICacheKeyComposer, CacheKeyComposer>();
         services.AddSingleton<ICacheFacade>(sp =>
         {
-            var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<CacheOptions>>();
+            var opts = sp.GetRequiredService<IOptions<CacheOptions>>();
             var l1 = sp.GetRequiredService<IL1Cache>();
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CompositeCacheFacade>>();
+            var logger = sp.GetRequiredService<ILogger<CompositeCacheFacade>>();
             var l2 = sp.GetService<IL2Cache>();
             return new CompositeCacheFacade(opts, l1, logger, l2);
         });

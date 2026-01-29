@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using SharedKernel.Persistence.Repositories;
+using SharedKernel.TrafficControl;
 
 namespace Admin.Modules.Endpoints;
 
@@ -29,7 +29,7 @@ public static class CustomerEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/admin/customers
         group.MapGet("customers/", [Authorize] async (
@@ -48,7 +48,7 @@ public static class CustomerEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/admin/customers/support-rep/{id}
         group.MapGet("customers/support-rep/{id:int}", [Authorize] async (
@@ -68,6 +68,6 @@ public static class CustomerEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

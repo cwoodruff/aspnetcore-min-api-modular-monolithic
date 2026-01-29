@@ -8,13 +8,15 @@ namespace SharedKernel.DataSQLite.Repositories;
 
 public class AlbumRepository(AppDbContext context) : BaseRepository<Album>(context), IAlbumRepository
 {
-    public async Task<List<Album>> GetByArtistId(int id) =>
-        await _context.Albums
+    public async Task<List<Album>> GetByArtistId(int id)
+    {
+        return await _context.Albums
             .Where(a => a.ArtistId == id)
             .Include(a => a.Artist)
             .Include(a => a.Tracks)
             .AsNoTracking()
             .ToListAsync();
+    }
 
     public async Task<AlbumApiModel> GetById(int id)
     {
@@ -23,11 +25,11 @@ public class AlbumRepository(AppDbContext context) : BaseRepository<Album>(conte
             .Where(a => a.Id == id)
             .Include(a => a.Artist)
             .Include(a => a.Tracks)
-            .ThenInclude(t => t.Genre)       // optional if you need GenreName
+            .ThenInclude(t => t.Genre) // optional if you need GenreName
             .Include(a => a.Tracks)
-            .ThenInclude(t => t.MediaType)   // optional if you need MediaTypeName
+            .ThenInclude(t => t.MediaType) // optional if you need MediaTypeName
             .AsNoTracking()
-            .AsSplitQuery()   // important on SQLite to avoid cartesian explosion
+            .AsSplitQuery() // important on SQLite to avoid cartesian explosion
             .SingleAsync();
 
         var albumDto = new AlbumApiModel
@@ -36,11 +38,13 @@ public class AlbumRepository(AppDbContext context) : BaseRepository<Album>(conte
             Title = albumEntity.Title,
             ArtistId = albumEntity.ArtistId,
             ArtistName = albumEntity.Artist?.Name,
-            Artist = albumEntity.Artist == null ? null : new ArtistApiModel
-            {
-                Id = albumEntity.Artist.Id,
-                Name = albumEntity.Artist.Name
-            },
+            Artist = albumEntity.Artist == null
+                ? null
+                : new ArtistApiModel
+                {
+                    Id = albumEntity.Artist.Id,
+                    Name = albumEntity.Artist.Name
+                },
             Tracks = albumEntity.Tracks.Select(t => new TrackApiModel
             {
                 Id = t.Id,

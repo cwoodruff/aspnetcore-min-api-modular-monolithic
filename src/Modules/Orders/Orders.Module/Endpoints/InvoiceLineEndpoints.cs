@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Orders.Modules.Services;
+using SharedKernel.TrafficControl;
 
 namespace Orders.Modules.Endpoints;
 
@@ -28,7 +29,7 @@ public static class InvoiceLineEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/orders/invoice-lines
         group.MapGet("invoice-lines/", [Authorize] async (
@@ -47,7 +48,7 @@ public static class InvoiceLineEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/orders/invoice-lines/invoice/{id}
         group.MapGet("invoice-lines/invoice/{id:int}", [Authorize] async (
@@ -67,7 +68,7 @@ public static class InvoiceLineEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/orders/invoice-lines/track/{id}
         group.MapGet("invoice-lines/track/{id:int}", [Authorize] async (
@@ -87,6 +88,6 @@ public static class InvoiceLineEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

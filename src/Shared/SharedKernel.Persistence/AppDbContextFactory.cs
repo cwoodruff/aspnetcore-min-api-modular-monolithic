@@ -9,10 +9,8 @@ public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
     {
         var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
         var connectionString = ResolveConnectionString();
-        optionsBuilder.UseSqlite(connectionString, sqlite =>
-        {
-            sqlite.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
-        });
+        optionsBuilder.UseSqlite(connectionString,
+            sqlite => { sqlite.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName); });
         return new AppDbContext(optionsBuilder.Options);
     }
 
@@ -32,6 +30,7 @@ public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
         {
             current = current.Parent;
         }
+
         var root = current?.FullName ?? AppContext.BaseDirectory;
         var dbPath = Path.Combine(root, "data", "chinook.db");
         Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);

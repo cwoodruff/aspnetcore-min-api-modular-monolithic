@@ -14,8 +14,12 @@ public static class BuildInfoProvider
     }
 
     public static string GetEnvironment(IHostEnvironment env)
-        => env.EnvironmentName;
+    {
+        return env.EnvironmentName;
+    }
 
     public static string GetServiceName(IConfiguration config)
-        => config["ServiceName"] ?? "ModularMonolith.Api";
+    {
+        return config["ServiceName"] ?? "ModularMonolith.Api";
+    }
 }

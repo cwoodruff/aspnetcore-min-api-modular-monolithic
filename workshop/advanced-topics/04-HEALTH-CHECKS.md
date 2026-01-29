@@ -6,16 +6,20 @@
 
 ## Overview
 
-Health checks enable monitoring systems, load balancers, and container orchestrators to determine if your application is healthy and ready to receive traffic. ASP.NET Core provides built-in support for health check endpoints.
+Health checks enable monitoring systems, load balancers, and container
+orchestrators to determine if your application is healthy and ready to receive
+traffic. ASP.NET Core provides built-in support for health check endpoints.
 
 **Duration:** 30-45 minutes
-**Prerequisites:** Basic Minimal API knowledge, understanding of deployment concepts
+**Prerequisites:** Basic Minimal API knowledge, understanding of deployment
+concepts
 
 ---
 
 ## Learning Objectives
 
 By the end of this guide, you will:
+
 - Understand liveness vs. readiness probes
 - Implement database health checks
 - Create custom health checks
@@ -28,11 +32,11 @@ By the end of this guide, you will:
 
 ### Liveness vs. Readiness
 
-| Type | Purpose | Example Failure |
-|------|---------|-----------------|
-| **Liveness** | Is the app running? | Deadlock, infinite loop |
+| Type          | Purpose                      | Example Failure                  |
+|---------------|------------------------------|----------------------------------|
+| **Liveness**  | Is the app running?          | Deadlock, infinite loop          |
 | **Readiness** | Can the app handle requests? | Database down, cache unavailable |
-| **Startup** | Has the app started? | Initial data loading |
+| **Startup**   | Has the app started?         | Initial data loading             |
 
 ### Kubernetes Probe Mapping
 
@@ -856,12 +860,12 @@ app.Run();
 
 ### Health Check Endpoints
 
-| Endpoint | Purpose | Tags |
-|----------|---------|------|
-| `/health/live` | Is the app running? | `live` |
-| `/health/ready` | Can the app handle requests? | `ready` |
+| Endpoint          | Purpose                        | Tags      |
+|-------------------|--------------------------------|-----------|
+| `/health/live`    | Is the app running?            | `live`    |
+| `/health/ready`   | Can the app handle requests?   | `ready`   |
 | `/health/startup` | Has the app finished starting? | `startup` |
-| `/health` | All checks combined | all |
+| `/health`         | All checks combined            | all       |
 
 ### Best Practices
 

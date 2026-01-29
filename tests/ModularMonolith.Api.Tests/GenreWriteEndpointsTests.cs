@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 namespace ModularMonolith.Api.Tests;
 
 /// <summary>
-/// Tests for POST/PUT/DELETE operations on Genre endpoints.
+///     Tests for POST/PUT/DELETE operations on Genre endpoints.
 /// </summary>
 public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
@@ -22,7 +22,8 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
     {
         var client = _factory.CreateClient();
         var payload = JsonSerializer.Serialize(new { name = "Jazz" });
-        var response = await client.PostAsync("/api/admin/genres", new StringContent(payload, Encoding.UTF8, "application/json"));
+        var response = await client.PostAsync("/api/admin/genres",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -36,7 +37,8 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
         client.UseBearer(token);
 
         var payload = JsonSerializer.Serialize(new { name = "Jazz" });
-        var response = await client.PostAsync("/api/admin/genres", new StringContent(payload, Encoding.UTF8, "application/json"));
+        var response = await client.PostAsync("/api/admin/genres",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -50,7 +52,8 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
 
         var uniqueName = $"TestGenre_{Guid.NewGuid():N}";
         var payload = JsonSerializer.Serialize(new { name = uniqueName });
-        var response = await client.PostAsync("/api/admin/genres", new StringContent(payload, Encoding.UTF8, "application/json"));
+        var response = await client.PostAsync("/api/admin/genres",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
 
         // Should not be 401 (unauthorized) since we have valid token
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
@@ -79,7 +82,8 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
         client.UseBearer(token);
 
         var payload = JsonSerializer.Serialize(new { name = "" });
-        var response = await client.PostAsync("/api/admin/genres", new StringContent(payload, Encoding.UTF8, "application/json"));
+        var response = await client.PostAsync("/api/admin/genres",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
 
         // Should not be 401 (we have valid credentials)
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
@@ -95,7 +99,8 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
 
         var longName = new string('A', 121); // Max is 120
         var payload = JsonSerializer.Serialize(new { name = longName });
-        var response = await client.PostAsync("/api/admin/genres", new StringContent(payload, Encoding.UTF8, "application/json"));
+        var response = await client.PostAsync("/api/admin/genres",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
 
         // Should not be 401 (we have valid credentials)
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
@@ -110,7 +115,8 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
     {
         var client = _factory.CreateClient();
         var payload = JsonSerializer.Serialize(new { name = "Updated Name" });
-        var response = await client.PutAsync("/api/admin/genres/1", new StringContent(payload, Encoding.UTF8, "application/json"));
+        var response = await client.PutAsync("/api/admin/genres/1",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -123,7 +129,8 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
         client.UseBearer(token);
 
         var payload = JsonSerializer.Serialize(new { name = "Updated Name" });
-        var response = await client.PutAsync("/api/admin/genres/1", new StringContent(payload, Encoding.UTF8, "application/json"));
+        var response = await client.PutAsync("/api/admin/genres/1",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -138,7 +145,8 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
         // Try to update an existing genre (ID 1 from chinook)
         var updatedName = $"Updated_{Guid.NewGuid():N}";
         var updatePayload = JsonSerializer.Serialize(new { name = updatedName });
-        var updateResponse = await client.PutAsync("/api/admin/genres/1", new StringContent(updatePayload, Encoding.UTF8, "application/json"));
+        var updateResponse = await client.PutAsync("/api/admin/genres/1",
+            new StringContent(updatePayload, Encoding.UTF8, "application/json"));
 
         // Should not be 401 (unauthorized) since we have valid token
         updateResponse.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
@@ -153,7 +161,8 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
         client.UseBearer(token);
 
         var payload = JsonSerializer.Serialize(new { name = "Updated Name" });
-        var response = await client.PutAsync("/api/admin/genres/999999", new StringContent(payload, Encoding.UTF8, "application/json"));
+        var response = await client.PutAsync("/api/admin/genres/999999",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
         // Should not be 401 (we have valid credentials)
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
     }
@@ -167,7 +176,8 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
         client.UseBearer(token);
 
         var payload = JsonSerializer.Serialize(new { name = "" });
-        var response = await client.PutAsync("/api/admin/genres/1", new StringContent(payload, Encoding.UTF8, "application/json"));
+        var response = await client.PutAsync("/api/admin/genres/1",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
         // Should not be 401 (we have valid credentials)
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
     }

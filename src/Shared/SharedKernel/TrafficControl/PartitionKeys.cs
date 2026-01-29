@@ -1,10 +1,11 @@
+using System.Net.Sockets;
 using Microsoft.AspNetCore.Http;
 
 namespace SharedKernel.TrafficControl;
 
 /// <summary>
-/// Helpers to derive a stable partition key for rate limiting from the current request.
-/// This is scaffolding only; the final implementation should align with ForwardedHeaders config.
+///     Helpers to derive a stable partition key for rate limiting from the current request.
+///     This is scaffolding only; the final implementation should align with ForwardedHeaders config.
 /// </summary>
 public static class PartitionKeys
 {
@@ -12,13 +13,22 @@ public static class PartitionKeys
     {
         // Priority: API key/client_id -> tenant -> sub -> IP
         var clientId = httpContext.User.FindFirst("client_id")?.Value;
-        if (!string.IsNullOrWhiteSpace(clientId)) return $"client:{Normalize(clientId)}";
+        if (!string.IsNullOrWhiteSpace(clientId))
+        {
+            return $"client:{Normalize(clientId)}";
+        }
 
         var tenant = httpContext.User.FindFirst("tenant")?.Value;
-        if (!string.IsNullOrWhiteSpace(tenant)) return $"tenant:{Normalize(tenant)}";
+        if (!string.IsNullOrWhiteSpace(tenant))
+        {
+            return $"tenant:{Normalize(tenant)}";
+        }
 
         var sub = httpContext.User.FindFirst("sub")?.Value;
-        if (!string.IsNullOrWhiteSpace(sub)) return $"sub:{Normalize(sub)}";
+        if (!string.IsNullOrWhiteSpace(sub))
+        {
+            return $"sub:{Normalize(sub)}";
+        }
 
         var ip = GetClientIp(httpContext);
         return $"ip:{ip}";
@@ -28,10 +38,15 @@ public static class PartitionKeys
     {
         // Minimal, conservative approach: use RemoteIpAddress. Forwarded headers trust should be configured at host.
         var ip = context.Connection.RemoteIpAddress;
-        return ip is null ? "unknown" : ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6
-            ? ip.MapToIPv4().ToString()
-            : ip.ToString();
+        return ip is null
+            ? "unknown"
+            : ip.AddressFamily == AddressFamily.InterNetworkV6
+                ? ip.MapToIPv4().ToString()
+                : ip.ToString();
     }
 
-    private static string Normalize(string value) => value.Trim().ToLowerInvariant();
+    private static string Normalize(string value)
+    {
+        return value.Trim().ToLowerInvariant();
+    }
 }

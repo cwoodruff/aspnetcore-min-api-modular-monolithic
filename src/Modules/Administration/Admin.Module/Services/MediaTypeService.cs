@@ -12,16 +12,16 @@ public sealed class MediaTypeService(
     ICacheKeyComposer keys,
     IValidator<MediaTypeApiModel> validator) : IMediaTypeService
 {
-    private readonly IValidator<MediaTypeApiModel> _validator = validator;
     private static readonly string[] MediaTypeTags = ["administration:mediatype", "administration:mediatype:by-id"];
+    private readonly IValidator<MediaTypeApiModel> _validator = validator;
 
     public async Task<MediaTypeApiModel?> GetMediaTypeByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "administration",
-            entity: "mediatype",
-            version: "v1",
-            discriminator: $"by-id:{id}");
+            "administration",
+            "mediatype",
+            "v1",
+            $"by-id:{id}");
 
         return await cache.GetOrAddAsync<MediaTypeApiModel?>(key, async _ =>
         {
@@ -44,10 +44,10 @@ public sealed class MediaTypeService(
     public async Task<IEnumerable<MediaTypeApiModel>> GetAllMediaTypesAsync(CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "administration",
-            entity: "mediatype",
-            version: "v1",
-            discriminator: "all");
+            "administration",
+            "mediatype",
+            "v1",
+            "all");
 
         return await cache.GetOrAddAsync<IEnumerable<MediaTypeApiModel>>(key, async _ =>
         {
@@ -100,10 +100,10 @@ public sealed class MediaTypeService(
             // Invalidate cache
             await cache.RemoveByTagAsync(MediaTypeTags[0], ct);
             var key = keys.Compose(
-                moduleName: "administration",
-                entity: "mediatype",
-                version: "v1",
-                discriminator: $"by-id:{model.Id}");
+                "administration",
+                "mediatype",
+                "v1",
+                $"by-id:{model.Id}");
             await cache.RemoveAsync(key, ct);
         }
 

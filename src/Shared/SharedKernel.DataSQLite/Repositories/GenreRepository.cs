@@ -7,8 +7,10 @@ namespace SharedKernel.DataSQLite.Repositories;
 
 public class GenreRepository(AppDbContext context) : BaseRepository<Genre>(context), IGenreRepository
 {
-    public async Task<Genre> GetById(int id) =>
-        await _context.Genres
+    public async Task<Genre> GetById(int id)
+    {
+        return await _context.Genres
             .AsNoTracking()
             .SingleAsync(e => e.Id == id);
+    }
 }

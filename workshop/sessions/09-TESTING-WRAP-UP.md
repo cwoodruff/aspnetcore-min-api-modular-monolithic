@@ -7,13 +7,16 @@
 
 ## Overview
 
-This final session covers integration testing with WebApplicationFactory, testing authenticated endpoints, and reviews the key concepts learned throughout the workshop.
+This final session covers integration testing with WebApplicationFactory,
+testing authenticated endpoints, and reviews the key concepts learned throughout
+the workshop.
 
 ---
 
 ## Learning Objectives
 
 By the end of this session, you will:
+
 - Write integration tests using WebApplicationFactory
 - Test endpoints with authentication
 - Mock user stores for testing
@@ -285,17 +288,17 @@ dotnet test --logger "console;verbosity=detailed"
 
 ### Key Concepts Learned
 
-| Session | Key Takeaway |
-|---------|--------------|
-| **1. Setup** | Solution structure, IModule contract |
-| **2. Architecture** | Modular Monolith benefits, host composition |
-| **3. First Module** | Health endpoints, endpoint metadata |
-| **4. Auth** | JWT tokens, policies, tenant scoping |
-| **5. Repository** | Base repository, EF Core patterns |
-| **6. Service/Cache** | Cache-aside, tag invalidation |
-| **7. Validation** | FluentValidation, problem details |
-| **8. Rate Limiting** | Fixed window, partition keys |
-| **9. Testing** | WebApplicationFactory, auth testing |
+| Session              | Key Takeaway                                |
+|----------------------|---------------------------------------------|
+| **1. Setup**         | Solution structure, IModule contract        |
+| **2. Architecture**  | Modular Monolith benefits, host composition |
+| **3. First Module**  | Health endpoints, endpoint metadata         |
+| **4. Auth**          | JWT tokens, policies, tenant scoping        |
+| **5. Repository**    | Base repository, EF Core patterns           |
+| **6. Service/Cache** | Cache-aside, tag invalidation               |
+| **7. Validation**    | FluentValidation, problem details           |
+| **8. Rate Limiting** | Fixed window, partition keys                |
+| **9. Testing**       | WebApplicationFactory, auth testing         |
 
 ### Architecture Layers
 
@@ -343,6 +346,7 @@ dotnet test --logger "console;verbosity=detailed"
 ### 2. Explore Advanced Topics
 
 See `/workshop/advanced-topics/` for:
+
 - Endpoint Filters
 - Output Caching
 - API Versioning
@@ -353,12 +357,12 @@ See `/workshop/advanced-topics/` for:
 
 ### 3. Resources
 
-| Resource | URL |
-|----------|-----|
-| ASP.NET Core Docs | https://docs.microsoft.com/aspnet/core |
+| Resource           | URL                                                              |
+|--------------------|------------------------------------------------------------------|
+| ASP.NET Core Docs  | https://docs.microsoft.com/aspnet/core                           |
 | Minimal APIs Guide | https://docs.microsoft.com/aspnet/core/fundamentals/minimal-apis |
-| FluentValidation | https://docs.fluentvalidation.net |
-| Rate Limiting | https://docs.microsoft.com/aspnet/core/performance/rate-limit |
+| FluentValidation   | https://docs.fluentvalidation.net                                |
+| Rate Limiting      | https://docs.microsoft.com/aspnet/core/performance/rate-limit    |
 
 ---
 
@@ -370,10 +374,12 @@ Common questions addressed during the workshop:
 A: When modules need independent scaling, deployment, or technology choices.
 
 **Q: How do modules communicate?**
-A: Currently through shared services. For eventual extraction, consider event-driven patterns.
+A: Currently through shared services. For eventual extraction, consider
+event-driven patterns.
 
 **Q: How do I add Redis caching?**
-A: Configure `Caching:Tier` to `L1L2` and `Caching:Provider` to `Redis`, add Redis connection string.
+A: Configure `Caching:Tier` to `L1L2` and `Caching:Provider` to `Redis`, add
+Redis connection string.
 
 **Q: How do I add custom authorization policies?**
 A: Add to `PolicyRegistry.Register()` in the Identity module.
@@ -383,6 +389,7 @@ A: Add to `PolicyRegistry.Register()` in the Identity module.
 ## Feedback
 
 Please provide feedback on this workshop:
+
 - What worked well?
 - What could be improved?
 - What additional topics would you like covered?

@@ -1,19 +1,19 @@
 using System.Reflection;
+using System.Threading.RateLimiting;
 using Admin.Modules;
 using Identity.Modules;
 using Identity.Modules.Extensions;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.OpenApi;
 using Music.Modules;
 using Orders.Modules;
 using Reporting.Modules;
 using SharedKernel;
 using SharedKernel.Caching;
-using SharedKernel.Persistence;
-using SharedKernel.TrafficControl;
-using System.Threading.RateLimiting;
-using Microsoft.OpenApi;
 using SharedKernel.DataSQLite.Repositories;
+using SharedKernel.Persistence;
 using SharedKernel.Persistence.Repositories;
+using SharedKernel.TrafficControl;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,14 +31,16 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Modular Monolith API",
         Version = "v1",
-        Description = "ASP.NET Core Minimal API Modular Monolith with modules: Music, Orders, Administration, Reporting, Identity.",
+        Description =
+            "ASP.NET Core Minimal API Modular Monolith with modules: Music, Orders, Administration, Reporting, Identity.",
         Contact = new OpenApiContact { Name = "API Team" }
     });
 
     var jwtSecurityScheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Description = "Paste your JWT access token only (no 'Bearer ' prefix). Swagger will add the prefix automatically.",
+        Description =
+            "Paste your JWT access token only (no 'Bearer ' prefix). Swagger will add the prefix automatically.",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
@@ -57,8 +59,8 @@ builder.Services.AddProblemDetails();
 // EF Core persistence registration
 // Resolve SQLite path for AppDbContext if not provided via configuration/environment.
 var existing = builder.Configuration.GetConnectionString("AppDatabase")
-              ?? builder.Configuration["ConnectionStrings:AppDatabase"]
-              ?? Environment.GetEnvironmentVariable("ConnectionStrings__AppDatabase");
+               ?? builder.Configuration["ConnectionStrings:AppDatabase"]
+               ?? Environment.GetEnvironmentVariable("ConnectionStrings__AppDatabase");
 if (string.IsNullOrWhiteSpace(existing))
 {
     static string? TryFindDb(string contentRoot)
@@ -74,10 +76,12 @@ if (string.IsNullOrWhiteSpace(existing))
         {
             current = current.Parent;
         }
+
         var root = current?.FullName;
         var rootDb = root is not null ? Path.Combine(root, "data", "chinook.db") : null;
         return rootDb is not null && File.Exists(rootDb) ? rootDb : null;
     }
+
     var dbPath = TryFindDb(builder.Environment.ContentRootPath);
     if (!string.IsNullOrWhiteSpace(dbPath))
     {
@@ -121,8 +125,8 @@ builder.Services.AddRateLimiter(options =>
 
     options.AddPolicy(RateLimitPolicyRegistry.Names.GlobalPublicAnon, context =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: PartitionKeys.FromRequest(context),
-            factory: _ => new FixedWindowRateLimiterOptions
+            PartitionKeys.FromRequest(context),
+            _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 60, // 60 requests per 60 seconds
                 Window = TimeSpan.FromSeconds(60),
@@ -163,25 +167,26 @@ app.UseSwaggerUI();
 
 // Root endpoint with service metadata
 app.MapGet("/", (IConfiguration cfg, IWebHostEnvironment env) =>
-{
-    var response = new
     {
-        module = "root",
-        status = "Healthy",
-        timestampUtc = DateTime.UtcNow.ToString("O"),
-        environment = env.EnvironmentName,
-        version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-                  ?? Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
-                  ?? "1.0.0",
-        service = cfg["ServiceName"] ?? "ModularMonolith.Api",
-    };
-    return Results.Json(response);
-})
-.WithName("Root")
-.Produces(200)
-.WithTags("Root")
-.Produces(429) // Rate limiting
-.RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+        var response = new
+        {
+            module = "root",
+            status = "Healthy",
+            timestampUtc = DateTime.UtcNow.ToString("O"),
+            environment = env.EnvironmentName,
+            version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                          ?.InformationalVersion
+                      ?? Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
+                      ?? "1.0.0",
+            service = cfg["ServiceName"] ?? "ModularMonolith.Api"
+        };
+        return Results.Json(response);
+    })
+    .WithName("Root")
+    .Produces(200)
+    .WithTags("Root")
+    .Produces(429) // Rate limiting
+    .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
 // Map module endpoints
 app.MapGroup(""); // noop to ensure route builder initialized
@@ -204,17 +209,22 @@ static IReadOnlyList<IModule> GetModules()
     ];
 }
 
-static string[] GetAllowedOrigins() =>
-[
-    "http://localhost:3000", "http://localhost:4200", "http://localhost:5173",
-    "https://localhost:3000", "https://localhost:4200", "https://localhost:5173"
-];
+static string[] GetAllowedOrigins()
+{
+    return
+    [
+        "http://localhost:3000", "http://localhost:4200", "http://localhost:5173",
+        "https://localhost:3000", "https://localhost:4200", "https://localhost:5173"
+    ];
+}
 
 
 // For WebApplicationFactory
 #pragma warning disable ASP0027 // Using partial Program to expose entry point for tests; acceptable in this project
 namespace ModularMonolith.Api
 {
-    public partial class Program { }
+    public class Program
+    {
+    }
 }
 #pragma warning restore ASP0027

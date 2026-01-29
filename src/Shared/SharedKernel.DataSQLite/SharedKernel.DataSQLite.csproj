@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\SharedKernel.Persistence\SharedKernel.Persistence.csproj" />
+        <ProjectReference Include="..\SharedKernel.Persistence\SharedKernel.Persistence.csproj"/>
     </ItemGroup>
 
 </Project>

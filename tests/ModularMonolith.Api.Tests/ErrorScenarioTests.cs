@@ -1,5 +1,5 @@
 using System.Net;
-using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
@@ -8,12 +8,65 @@ using Microsoft.AspNetCore.Mvc.Testing;
 namespace ModularMonolith.Api.Tests;
 
 /// <summary>
-/// Tests for error scenarios including invalid JSON, validation errors, and edge cases.
+///     Tests for error scenarios including invalid JSON, validation errors, and edge cases.
 /// </summary>
 public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory = factory.WithWebHostBuilder(_ => { });
+
+    #region Concurrent Write Tests
+
+    [Fact]
+    public async Task ConcurrentCreates_ShouldNotReturnUnauthorized()
+    {
+        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var client = tenantFactory.CreateClient();
+        var token = await TestAuthHelpers.GetAccessTokenAsync(client);
+        client.UseBearer(token);
+
+        // Create multiple genres concurrently
+        var tasks = Enumerable.Range(0, 5).Select(async i =>
+        {
+            var uniqueName = $"Concurrent_{Guid.NewGuid():N}";
+            var payload = JsonSerializer.Serialize(new { name = uniqueName });
+            return await client.PostAsync("/api/admin/genres",
+                new StringContent(payload, Encoding.UTF8, "application/json"));
+        }).ToList();
+
+        var responses = await Task.WhenAll(tasks);
+
+        // None should be 401 (unauthorized) since we have valid credentials
+        var unauthorizedCount = responses.Count(r => r.StatusCode == HttpStatusCode.Unauthorized);
+        unauthorizedCount.Should().Be(0, "requests with valid credentials should not return 401");
+    }
+
+    #endregion
+
+    #region Method Not Allowed Tests
+
+    [Fact]
+    public async Task PatchGenre_ShouldReturn405_MethodNotAllowed()
+    {
+        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var client = tenantFactory.CreateClient();
+        var token = await TestAuthHelpers.GetAccessTokenAsync(client);
+        client.UseBearer(token);
+
+        var request = new HttpRequestMessage(HttpMethod.Patch, "/api/admin/genres/1")
+        {
+            Content = new StringContent("""{"name": "Patched"}""", Encoding.UTF8, "application/json")
+        };
+
+        var response = await client.SendAsync(request);
+
+        // PATCH is not implemented, should return 405 or 404
+        response.StatusCode.Should().BeOneOf(
+            HttpStatusCode.MethodNotAllowed,
+            HttpStatusCode.NotFound);
+    }
+
+    #endregion
 
     #region Invalid JSON Tests
 
@@ -287,7 +340,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
 
         // Use an obviously invalid/expired token
         client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "expired.token.here");
+            new AuthenticationHeaderValue("Bearer", "expired.token.here");
 
         var response = await client.GetAsync("/api/music/albums/1");
 
@@ -301,64 +354,11 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
 
         // Use a malformed token
         client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "not-a-valid-jwt");
+            new AuthenticationHeaderValue("Bearer", "not-a-valid-jwt");
 
         var response = await client.GetAsync("/api/music/albums/1");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    #endregion
-
-    #region Concurrent Write Tests
-
-    [Fact]
-    public async Task ConcurrentCreates_ShouldNotReturnUnauthorized()
-    {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
-        var client = tenantFactory.CreateClient();
-        var token = await TestAuthHelpers.GetAccessTokenAsync(client);
-        client.UseBearer(token);
-
-        // Create multiple genres concurrently
-        var tasks = Enumerable.Range(0, 5).Select(async i =>
-        {
-            var uniqueName = $"Concurrent_{Guid.NewGuid():N}";
-            var payload = JsonSerializer.Serialize(new { name = uniqueName });
-            return await client.PostAsync("/api/admin/genres",
-                new StringContent(payload, Encoding.UTF8, "application/json"));
-        }).ToList();
-
-        var responses = await Task.WhenAll(tasks);
-
-        // None should be 401 (unauthorized) since we have valid credentials
-        var unauthorizedCount = responses.Count(r => r.StatusCode == HttpStatusCode.Unauthorized);
-        unauthorizedCount.Should().Be(0, "requests with valid credentials should not return 401");
-    }
-
-    #endregion
-
-    #region Method Not Allowed Tests
-
-    [Fact]
-    public async Task PatchGenre_ShouldReturn405_MethodNotAllowed()
-    {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
-        var client = tenantFactory.CreateClient();
-        var token = await TestAuthHelpers.GetAccessTokenAsync(client);
-        client.UseBearer(token);
-
-        var request = new HttpRequestMessage(HttpMethod.Patch, "/api/admin/genres/1")
-        {
-            Content = new StringContent("""{"name": "Patched"}""", Encoding.UTF8, "application/json")
-        };
-
-        var response = await client.SendAsync(request);
-
-        // PATCH is not implemented, should return 405 or 404
-        response.StatusCode.Should().BeOneOf(
-            HttpStatusCode.MethodNotAllowed,
-            HttpStatusCode.NotFound);
     }
 
     #endregion

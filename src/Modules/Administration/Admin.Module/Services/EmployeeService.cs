@@ -12,16 +12,16 @@ public sealed class EmployeeService(
     ICacheKeyComposer keys,
     IValidator<EmployeeApiModel> validator) : IEmployeeService
 {
-    private readonly IValidator<EmployeeApiModel> _validator = validator;
     private static readonly string[] EmployeeTags = ["administration:employee", "administration:employee:by-id"];
+    private readonly IValidator<EmployeeApiModel> _validator = validator;
 
     public async Task<EmployeeApiModel?> GetEmployeeByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "administration",
-            entity: "employee",
-            version: "v1",
-            discriminator: $"by-id:{id}");
+            "administration",
+            "employee",
+            "v1",
+            $"by-id:{id}");
 
         return await cache.GetOrAddAsync<EmployeeApiModel?>(key, async _ =>
         {
@@ -44,10 +44,10 @@ public sealed class EmployeeService(
     public async Task<IEnumerable<EmployeeApiModel>> GetAllEmployeesAsync(CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "administration",
-            entity: "employee",
-            version: "v1",
-            discriminator: "all");
+            "administration",
+            "employee",
+            "v1",
+            "all");
 
         return await cache.GetOrAddAsync<IEnumerable<EmployeeApiModel>>(key, async _ =>
         {
@@ -70,10 +70,10 @@ public sealed class EmployeeService(
     public async Task<IEnumerable<EmployeeApiModel>> GetDirectReportsAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "administration",
-            entity: "employee",
-            version: "v1",
-            discriminator: $"direct-reports:{id}");
+            "administration",
+            "employee",
+            "v1",
+            $"direct-reports:{id}");
 
         return await cache.GetOrAddAsync<IEnumerable<EmployeeApiModel>>(key, async _ =>
         {
@@ -96,10 +96,10 @@ public sealed class EmployeeService(
     public async Task<EmployeeApiModel?> GetReportsToAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "administration",
-            entity: "employee",
-            version: "v1",
-            discriminator: $"reports-to:{id}");
+            "administration",
+            "employee",
+            "v1",
+            $"reports-to:{id}");
 
         return await cache.GetOrAddAsync<EmployeeApiModel?>(key, async _ =>
         {
@@ -152,10 +152,10 @@ public sealed class EmployeeService(
             // Invalidate cache
             await cache.RemoveByTagAsync(EmployeeTags[0], ct);
             var key = keys.Compose(
-                moduleName: "administration",
-                entity: "employee",
-                version: "v1",
-                discriminator: $"by-id:{model.Id}");
+                "administration",
+                "employee",
+                "v1",
+                $"by-id:{model.Id}");
             await cache.RemoveAsync(key, ct);
         }
 

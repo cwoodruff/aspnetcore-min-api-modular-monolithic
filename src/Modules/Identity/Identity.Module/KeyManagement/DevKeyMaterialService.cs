@@ -5,10 +5,10 @@ namespace Identity.Modules.KeyManagement;
 
 public sealed class DevKeyMaterialService : IKeyMaterialService
 {
-    private readonly RsaSecurityKey _rsaKey;
-    private readonly SigningCredentials _signingCredentials;
     private readonly string _kid;
     private readonly RSAParameters _publicParams;
+    private readonly RsaSecurityKey _rsaKey;
+    private readonly SigningCredentials _signingCredentials;
 
     public DevKeyMaterialService()
     {
@@ -21,20 +21,26 @@ public sealed class DevKeyMaterialService : IKeyMaterialService
         _signingCredentials = new SigningCredentials(_rsaKey, SecurityAlgorithms.RsaSha256);
     }
 
-    public SigningCredentials GetCurrentSigningCredentials() => _signingCredentials;
+    public SigningCredentials GetCurrentSigningCredentials()
+    {
+        return _signingCredentials;
+    }
 
     public IEnumerable<SecurityKey> GetValidationKeys()
     {
         yield return _rsaKey;
     }
 
-    public string GetCurrentKeyId() => _kid;
+    public string GetCurrentKeyId()
+    {
+        return _kid;
+    }
 
     public object GetJwksDocument()
     {
         // Build a minimal JWKS for the single RSA key from stored public parameters
-        string n = Base64UrlEncoder.Encode(_publicParams.Modulus!);
-        string e = Base64UrlEncoder.Encode(_publicParams.Exponent!);
+        var n = Base64UrlEncoder.Encode(_publicParams.Modulus!);
+        var e = Base64UrlEncoder.Encode(_publicParams.Exponent!);
         return new
         {
             keys = new[]
@@ -46,7 +52,7 @@ public sealed class DevKeyMaterialService : IKeyMaterialService
                     alg = SecurityAlgorithms.RsaSha256,
                     kid = _kid,
                     n,
-                    e,
+                    e
                 }
             }
         };

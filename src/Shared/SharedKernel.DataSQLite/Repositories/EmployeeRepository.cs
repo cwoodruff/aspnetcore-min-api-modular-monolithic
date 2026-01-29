@@ -8,20 +8,19 @@ namespace SharedKernel.DataSQLite.Repositories;
 
 public class EmployeeRepository(AppDbContext context) : BaseRepository<Employee>(context), IEmployeeRepository
 {
-    public async Task<Employee> GetReportsTo(int id) =>
-        (await _context.Employees.FindAsync(id))!;
+    public async Task<Employee> GetReportsTo(int id)
+    {
+        return (await _context.Employees.FindAsync(id))!;
+    }
 
-    public async Task<List<Employee>> GetDirectReports(int id) =>
-        await _context.Employees.Where(e => e.ReportsTo == id).AsNoTracking().ToListAsync();
+    public async Task<List<Employee>> GetDirectReports(int id)
+    {
+        return await _context.Employees.Where(e => e.ReportsTo == id).AsNoTracking().ToListAsync();
+    }
 
-    public async Task<Employee> GetToReports(int id) =>
-        (await _context.Employees
-            .FindAsync(_context.Employees.Where(e => e.Id == id)
-                .Select(p => new { p.ReportsTo })
-                .First()))!;
-
-    public async Task<EmployeeApiModel> GetById(int id) =>
-        await _context.Employees
+    public async Task<EmployeeApiModel> GetById(int id)
+    {
+        return await _context.Employees
             .Where(e => e.Id == id)
             .Select(e => new EmployeeApiModel
             {
@@ -48,4 +47,13 @@ public class EmployeeRepository(AppDbContext context) : BaseRepository<Employee>
             })
             .AsNoTracking()
             .SingleAsync();
+    }
+
+    public async Task<Employee> GetToReports(int id)
+    {
+        return (await _context.Employees
+            .FindAsync(_context.Employees.Where(e => e.Id == id)
+                .Select(p => new { p.ReportsTo })
+                .First()))!;
+    }
 }

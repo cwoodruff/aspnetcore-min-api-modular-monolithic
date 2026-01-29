@@ -6,16 +6,20 @@
 
 ## Overview
 
-Structured logging captures log data as structured objects rather than plain text strings, making logs searchable, filterable, and analyzable. Correlation IDs link related log entries across distributed requests.
+Structured logging captures log data as structured objects rather than plain
+text strings, making logs searchable, filterable, and analyzable. Correlation
+IDs link related log entries across distributed requests.
 
 **Duration:** 45-60 minutes
-**Prerequisites:** Basic Minimal API knowledge, understanding of logging concepts
+**Prerequisites:** Basic Minimal API knowledge, understanding of logging
+concepts
 
 ---
 
 ## Learning Objectives
 
 By the end of this guide, you will:
+
 - Implement structured logging with Serilog
 - Add correlation IDs to track requests
 - Configure log enrichment
@@ -806,13 +810,13 @@ finally
 
 ### Key Components
 
-| Component | Purpose |
-|-----------|---------|
-| Serilog | Structured logging library |
-| Correlation ID | Links related log entries |
-| Log Enrichers | Add context to all logs |
-| Log Scopes | Add context to specific operations |
-| Seq/ELK | Centralized log aggregation |
+| Component      | Purpose                            |
+|----------------|------------------------------------|
+| Serilog        | Structured logging library         |
+| Correlation ID | Links related log entries          |
+| Log Enrichers  | Add context to all logs            |
+| Log Scopes     | Add context to specific operations |
+| Seq/ELK        | Centralized log aggregation        |
 
 ### Best Practices
 
@@ -820,16 +824,17 @@ finally
 2. **Include correlation IDs** — Essential for distributed tracing
 3. **Enrich with context** — User, tenant, operation
 4. **Mask sensitive data** — Passwords, tokens, PII
-5. **Use appropriate levels** — Debug for details, Info for flow, Warn/Error for problems
+5. **Use appropriate levels** — Debug for details, Info for flow, Warn/Error for
+   problems
 6. **Aggregate logs centrally** — Seq, Elasticsearch, Application Insights
 
 ### Log Levels Guide
 
-| Level | Use For |
-|-------|---------|
-| Verbose | Detailed debugging (disabled in production) |
-| Debug | Developer diagnostics |
-| Information | Normal application flow |
-| Warning | Unexpected but recoverable situations |
-| Error | Failures that need attention |
-| Fatal | Application crashes |
+| Level       | Use For                                     |
+|-------------|---------------------------------------------|
+| Verbose     | Detailed debugging (disabled in production) |
+| Debug       | Developer diagnostics                       |
+| Information | Normal application flow                     |
+| Warning     | Unexpected but recoverable situations       |
+| Error       | Failures that need attention                |
+| Fatal       | Application crashes                         |

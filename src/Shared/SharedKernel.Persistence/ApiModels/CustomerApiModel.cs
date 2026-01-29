@@ -23,8 +23,9 @@ public sealed class CustomerApiModel : BaseApiModel, IConvertModel<Customer>
 
     public EmployeeApiModel? SupportRep { get; set; }
 
-    public Customer Convert() =>
-        new()
+    public Customer Convert()
+    {
+        return new Customer
         {
             Id = Id,
             FirstName = FirstName,
@@ -40,4 +41,5 @@ public sealed class CustomerApiModel : BaseApiModel, IConvertModel<Customer>
             Email = Email,
             SupportRepId = SupportRepId
         };
+    }
 }

@@ -6,16 +6,21 @@
 
 ## Overview
 
-The Outbox Pattern ensures reliable message publishing in distributed systems. It guarantees that database changes and message publishing happen atomically, preventing data inconsistencies when a service fails between saving data and publishing events.
+The Outbox Pattern ensures reliable message publishing in distributed systems.
+It guarantees that database changes and message publishing happen atomically,
+preventing data inconsistencies when a service fails between saving data and
+publishing events.
 
 **Duration:** 60-90 minutes
-**Prerequisites:** Intermediate C#, understanding of message queues and transactions
+**Prerequisites:** Intermediate C#, understanding of message queues and
+transactions
 
 ---
 
 ## Learning Objectives
 
 By the end of this guide, you will:
+
 - Understand the dual-write problem
 - Implement the Outbox Pattern
 - Process outbox messages reliably
@@ -758,13 +763,13 @@ public class OutboxServiceTests
 
 ### When to Use
 
-| Scenario | Use Outbox |
-|----------|-----------|
-| Microservices communication | Yes |
-| Event-driven architecture | Yes |
-| Saga orchestration | Yes |
-| Simple monolith | Usually not needed |
-| In-process events only | No |
+| Scenario                    | Use Outbox         |
+|-----------------------------|--------------------|
+| Microservices communication | Yes                |
+| Event-driven architecture   | Yes                |
+| Saga orchestration          | Yes                |
+| Simple monolith             | Usually not needed |
+| In-process events only      | No                 |
 
 ### Files to Create
 

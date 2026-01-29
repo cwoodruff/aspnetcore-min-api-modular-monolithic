@@ -8,32 +8,45 @@ namespace SharedKernel.DataSQLite.Repositories;
 
 public class TrackRepository(AppDbContext context) : BaseRepository<Track>(context), ITrackRepository
 {
-    public async Task<List<Track>> GetByAlbumId(int id) =>
-        await _context.Tracks.Where(a => a.AlbumId == id)
-                .AsNoTracking().ToListAsync();
-
-    public async Task<List<Track>> GetByGenreId(int id) =>
-        await _context.Tracks.Where(a => a.GenreId == id)
+    public async Task<List<Track>> GetByAlbumId(int id)
+    {
+        return await _context.Tracks.Where(a => a.AlbumId == id)
             .AsNoTracking().ToListAsync();
+    }
 
-    public async Task<List<Track>> GetByMediaTypeId(int id) =>
-        await _context.Tracks.Where(a => a.MediaTypeId == id)
-                .AsNoTracking().ToListAsync();
+    public async Task<List<Track>> GetByGenreId(int id)
+    {
+        return await _context.Tracks.Where(a => a.GenreId == id)
+            .AsNoTracking().ToListAsync();
+    }
 
-    public async Task<List<Track>> GetByPlaylistId(int id) =>
-        await _context.PlaylistTracks.Where(p => p.PlaylistId == id).Select(p => p.Track!)
-                .AsNoTracking().ToListAsync();
+    public async Task<List<Track>> GetByMediaTypeId(int id)
+    {
+        return await _context.Tracks.Where(a => a.MediaTypeId == id)
+            .AsNoTracking().ToListAsync();
+    }
 
-    public async Task<List<Track>> GetByArtistId(int id) =>
-        await _context.Albums.Where(a => a.ArtistId == id).SelectMany(t => t.Tracks!)
-                .AsNoTracking().ToListAsync();
+    public async Task<List<Track>> GetByPlaylistId(int id)
+    {
+        return await _context.PlaylistTracks.Where(p => p.PlaylistId == id).Select(p => p.Track!)
+            .AsNoTracking().ToListAsync();
+    }
 
-    public async Task<List<Track>> GetByInvoiceId(int id) =>
-        await _context.Tracks.Where(c => c.InvoiceLines!.Any(o => o.InvoiceId == id))
-                .AsNoTracking().ToListAsync();
+    public async Task<List<Track>> GetByArtistId(int id)
+    {
+        return await _context.Albums.Where(a => a.ArtistId == id).SelectMany(t => t.Tracks!)
+            .AsNoTracking().ToListAsync();
+    }
 
-    public async Task<TrackApiModel> GetById(int id) =>
-        await _context.Tracks
+    public async Task<List<Track>> GetByInvoiceId(int id)
+    {
+        return await _context.Tracks.Where(c => c.InvoiceLines!.Any(o => o.InvoiceId == id))
+            .AsNoTracking().ToListAsync();
+    }
+
+    public async Task<TrackApiModel> GetById(int id)
+    {
+        return await _context.Tracks
             .Where(t => t.Id == id)
             .Select(t => new TrackApiModel
             {
@@ -57,4 +70,5 @@ public class TrackRepository(AppDbContext context) : BaseRepository<Track>(conte
             })
             .AsNoTracking()
             .SingleAsync();
+    }
 }

@@ -6,7 +6,9 @@
 
 ## Overview
 
-Response compression reduces the size of HTTP responses, improving performance and reducing bandwidth costs. ASP.NET Core supports Brotli and Gzip compression out of the box.
+Response compression reduces the size of HTTP responses, improving performance
+and reducing bandwidth costs. ASP.NET Core supports Brotli and Gzip compression
+out of the box.
 
 **Duration:** 20-30 minutes
 **Prerequisites:** Basic Minimal API knowledge, understanding of HTTP headers
@@ -16,6 +18,7 @@ Response compression reduces the size of HTTP responses, improving performance a
 ## Learning Objectives
 
 By the end of this guide, you will:
+
 - Configure response compression middleware
 - Understand Brotli vs Gzip trade-offs
 - Implement compression for different content types
@@ -28,20 +31,20 @@ By the end of this guide, you will:
 
 ### Impact on Performance
 
-| Metric | Without Compression | With Compression |
-|--------|--------------------|--------------------|
-| JSON Response (100KB) | 100KB | ~15KB (85% reduction) |
-| HTML Page (50KB) | 50KB | ~8KB (84% reduction) |
-| Network Time (3G) | 800ms | 120ms |
-| Bandwidth Cost | $100/month | $15/month |
+| Metric                | Without Compression | With Compression      |
+|-----------------------|---------------------|-----------------------|
+| JSON Response (100KB) | 100KB               | ~15KB (85% reduction) |
+| HTML Page (50KB)      | 50KB                | ~8KB (84% reduction)  |
+| Network Time (3G)     | 800ms               | 120ms                 |
+| Bandwidth Cost        | $100/month          | $15/month             |
 
 ### Compression Algorithms
 
-| Algorithm | Compression Ratio | Speed | Browser Support |
-|-----------|------------------|-------|-----------------|
-| **Brotli** | Excellent | Slower | Modern browsers |
-| **Gzip** | Good | Fast | All browsers |
-| **Deflate** | Good | Fast | All browsers |
+| Algorithm   | Compression Ratio | Speed  | Browser Support |
+|-------------|-------------------|--------|-----------------|
+| **Brotli**  | Excellent         | Slower | Modern browsers |
+| **Gzip**    | Good              | Fast   | All browsers    |
+| **Deflate** | Good              | Fast   | All browsers    |
 
 ---
 
@@ -76,6 +79,7 @@ app.Run();
 ### Default Behavior
 
 By default, compression is enabled for:
+
 - `text/plain`
 - `text/css`
 - `application/javascript`
@@ -241,6 +245,7 @@ app.MapGet("/api/realtime", StreamData)
 ### The CRIME/BREACH Vulnerability
 
 Compression over HTTPS can leak information when:
+
 1. Attacker can inject content into request
 2. Response includes user secrets + attacker content
 3. Compressed size reveals information
@@ -490,12 +495,12 @@ app.Run();
 
 ### Configuration Quick Reference
 
-| Setting | Recommendation |
-|---------|----------------|
+| Setting        | Recommendation                                            |
+|----------------|-----------------------------------------------------------|
 | EnableForHttps | `true` for APIs, consider `false` for sensitive web pages |
-| Brotli Level | `Optimal` (quality 4-5) |
-| Gzip Level | `Optimal` |
-| Minimum Size | Don't compress responses < 1KB |
+| Brotli Level   | `Optimal` (quality 4-5)                                   |
+| Gzip Level     | `Optimal`                                                 |
+| Minimum Size   | Don't compress responses < 1KB                            |
 
 ### Best Practices
 

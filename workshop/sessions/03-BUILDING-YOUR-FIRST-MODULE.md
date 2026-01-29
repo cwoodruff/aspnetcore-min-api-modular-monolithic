@@ -7,13 +7,16 @@
 
 ## Overview
 
-In this session, you'll build complete module implementations with health endpoints, data-health endpoints, and proper endpoint metadata. You'll learn the patterns used throughout the solution for endpoint configuration.
+In this session, you'll build complete module implementations with health
+endpoints, data-health endpoints, and proper endpoint metadata. You'll learn the
+patterns used throughout the solution for endpoint configuration.
 
 ---
 
 ## Learning Objectives
 
 By the end of this session, you will:
+
 - Create health endpoints that report module status
 - Create data-health endpoints that verify database connectivity
 - Configure endpoint metadata (names, tags, produces, rate limiting)
@@ -27,6 +30,7 @@ By the end of this session, you will:
 ### 1.1 Health Endpoint Purpose
 
 Health endpoints provide:
+
 - **Liveness checks** - Is the module running?
 - **Readiness checks** - Can the module handle requests?
 - **Monitoring data** - Version, environment, timestamps
@@ -73,17 +77,18 @@ public static class MusicHealthEndpoints
 
 ### 1.3 Endpoint Metadata Explained
 
-| Method | Purpose |
-|--------|---------|
-| `.WithName("MusicHealth")` | Unique identifier for OpenAPI/link generation |
-| `.Produces(200)` | Documents 200 OK response for Swagger |
-| `.WithTags("Music")` | Groups endpoint in Swagger UI |
-| `.Produces(429)` | Documents rate limit response |
-| `.RequireRateLimiting(...)` | Applies rate limiting policy |
+| Method                      | Purpose                                       |
+|-----------------------------|-----------------------------------------------|
+| `.WithName("MusicHealth")`  | Unique identifier for OpenAPI/link generation |
+| `.Produces(200)`            | Documents 200 OK response for Swagger         |
+| `.WithTags("Music")`        | Groups endpoint in Swagger UI                 |
+| `.Produces(429)`            | Documents rate limit response                 |
+| `.RequireRateLimiting(...)` | Applies rate limiting policy                  |
 
 ### 1.4 Extension Method Pattern
 
-The `MapMusicHealthEndpoints` is an extension method on `IEndpointRouteBuilder`, allowing clean composition:
+The `MapMusicHealthEndpoints` is an extension method on `IEndpointRouteBuilder`,
+allowing clean composition:
 
 ```csharp
 // In Module.cs MapEndpoints:
@@ -98,6 +103,7 @@ group.MapMusicHealthEndpoints();  // Extension method called on group
 ### 2.1 Data-Health Purpose
 
 Data-health endpoints verify:
+
 - Database connectivity
 - External service availability
 - Configuration correctness
@@ -327,13 +333,16 @@ static IReadOnlyList<IModule> GetModules()
 
 ### Exercise: Create Additional Health Endpoints
 
-Create health endpoints for the Administration module following the exact patterns shown.
+Create health endpoints for the Administration module following the exact
+patterns shown.
 
 **Expected Files:**
+
 - `src/Modules/Administration/Admin.Module/Endpoints/HealthEndpoints.cs`
 - `src/Modules/Administration/Admin.Module/Endpoints/DataHealthEndpoints.cs`
 
 **Requirements:**
+
 1. Module name should be "Administration"
 2. Route group should be `/api/admin`
 3. Apply rate limiting policy
@@ -459,22 +468,23 @@ public static void MapYourModuleDataHealthEndpoints(this IEndpointRouteBuilder g
 
 ### Common Endpoint Metadata
 
-| Method | Example |
-|--------|---------|
-| `.WithName(string)` | `.WithName("GetAlbumById")` |
-| `.WithTags(params string[])` | `.WithTags("Music", "Albums")` |
-| `.Produces(int)` | `.Produces(200)`, `.Produces(404)` |
-| `.Produces<T>(int)` | `.Produces<AlbumApiModel>(200)` |
-| `.ProducesValidationProblem()` | Adds 400 validation response |
-| `.RequireAuthorization(string)` | `.RequireAuthorization("music.read")` |
-| `.RequireRateLimiting(string)` | `.RequireRateLimiting("global:public-anon")` |
-| `.AllowAnonymous()` | Bypasses authentication |
+| Method                          | Example                                      |
+|---------------------------------|----------------------------------------------|
+| `.WithName(string)`             | `.WithName("GetAlbumById")`                  |
+| `.WithTags(params string[])`    | `.WithTags("Music", "Albums")`               |
+| `.Produces(int)`                | `.Produces(200)`, `.Produces(404)`           |
+| `.Produces<T>(int)`             | `.Produces<AlbumApiModel>(200)`              |
+| `.ProducesValidationProblem()`  | Adds 400 validation response                 |
+| `.RequireAuthorization(string)` | `.RequireAuthorization("music.read")`        |
+| `.RequireRateLimiting(string)`  | `.RequireRateLimiting("global:public-anon")` |
+| `.AllowAnonymous()`             | Bypasses authentication                      |
 
 ---
 
 ## Next Session
 
 In **Session 4: Authentication & Authorization**, you will:
+
 - Implement JWT Bearer authentication
 - Create login and token endpoints
 - Define authorization policies

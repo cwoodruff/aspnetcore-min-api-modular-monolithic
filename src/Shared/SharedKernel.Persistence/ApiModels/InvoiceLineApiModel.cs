@@ -14,8 +14,9 @@ public sealed class InvoiceLineApiModel : BaseApiModel, IConvertModel<InvoiceLin
 
     public TrackApiModel? Track { get; set; } = null!;
 
-    public InvoiceLine Convert() =>
-        new()
+    public InvoiceLine Convert()
+    {
+        return new InvoiceLine
         {
             Id = Id,
             InvoiceId = InvoiceId,
@@ -23,4 +24,5 @@ public sealed class InvoiceLineApiModel : BaseApiModel, IConvertModel<InvoiceLin
             UnitPrice = UnitPrice,
             Quantity = Quantity
         };
+    }
 }

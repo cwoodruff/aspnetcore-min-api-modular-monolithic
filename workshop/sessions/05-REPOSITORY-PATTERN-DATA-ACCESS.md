@@ -7,13 +7,17 @@
 
 ## Overview
 
-This session covers the Repository Pattern implementation using Entity Framework Core with SQLite. You'll understand the base repository with generic CRUD operations, entity-specific repositories with complex queries, and EF Core optimization techniques.
+This session covers the Repository Pattern implementation using Entity Framework
+Core with SQLite. You'll understand the base repository with generic CRUD
+operations, entity-specific repositories with complex queries, and EF Core
+optimization techniques.
 
 ---
 
 ## Learning Objectives
 
 By the end of this session, you will:
+
 - Understand the Repository Pattern and its benefits
 - Implement a generic base repository
 - Create entity-specific repositories with custom queries
@@ -26,12 +30,12 @@ By the end of this session, you will:
 
 ### 1.1 Why Repository Pattern?
 
-| Benefit | Description |
-|---------|-------------|
-| **Abstraction** | Hide EF Core details from services |
-| **Testability** | Easy to mock for unit tests |
-| **Single Responsibility** | Data access logic in one place |
-| **Consistency** | Common patterns for all entities |
+| Benefit                   | Description                        |
+|---------------------------|------------------------------------|
+| **Abstraction**           | Hide EF Core details from services |
+| **Testability**           | Easy to mock for unit tests        |
+| **Single Responsibility** | Data access logic in one place     |
+| **Consistency**           | Common patterns for all entities   |
 
 ### 1.2 Solution Architecture
 
@@ -88,6 +92,7 @@ public interface IAlbumRepository : IRepository<Album>, IDisposable
 ```
 
 Key points:
+
 - Extends `IRepository<Album>` for generic CRUD
 - Adds custom methods for specific queries
 - `GetById` returns `AlbumApiModel` (DTO) not entity
@@ -482,21 +487,22 @@ public class YourEntityRepository(AppDbContext context)
 
 ### EF Core Query Patterns
 
-| Pattern | Purpose |
-|---------|---------|
-| `.AsNoTracking()` | Disable change tracking (reads) |
-| `.Include(e => e.Nav)` | Eager load navigation property |
-| `.ThenInclude(n => n.Child)` | Eager load nested navigation |
-| `.AsSplitQuery()` | Split into multiple SQL queries |
-| `.Where(e => predicate)` | Filter results |
-| `.SingleAsync()` | Expect exactly one result |
-| `.ToListAsync()` | Get all matching results |
+| Pattern                      | Purpose                         |
+|------------------------------|---------------------------------|
+| `.AsNoTracking()`            | Disable change tracking (reads) |
+| `.Include(e => e.Nav)`       | Eager load navigation property  |
+| `.ThenInclude(n => n.Child)` | Eager load nested navigation    |
+| `.AsSplitQuery()`            | Split into multiple SQL queries |
+| `.Where(e => predicate)`     | Filter results                  |
+| `.SingleAsync()`             | Expect exactly one result       |
+| `.ToListAsync()`             | Get all matching results        |
 
 ---
 
 ## Next Session
 
 In **Session 6: Service Layer with Caching**, you will:
+
 - Build the service layer that wraps repositories
 - Implement cache-aside pattern with ICacheFacade
 - Use structured cache keys

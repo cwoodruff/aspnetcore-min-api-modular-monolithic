@@ -7,13 +7,16 @@
 
 ## Overview
 
-This session covers the service layer pattern with integrated caching. You'll learn the cache-aside pattern, structured cache key composition, and tag-based cache invalidation for writes.
+This session covers the service layer pattern with integrated caching. You'll
+learn the cache-aside pattern, structured cache key composition, and tag-based
+cache invalidation for writes.
 
 ---
 
 ## Learning Objectives
 
 By the end of this session, you will:
+
 - Understand the service layer's role in the architecture
 - Implement the cache-aside pattern
 - Use structured cache keys with ICacheKeyComposer
@@ -135,11 +138,13 @@ The cache key follows a hierarchical pattern:
 ```
 
 Example:
+
 ```
 development:mmapi:music:album:v1::::by-id:42
 ```
 
 Benefits:
+
 - **Namespace isolation** - Different environments don't collide
 - **Version support** - Can invalidate old cache versions
 - **Multi-tenant** - Optional tenant scoping
@@ -266,12 +271,12 @@ internal sealed class CompositeCacheFacade(
 
 ### 2.2 Key Features
 
-| Feature | Purpose |
-|---------|---------|
-| **L1/L2 tiers** | In-memory (fast) + distributed (shared) |
-| **Single-flight** | Prevents cache stampede |
-| **TTL jitter** | Prevents synchronized expiration |
-| **Lock per key** | Fine-grained concurrency |
+| Feature           | Purpose                                 |
+|-------------------|-----------------------------------------|
+| **L1/L2 tiers**   | In-memory (fast) + distributed (shared) |
+| **Single-flight** | Prevents cache stampede                 |
+| **TTL jitter**    | Prevents synchronized expiration        |
+| **Lock per key**  | Fine-grained concurrency                |
 
 ---
 
@@ -452,6 +457,7 @@ return await cache.GetOrAddAsync<AlbumApiModel?>(key, async _ =>
 ```
 
 Flow:
+
 1. Check cache for key
 2. If found (cache hit), return cached value
 3. If not found (cache miss), call factory
@@ -579,12 +585,12 @@ public void RegisterServices(IServiceCollection services, IConfiguration config)
 
 ### 5.2 Configuration Options
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `Enabled` | Enable/disable caching globally | `true` |
-| `Tier` | `L1` (memory only) or `L1L2` (with distributed) | `L1` |
-| `Provider` | `InMemory` or `Redis` | `InMemory` |
-| `DefaultTTLSeconds` | Default TTL if not specified | `300` |
+| Option              | Description                                     | Default    |
+|---------------------|-------------------------------------------------|------------|
+| `Enabled`           | Enable/disable caching globally                 | `true`     |
+| `Tier`              | `L1` (memory only) or `L1L2` (with distributed) | `L1`       |
+| `Provider`          | `InMemory` or `Redis`                           | `InMemory` |
+| `DefaultTTLSeconds` | Default TTL if not specified                    | `300`      |
 
 ---
 
@@ -650,10 +656,10 @@ public class YourService(
 
 ### Cache Key Examples
 
-| Operation | Discriminator | Full Key (example) |
-|-----------|---------------|-------------------|
-| Get by ID | `by-id:{id}` | `dev:mmapi:music:album:v1::::by-id:42` |
-| Get all | `all` | `dev:mmapi:music:album:v1::::all` |
+| Operation   | Discriminator    | Full Key (example)                        |
+|-------------|------------------|-------------------------------------------|
+| Get by ID   | `by-id:{id}`     | `dev:mmapi:music:album:v1::::by-id:42`    |
+| Get all     | `all`            | `dev:mmapi:music:album:v1::::all`         |
 | By relation | `by-artist:{id}` | `dev:mmapi:music:album:v1::::by-artist:5` |
 
 ---
@@ -661,6 +667,7 @@ public class YourService(
 ## Next Session
 
 In **Session 7: FluentValidation**, you will:
+
 - Create validators for API models
 - Register validators with DI
 - Handle validation errors in services

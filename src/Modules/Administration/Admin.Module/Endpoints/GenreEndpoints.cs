@@ -1,19 +1,15 @@
+using System.ComponentModel.DataAnnotations;
 using Admin.Modules.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using SharedKernel.Persistence.Repositories;
-using System.ComponentModel.DataAnnotations;
+using SharedKernel.TrafficControl;
 
 namespace Admin.Modules.Endpoints;
 
 public static class GenreEndpoints
 {
-    // Request DTOs with validation
-    public record CreateGenreRequest([Required, StringLength(120, MinimumLength = 1)] string Name);
-    public record UpdateGenreRequest([Required, StringLength(120, MinimumLength = 1)] string Name);
-
     public static void MapGenreEndpoints(this IEndpointRouteBuilder group)
     {
         // GET /api/admin/genres/{id}
@@ -34,7 +30,7 @@ public static class GenreEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/admin/genres
         group.MapGet("genres/", [Authorize] async (
@@ -53,7 +49,7 @@ public static class GenreEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // POST /api/admin/genres
         group.MapPost("/genres", [Authorize] async (
@@ -73,7 +69,7 @@ public static class GenreEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .WithTags("Administration")
             .Produces(429)
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // PUT /api/admin/genres/{id}
         group.MapPut("/genres/{id:int}", [Authorize] async (
@@ -95,7 +91,7 @@ public static class GenreEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429)
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // DELETE /api/admin/genres/{id}
         group.MapDelete("/genres/{id:int}", [Authorize] async (
@@ -115,6 +111,17 @@ public static class GenreEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429)
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
+
+    // Request DTOs with validation
+    public record CreateGenreRequest(
+        [Required]
+        [StringLength(120, MinimumLength = 1)]
+        string Name);
+
+    public record UpdateGenreRequest(
+        [Required]
+        [StringLength(120, MinimumLength = 1)]
+        string Name);
 }

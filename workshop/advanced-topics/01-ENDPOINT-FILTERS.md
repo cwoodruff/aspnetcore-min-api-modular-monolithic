@@ -6,7 +6,9 @@
 
 ## Overview
 
-Endpoint filters are the Minimal API equivalent of MVC action filters. They allow you to run code before and after endpoint execution, making them perfect for cross-cutting concerns like validation, logging, and authorization.
+Endpoint filters are the Minimal API equivalent of MVC action filters. They
+allow you to run code before and after endpoint execution, making them perfect
+for cross-cutting concerns like validation, logging, and authorization.
 
 **Duration:** 45-60 minutes
 **Prerequisites:** Basic Minimal API knowledge, understanding of middleware
@@ -16,6 +18,7 @@ Endpoint filters are the Minimal API equivalent of MVC action filters. They allo
 ## Learning Objectives
 
 By the end of this guide, you will:
+
 - Understand the endpoint filter pipeline
 - Create custom endpoint filters
 - Chain multiple filters together
@@ -36,13 +39,13 @@ Request → Middleware → Routing → [Endpoint Filters] → Endpoint Handler �
 
 ### Filter vs. Middleware
 
-| Aspect | Middleware | Endpoint Filter |
-|--------|------------|-----------------|
-| Scope | All requests | Specific endpoints |
-| Access to endpoint metadata | No | Yes |
-| Access to handler parameters | No | Yes |
-| Can short-circuit | Yes | Yes |
-| Order | Global | Per-endpoint |
+| Aspect                       | Middleware   | Endpoint Filter    |
+|------------------------------|--------------|--------------------|
+| Scope                        | All requests | Specific endpoints |
+| Access to endpoint metadata  | No           | Yes                |
+| Access to handler parameters | No           | Yes                |
+| Can short-circuit            | Yes          | Yes                |
+| Order                        | Global       | Per-endpoint       |
 
 ---
 
@@ -642,14 +645,14 @@ public class LoggingEndpointFilterTests
 
 ### When to Use Endpoint Filters
 
-| Use Case | Filter Type |
-|----------|-------------|
-| Input validation | `ValidationFilter<T>` |
-| Audit logging | `AuditLogFilter` |
-| Custom authorization | `TenantAuthorizationFilter` |
-| Performance monitoring | `LoggingEndpointFilter` |
-| Rate limiting (custom) | `CustomRateLimitFilter` |
-| Response caching (custom) | `ResponseCacheFilter` |
+| Use Case                  | Filter Type                 |
+|---------------------------|-----------------------------|
+| Input validation          | `ValidationFilter<T>`       |
+| Audit logging             | `AuditLogFilter`            |
+| Custom authorization      | `TenantAuthorizationFilter` |
+| Performance monitoring    | `LoggingEndpointFilter`     |
+| Rate limiting (custom)    | `CustomRateLimitFilter`     |
+| Response caching (custom) | `ResponseCacheFilter`       |
 
 ### Best Practices
 

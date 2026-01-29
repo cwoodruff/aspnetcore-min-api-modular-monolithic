@@ -6,7 +6,9 @@
 
 ## Overview
 
-Background services allow your API to perform work asynchronously without blocking HTTP requests. Common use cases include queue processing, scheduled tasks, cache warming, and cleanup jobs.
+Background services allow your API to perform work asynchronously without
+blocking HTTP requests. Common use cases include queue processing, scheduled
+tasks, cache warming, and cleanup jobs.
 
 **Duration:** 45-60 minutes
 **Prerequisites:** Basic Minimal API knowledge, understanding of async/await
@@ -16,6 +18,7 @@ Background services allow your API to perform work asynchronously without blocki
 ## Learning Objectives
 
 By the end of this guide, you will:
+
 - Implement IHostedService and BackgroundService
 - Create scheduled background tasks
 - Process queued work items
@@ -28,12 +31,12 @@ By the end of this guide, you will:
 
 ### Service Types
 
-| Type | Use Case | Lifecycle |
-|------|----------|-----------|
-| `IHostedService` | Full control over start/stop | Manual implementation |
-| `BackgroundService` | Long-running tasks | Built-in loop handling |
-| Timed Service | Periodic tasks | Timer-based execution |
-| Queue Processor | Work item processing | Consumer pattern |
+| Type                | Use Case                     | Lifecycle              |
+|---------------------|------------------------------|------------------------|
+| `IHostedService`    | Full control over start/stop | Manual implementation  |
+| `BackgroundService` | Long-running tasks           | Built-in loop handling |
+| Timed Service       | Periodic tasks               | Timer-based execution  |
+| Queue Processor     | Work item processing         | Consumer pattern       |
 
 ### Lifecycle
 
@@ -946,12 +949,12 @@ public class TestTimedService : BackgroundService
 
 ### Background Service Patterns
 
-| Pattern | Use Case |
-|---------|----------|
-| Simple Loop | Continuous polling/processing |
+| Pattern         | Use Case                          |
+|-----------------|-----------------------------------|
+| Simple Loop     | Continuous polling/processing     |
 | Timed/Scheduled | Periodic tasks (cleanup, reports) |
-| Queue-Based | Async work from requests |
-| Startup Task | One-time initialization |
+| Queue-Based     | Async work from requests          |
+| Startup Task    | One-time initialization           |
 
 ### Best Practices
 

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using SharedKernel.Persistence.Repositories;
+using SharedKernel.TrafficControl;
 
 namespace Admin.Modules.Endpoints;
 
@@ -29,7 +29,7 @@ public static class EmployeeEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/admin/employees
         group.MapGet("employees/", [Authorize] async (
@@ -48,7 +48,7 @@ public static class EmployeeEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/admin/employees/{id}/direct-reports
         group.MapGet("employees/{id:int}/direct-reports", [Authorize] async (
@@ -68,7 +68,7 @@ public static class EmployeeEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
         // GET /api/admin/employees/{id}/reports-to
         group.MapGet("employees/{id:int}/reports-to", [Authorize] async (
@@ -88,6 +88,6 @@ public static class EmployeeEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

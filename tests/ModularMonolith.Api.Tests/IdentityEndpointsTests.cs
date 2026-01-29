@@ -8,12 +8,32 @@ using Microsoft.AspNetCore.Mvc.Testing;
 namespace ModularMonolith.Api.Tests;
 
 /// <summary>
-/// Tests for Identity module endpoints (login, refresh, logout, userinfo, JWKS).
+///     Tests for Identity module endpoints (login, refresh, logout, userinfo, JWKS).
 /// </summary>
 public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory = factory.WithWebHostBuilder(_ => { });
+
+    #region Health Endpoint Tests
+
+    [Fact]
+    public async Task IdentityHealth_ShouldReturnHealthy()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/identity/health");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var content = await response.Content.ReadFromJsonAsync<JsonElement>();
+        content.TryGetProperty("module", out var module).Should().BeTrue();
+        module.GetString().Should().Be("Identity");
+
+        content.TryGetProperty("status", out var status).Should().BeTrue();
+        status.GetString().Should().BeOneOf("healthy", "Healthy");
+    }
+
+    #endregion
 
     #region Login Tests
 
@@ -285,26 +305,6 @@ public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
             part.Should().NotBeNullOrWhiteSpace();
             part.Should().MatchRegex("^[A-Za-z0-9_-]+$", "JWT parts should be base64url encoded");
         }
-    }
-
-    #endregion
-
-    #region Health Endpoint Tests
-
-    [Fact]
-    public async Task IdentityHealth_ShouldReturnHealthy()
-    {
-        var client = _factory.CreateClient();
-
-        var response = await client.GetAsync("/api/identity/health");
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var content = await response.Content.ReadFromJsonAsync<JsonElement>();
-        content.TryGetProperty("module", out var module).Should().BeTrue();
-        module.GetString().Should().Be("Identity");
-
-        content.TryGetProperty("status", out var status).Should().BeTrue();
-        status.GetString().Should().BeOneOf("healthy", "Healthy");
     }
 
     #endregion

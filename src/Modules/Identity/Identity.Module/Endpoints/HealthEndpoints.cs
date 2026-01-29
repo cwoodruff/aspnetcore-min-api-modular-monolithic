@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using SharedKernel;
+using SharedKernel.TrafficControl;
 
 namespace Identity.Modules.Endpoints;
 
@@ -20,7 +21,7 @@ public static class IdentityHealthEndpoints
                     timestampUtc = DateTime.UtcNow.ToString("O"),
                     environment = BuildInfoProvider.GetEnvironment(env),
                     version = BuildInfoProvider.GetInformationalVersion(typeof(IdentityModule).Assembly),
-                    service = BuildInfoProvider.GetServiceName(cfg),
+                    service = BuildInfoProvider.GetServiceName(cfg)
                 };
                 return Results.Json(response);
             })
@@ -28,6 +29,6 @@ public static class IdentityHealthEndpoints
             .Produces(200)
             .WithTags("Identity")
             .Produces(429) // Rate limiting
-            .RequireRateLimiting(SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

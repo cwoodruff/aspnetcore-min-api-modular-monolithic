@@ -6,7 +6,9 @@
 
 ## Overview
 
-API versioning allows you to evolve your API while maintaining backward compatibility for existing clients. ASP.NET Core provides flexible versioning strategies including URL path, query string, and header-based versioning.
+API versioning allows you to evolve your API while maintaining backward
+compatibility for existing clients. ASP.NET Core provides flexible versioning
+strategies including URL path, query string, and header-based versioning.
 
 **Duration:** 30-45 minutes
 **Prerequisites:** Basic Minimal API knowledge, understanding of REST API design
@@ -16,6 +18,7 @@ API versioning allows you to evolve your API while maintaining backward compatib
 ## Learning Objectives
 
 By the end of this guide, you will:
+
 - Understand when and why to version APIs
 - Implement URL path-based versioning
 - Implement query string and header versioning
@@ -28,25 +31,25 @@ By the end of this guide, you will:
 
 ### Version When You Have Breaking Changes
 
-| Change Type | Breaking? | Requires New Version? |
-|------------|-----------|----------------------|
-| Add new endpoint | No | No |
-| Add optional field to response | No | No |
-| Add optional parameter | No | No |
-| Remove endpoint | Yes | Yes |
-| Remove response field | Yes | Yes |
-| Rename field | Yes | Yes |
-| Change field type | Yes | Yes |
-| Change validation rules | Maybe | Consider |
+| Change Type                    | Breaking? | Requires New Version? |
+|--------------------------------|-----------|-----------------------|
+| Add new endpoint               | No        | No                    |
+| Add optional field to response | No        | No                    |
+| Add optional parameter         | No        | No                    |
+| Remove endpoint                | Yes       | Yes                   |
+| Remove response field          | Yes       | Yes                   |
+| Rename field                   | Yes       | Yes                   |
+| Change field type              | Yes       | Yes                   |
+| Change validation rules        | Maybe     | Consider              |
 
 ### Versioning Strategies
 
-| Strategy | Example | Pros | Cons |
-|----------|---------|------|------|
-| URL Path | `/api/v1/albums` | Clear, cacheable | Pollutes URLs |
-| Query String | `/api/albums?api-version=1.0` | Non-invasive | Less discoverable |
-| Header | `X-API-Version: 1.0` | Clean URLs | Hidden, harder to test |
-| Media Type | `Accept: application/vnd.api.v1+json` | RESTful | Complex |
+| Strategy     | Example                               | Pros             | Cons                   |
+|--------------|---------------------------------------|------------------|------------------------|
+| URL Path     | `/api/v1/albums`                      | Clear, cacheable | Pollutes URLs          |
+| Query String | `/api/albums?api-version=1.0`         | Non-invasive     | Less discoverable      |
+| Header       | `X-API-Version: 1.0`                  | Clean URLs       | Hidden, harder to test |
+| Media Type   | `Accept: application/vnd.api.v1+json` | RESTful          | Complex                |
 
 ---
 
@@ -632,11 +635,11 @@ public class VersionedApiTests
 
 ### Versioning Quick Reference
 
-| Strategy | URL Example | Configuration |
-|----------|-------------|---------------|
-| URL Path | `/api/v1/albums` | `UrlSegmentApiVersionReader()` |
+| Strategy     | URL Example                   | Configuration                                |
+|--------------|-------------------------------|----------------------------------------------|
+| URL Path     | `/api/v1/albums`              | `UrlSegmentApiVersionReader()`               |
 | Query String | `/api/albums?api-version=1.0` | `QueryStringApiVersionReader("api-version")` |
-| Header | `X-API-Version: 1.0` | `HeaderApiVersionReader("X-API-Version")` |
+| Header       | `X-API-Version: 1.0`          | `HeaderApiVersionReader("X-API-Version")`    |
 
 ### Best Practices
 

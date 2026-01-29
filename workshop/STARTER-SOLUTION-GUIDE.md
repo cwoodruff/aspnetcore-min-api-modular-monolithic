@@ -1,6 +1,8 @@
 # Workshop Starter Solution Guide
 
-This document describes the starter solution that workshop participants receive. It includes the foundational infrastructure so participants can focus on learning architectural patterns rather than boilerplate setup.
+This document describes the starter solution that workshop participants receive.
+It includes the foundational infrastructure so participants can focus on
+learning architectural patterns rather than boilerplate setup.
 
 ---
 
@@ -9,6 +11,7 @@ This document describes the starter solution that workshop participants receive.
 ### What's Included (Pre-Built)
 
 #### 1. Solution Structure
+
 ```
 workshop-starter/
 ├── src/
@@ -85,35 +88,35 @@ workshop-starter/
 During the workshop, participants will create:
 
 1. **Repository Implementations** (Session 5)
-   - `BaseRepository<T>`
-   - `GenreRepository`
-   - `ArtistRepository`
-   - `AlbumRepository`
+    - `BaseRepository<T>`
+    - `GenreRepository`
+    - `ArtistRepository`
+    - `AlbumRepository`
 
 2. **Identity Module** (Session 4)
-   - `DevKeyMaterialService`
-   - `TokenService`
-   - `InMemoryUserStore`
-   - `InMemoryRefreshTokenStore`
-   - `AuthEndpoints`
-   - `IdentityAuthExtensions`
+    - `DevKeyMaterialService`
+    - `TokenService`
+    - `InMemoryUserStore`
+    - `InMemoryRefreshTokenStore`
+    - `AuthEndpoints`
+    - `IdentityAuthExtensions`
 
 3. **Module Implementations** (Sessions 2-3)
-   - `ReportingModule.Modules`
-   - `MusicModule.Modules`
-   - `AdministrationModule.Modules`
+    - `ReportingModule.Modules`
+    - `MusicModule.Modules`
+    - `AdministrationModule.Modules`
 
 4. **Services** (Session 6)
-   - `IGenreService` / `GenreService`
-   - `IArtistService` / `ArtistService`
+    - `IGenreService` / `GenreService`
+    - `IArtistService` / `ArtistService`
 
 5. **Validators** (Session 7)
-   - `GenreValidator`
-   - `ArtistValidator`
+    - `GenreValidator`
+    - `ArtistValidator`
 
 6. **Tests** (Session 9)
-   - Health endpoint tests
-   - Authenticated endpoint tests
+    - Health endpoint tests
+    - Authenticated endpoint tests
 
 ---
 
@@ -374,6 +377,7 @@ dotnet run --project src/ModularMonolith.Api
 Ensure each module project has correct references:
 
 ### Music.Module.csproj
+
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -391,6 +395,7 @@ Ensure each module project has correct references:
 ```
 
 ### Identity.Module.csproj
+
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -412,21 +417,25 @@ Ensure each module project has correct references:
 ## Troubleshooting Setup Issues
 
 ### "Project reference not found"
+
 - Verify all .csproj files exist
 - Check relative paths in project references
 - Run `dotnet restore` from solution root
 
 ### "Database not found"
+
 - Ensure chinook.db is in `src/ModularMonolith.Api/data/`
 - Check connection string in appsettings.json
 - Verify file permissions
 
 ### "Package restore failed"
+
 - Check internet connectivity
 - Clear NuGet cache: `dotnet nuget locals all --clear`
 - Use offline package source if needed
 
 ### "SDK not found"
+
 - Install .NET 10 SDK from https://dot.net
 - Verify with `dotnet --list-sdks`
 - Check global.json if present

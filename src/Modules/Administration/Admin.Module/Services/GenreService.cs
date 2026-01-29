@@ -18,10 +18,10 @@ public sealed class GenreService(
     public async Task<GenreApiModel?> GetGenreByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "administration",
-            entity: "genre",
-            version: "v1",
-            discriminator: $"by-id:{id}");
+            "administration",
+            "genre",
+            "v1",
+            $"by-id:{id}");
 
         return await cache.GetOrAddAsync<GenreApiModel?>(key, async _ =>
         {
@@ -44,10 +44,10 @@ public sealed class GenreService(
     public async Task<IEnumerable<GenreApiModel>> GetAllGenresAsync(CancellationToken ct)
     {
         var key = keys.Compose(
-            moduleName: "administration",
-            entity: "genre",
-            version: "v1",
-            discriminator: "all");
+            "administration",
+            "genre",
+            "v1",
+            "all");
 
         return await cache.GetOrAddAsync<IEnumerable<GenreApiModel>>(key, async _ =>
         {
@@ -102,10 +102,10 @@ public sealed class GenreService(
             // Invalidate cache
             await cache.RemoveByTagAsync(GenreTags[0], ct);
             var key = keys.Compose(
-                moduleName: "administration",
-                entity: "genre",
-                version: "v1",
-                discriminator: $"by-id:{id}");
+                "administration",
+                "genre",
+                "v1",
+                $"by-id:{id}");
             await cache.RemoveAsync(key, ct);
         }
 
@@ -121,10 +121,10 @@ public sealed class GenreService(
             // Invalidate cache
             await cache.RemoveByTagAsync(GenreTags[0], ct);
             var key = keys.Compose(
-                moduleName: "administration",
-                entity: "genre",
-                version: "v1",
-                discriminator: $"by-id:{id}");
+                "administration",
+                "genre",
+                "v1",
+                $"by-id:{id}");
             await cache.RemoveAsync(key, ct);
         }
 
