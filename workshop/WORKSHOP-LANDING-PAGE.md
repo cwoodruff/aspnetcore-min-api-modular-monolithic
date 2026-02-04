@@ -296,19 +296,19 @@ needs.
 
 ## About the Instructor
 
-**[Instructor Name]**
+**Chris Woody Woodruff**
 
-[Brief bio highlighting relevant experience with ASP.NET Core, API development, and teaching/mentoring. Include years of experience, notable projects or companies, and any relevant certifications or speaking experience.]
+Chris Woodruff has been at the forefront of software development since before the first .COM boom, building a career that spans enterprise web development, cloud solutions, software analytics, and developer relations. As an Architect, he applies his deep technical expertise to tackle complex challenges, with a particular focus on API design and scalable architectures. He is recognized as a Microsoft MVP specializing in .NET and Web Development. Woody’s impact extends beyond his professional responsibilities; he is a dedicated mentor and educator, teaching courses that help individuals transition into tech careers. His passion for sharing knowledge has made him a sought-after speaker at international conferences, where he discusses topics such as database development, web APIs, and software architecture. He contributes to the developer community by co-hosting **The Breakpoint Show** podcast and creating content that aids engineers in refining their skills. Previously, Woody led engineering teams at Rocket Homes, developed event-driven integration platforms, and spearheaded developer relations initiatives at Rocket Mortgage. His experience also includes serving as a Developer Advocate at JetBrains and architecting cloud-based analytics platforms at Eidex. Through his consulting work, he has assisted major companies, including Microsoft and MLB Advanced Media, in building robust software solutions. Beyond technology, Woody is an avid bourbon enthusiast, often exploring the Bourbon Trail in search of unique selections to share with friends. He also enjoys writing about his experiences in tech and life on his blog at https://woodruff.dev. You can stay connected with him on Bluesky at @woodruff.dev and on Mastodon at mastodon.social/@cwoodruff, where he engages with the developer community and shares insights on software, mentorship, and personal interests.
 
-[Photo placeholder]
+https://www.woodruff.dev/wp-content/uploads/2025/02/dne0BXsw9zrk-ZJDQGX7f.jpg
 
 ---
 
 ## Questions?
 
-**Email:** [email]
-**Twitter/X:** [@handle]
-**LinkedIn:** [profile]
+**Email:** cwoodruff@live.com
+**Blusky:** @woodruff.dev
+**LinkedIn:** /in/chriswoodruff/
 
 ---
 
