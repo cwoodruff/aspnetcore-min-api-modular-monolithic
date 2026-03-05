@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <NoWarn>$(NoWarn);CA1707</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1"/>
+        <PackageReference Include="TngTech.ArchUnitNET.xUnit" Version="0.13.1"/>
+        <PackageReference Include="xunit" Version="2.9.3"/>
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Modules\Music\Music.Module\Music.Module.csproj"/>
+        <ProjectReference Include="..\..\src\Modules\Orders\Orders.Module\Orders.Module.csproj"/>
+        <ProjectReference Include="..\..\src\Modules\Administration\Admin.Module\Admin.Module.csproj"/>
+        <ProjectReference Include="..\..\src\Modules\Identity\Identity.Module\Identity.Module.csproj"/>
+        <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Module\Reporting.Module.csproj"/>
+        <ProjectReference Include="..\..\src\Shared\SharedKernel\SharedKernel.csproj"/>
+        <ProjectReference Include="..\..\src\Shared\SharedKernel.Persistence\SharedKernel.Persistence.csproj"/>
+        <ProjectReference Include="..\..\src\Shared\SharedKernel.DataSQLite\SharedKernel.DataSQLite.csproj"/>
+    </ItemGroup>
+
+</Project>
