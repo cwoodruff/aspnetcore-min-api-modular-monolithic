@@ -11,7 +11,8 @@ namespace Identity.Modules.Services;
 public sealed class TokenService(
     IOptions<JwtAuthOptions> options,
     IKeyMaterialService keys,
-    IRefreshTokenStore refreshStore) : ITokenService
+    IRefreshTokenStore refreshStore,
+    IUserStore userStore) : ITokenService
 {
     private readonly JwtAuthOptions _opts = options.Value;
 
@@ -90,10 +91,19 @@ public sealed class TokenService(
             return null;
         }
 
-        // For demo, static roles/permissions are not stored - in real impl, fetch from DB
-        var pair = await IssueAsync(userId, userId, Array.Empty<string>(), Array.Empty<string>(), null, null, ct);
+        // OWASP A01: Re-fetch current user permissions/tenant on refresh
+        // to ensure revoked permissions are not carried over in new tokens
+        var user = await userStore.GetUserByIdAsync(userId, ct);
+        if (!user.found)
+        {
+            // User may have been deactivated since the refresh token was issued
+            await refreshStore.RevokeAsync(userId, refreshToken, ct);
+            return null;
+        }
 
-        // Revoke old
+        var pair = await IssueAsync(userId, user.displayName, user.roles, user.permissions, user.email, user.tenant, ct);
+
+        // Revoke old refresh token (rotation)
         await refreshStore.RevokeAsync(userId, refreshToken, ct);
         return pair;
     }

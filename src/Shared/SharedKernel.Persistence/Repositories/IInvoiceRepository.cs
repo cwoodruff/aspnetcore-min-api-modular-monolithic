@@ -6,5 +6,5 @@ namespace SharedKernel.Persistence.Repositories;
 public interface IInvoiceRepository : IRepository<Invoice>, IDisposable
 {
     Task<List<Invoice>> GetByCustomerId(int id);
-    Task<InvoiceApiModel> GetById(int id);
+    Task<InvoiceApiModel?> GetById(int id);
 }

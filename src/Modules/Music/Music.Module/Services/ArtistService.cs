@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
 using SharedKernel.Persistence.Extensions;
@@ -10,9 +11,11 @@ public class ArtistService(
     IArtistRepository repository,
     ICacheFacade cache,
     ICacheKeyComposer keys,
-    IValidator<ArtistApiModel> validator) : IArtistService
+    IValidator<ArtistApiModel> validator,
+    ILogger<ArtistService> logger) : IArtistService
 {
     private static readonly string[] ArtistTags = ["music:artist", "music:artist:by-id"];
+    private readonly ILogger<ArtistService> _logger = logger;
     private readonly IValidator<ArtistApiModel> _validator = validator;
 
     public async Task<ArtistApiModel?> GetArtistByIdAsync(int id, CancellationToken ct)
@@ -24,16 +27,8 @@ public class ArtistService(
             $"by-id:{id}");
 
         return await cache.GetOrAddAsync<ArtistApiModel?>(key, async _ =>
-        {
-            try
-            {
-                return await repository.GetById(id);
-            }
-            catch
-            {
-                return null;
-            }
-        }, new CacheEntryOptions
+            await repository.GetById(id)
+        , new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
             Tags = ArtistTags
@@ -50,15 +45,8 @@ public class ArtistService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                var entities = await repository.GetAll();
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetAll();
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),

@@ -14,7 +14,7 @@ public class InvoiceRepository(AppDbContext context) : BaseRepository<Invoice>(c
             .AsNoTracking().ToListAsync();
     }
 
-    public async Task<InvoiceApiModel> GetById(int id)
+    public async Task<InvoiceApiModel?> GetById(int id)
     {
         return await _context.Invoices
             .Where(i => i.Id == id)
@@ -60,6 +60,6 @@ public class InvoiceRepository(AppDbContext context) : BaseRepository<Invoice>(c
                 }).ToList()
             })
             .AsNoTracking()
-            .SingleAsync();
+            .SingleOrDefaultAsync();
     }
 }

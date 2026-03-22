@@ -153,6 +153,19 @@ if (!app.Environment.IsDevelopment())
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+
+// OWASP A05: Security headers to prevent clickjacking, MIME-sniffing, and XSS
+app.Use(async (ctx, next) =>
+{
+    ctx.Response.Headers.XContentTypeOptions = "nosniff";
+    ctx.Response.Headers.XFrameOptions = "DENY";
+    ctx.Response.Headers.XXSSProtection = "0"; // modern browsers: CSP replaces this
+    ctx.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    ctx.Response.Headers.ContentSecurityPolicy = "default-src 'self'; frame-ancestors 'none'";
+    ctx.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+    await next();
+});
+
 app.UseCors("Default");
 
 // Rate limiter should run early in the pipeline

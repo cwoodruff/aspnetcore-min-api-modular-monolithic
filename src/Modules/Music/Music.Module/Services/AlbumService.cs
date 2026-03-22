@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
 using SharedKernel.Persistence.Extensions;
@@ -10,9 +11,11 @@ public class AlbumService(
     IAlbumRepository repository,
     ICacheFacade cache,
     ICacheKeyComposer keys,
-    IValidator<AlbumApiModel> validator) : IAlbumService
+    IValidator<AlbumApiModel> validator,
+    ILogger<AlbumService> logger) : IAlbumService
 {
     private static readonly string[] AlbumTags = ["music:album", "music:album:by-id"];
+    private readonly ILogger<AlbumService> _logger = logger;
     private readonly IValidator<AlbumApiModel> _validator = validator;
 
     public async Task<AlbumApiModel?> GetAlbumByIdAsync(int id, CancellationToken ct)
@@ -24,16 +27,8 @@ public class AlbumService(
             $"by-id:{id}");
 
         return await cache.GetOrAddAsync<AlbumApiModel?>(key, async _ =>
-        {
-            try
-            {
-                return await repository.GetById(id);
-            }
-            catch
-            {
-                return null;
-            }
-        }, new CacheEntryOptions
+            await repository.GetById(id)
+        , new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
             Tags = AlbumTags
@@ -50,15 +45,8 @@ public class AlbumService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                var entities = await repository.GetAll();
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetAll();
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -76,15 +64,8 @@ public class AlbumService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                var entities = await repository.GetByArtistId(id);
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetByArtistId(id);
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),

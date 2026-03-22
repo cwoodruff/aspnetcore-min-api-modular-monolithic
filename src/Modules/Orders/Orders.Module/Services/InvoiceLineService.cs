@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
 using SharedKernel.Persistence.Extensions;
@@ -10,9 +11,11 @@ public class InvoiceLineService(
     IInvoiceLineRepository repository,
     ICacheFacade cache,
     ICacheKeyComposer keys,
-    IValidator<InvoiceLineApiModel> validator) : IInvoiceLineService
+    IValidator<InvoiceLineApiModel> validator,
+    ILogger<InvoiceLineService> logger) : IInvoiceLineService
 {
     private static readonly string[] InvoiceLineTags = ["orders:invoiceline", "orders:invoiceline:by-id"];
+    private readonly ILogger<InvoiceLineService> _logger = logger;
     private readonly IValidator<InvoiceLineApiModel> _validator = validator;
 
     public async Task<object?> GetInvoiceLineByIdAsync(int id, CancellationToken ct)
@@ -24,16 +27,8 @@ public class InvoiceLineService(
             $"by-id:{id}");
 
         return await cache.GetOrAddAsync<object?>(key, async _ =>
-        {
-            try
-            {
-                return await repository.GetById(id);
-            }
-            catch
-            {
-                return null;
-            }
-        }, new CacheEntryOptions
+            await repository.GetById(id)
+        , new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
             Tags = InvoiceLineTags
@@ -50,16 +45,8 @@ public class InvoiceLineService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                await Task.Yield();
-                var entities = await repository.GetAll();
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetAll();
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -77,16 +64,8 @@ public class InvoiceLineService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                await Task.Yield();
-                var entities = await repository.GetByInvoiceId(id);
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetByInvoiceId(id);
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -104,16 +83,8 @@ public class InvoiceLineService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                await Task.Yield();
-                var entities = await repository.GetByTrackId(id);
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetByTrackId(id);
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),

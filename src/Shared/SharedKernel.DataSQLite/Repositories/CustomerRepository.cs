@@ -16,7 +16,7 @@ public class CustomerRepository(AppDbContext context) : BaseRepository<Customer>
             .ToListAsync();
     }
 
-    public async Task<CustomerApiModel> GetById(int id)
+    public async Task<CustomerApiModel?> GetById(int id)
     {
         return await _context.Customers
             .Where(c => c.Id == id)
@@ -53,6 +53,6 @@ public class CustomerRepository(AppDbContext context) : BaseRepository<Customer>
                 }).ToList()
             })
             .AsNoTracking()
-            .SingleAsync();
+            .SingleOrDefaultAsync();
     }
 }

@@ -44,7 +44,7 @@ public class TrackRepository(AppDbContext context) : BaseRepository<Track>(conte
             .AsNoTracking().ToListAsync();
     }
 
-    public async Task<TrackApiModel> GetById(int id)
+    public async Task<TrackApiModel?> GetById(int id)
     {
         return await _context.Tracks
             .Where(t => t.Id == id)
@@ -69,6 +69,6 @@ public class TrackRepository(AppDbContext context) : BaseRepository<Track>(conte
                 InvoiceLines = new List<InvoiceLineApiModel>()
             })
             .AsNoTracking()
-            .SingleAsync();
+            .SingleOrDefaultAsync();
     }
 }

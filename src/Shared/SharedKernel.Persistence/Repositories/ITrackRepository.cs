@@ -11,5 +11,5 @@ public interface ITrackRepository : IRepository<Track>, IDisposable
     Task<List<Track>> GetByInvoiceId(int id);
     Task<List<Track>> GetByPlaylistId(int id);
     Task<List<Track>> GetByArtistId(int id);
-    Task<TrackApiModel> GetById(int id);
+    Task<TrackApiModel?> GetById(int id);
 }

@@ -7,10 +7,10 @@ namespace SharedKernel.DataSQLite.Repositories;
 
 public class MediaTypeRepository(AppDbContext context) : BaseRepository<MediaType>(context), IMediaTypeRepository
 {
-    public async Task<MediaType> GetById(int id)
+    public async Task<MediaType?> GetById(int id)
     {
         return await _context.MediaTypes
             .AsNoTracking()
-            .SingleAsync(e => e.Id == id);
+            .SingleOrDefaultAsync(e => e.Id == id);
     }
 }

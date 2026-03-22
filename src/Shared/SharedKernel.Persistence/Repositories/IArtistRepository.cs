@@ -5,5 +5,5 @@ namespace SharedKernel.Persistence.Repositories;
 
 public interface IArtistRepository : IRepository<Artist>, IDisposable
 {
-    Task<ArtistApiModel> GetById(int id);
+    Task<ArtistApiModel?> GetById(int id);
 }

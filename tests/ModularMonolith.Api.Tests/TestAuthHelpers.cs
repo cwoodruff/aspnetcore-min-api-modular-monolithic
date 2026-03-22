@@ -53,9 +53,11 @@ public static class TestAuthHelpers
         return login.access_token;
     }
 
-    public static void UseBearer(this HttpClient client, string token)
+    public static void UseBearer(this HttpClient client, string token, string tenantId = "tenant-123")
     {
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.Remove("X-Tenant-Id");
+        client.DefaultRequestHeaders.Add("X-Tenant-Id", tenantId);
     }
 
     public sealed record LoginResponse(
@@ -78,6 +80,19 @@ public static class TestAuthHelpers
 
             return Task.FromResult<(bool, string, string?, string[], string[], string?, string?)>((false, string.Empty,
                 null, Array.Empty<string>(), Array.Empty<string>(), null, null));
+        }
+
+        public Task<(bool found, string? displayName, string[] roles, string[] permissions, string? email, string? tenant)>
+            GetUserByIdAsync(string userId, CancellationToken ct = default)
+        {
+            if (string.Equals(userId, "user-1", StringComparison.Ordinal))
+            {
+                return Task.FromResult<(bool, string?, string[], string[], string?, string?)>(
+                    (true, "Demo User", roles, permissions, "demo@example.com", tenantId));
+            }
+
+            return Task.FromResult<(bool, string?, string[], string[], string?, string?)>(
+                (false, null, Array.Empty<string>(), Array.Empty<string>(), null, null));
         }
     }
 }

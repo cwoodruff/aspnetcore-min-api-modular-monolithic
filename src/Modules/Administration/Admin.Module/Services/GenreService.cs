@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
 using SharedKernel.Persistence.Entities;
@@ -11,9 +12,11 @@ public sealed class GenreService(
     IGenreRepository repo,
     ICacheFacade cache,
     ICacheKeyComposer keys,
-    IValidator<GenreApiModel> validator) : IGenreService
+    IValidator<GenreApiModel> validator,
+    ILogger<GenreService> logger) : IGenreService
 {
     private static readonly string[] GenreTags = ["administration:genre", "administration:genre:by-id"];
+    private readonly ILogger<GenreService> _logger = logger;
 
     public async Task<GenreApiModel?> GetGenreByIdAsync(int id, CancellationToken ct)
     {
@@ -25,15 +28,8 @@ public sealed class GenreService(
 
         return await cache.GetOrAddAsync<GenreApiModel?>(key, async _ =>
         {
-            try
-            {
-                var g = await repo.GetById(id);
-                return g.Convert();
-            }
-            catch
-            {
-                return null;
-            }
+            var g = await repo.GetById(id);
+            return g?.Convert();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -51,15 +47,8 @@ public sealed class GenreService(
 
         return await cache.GetOrAddAsync<IEnumerable<GenreApiModel>>(key, async _ =>
         {
-            try
-            {
-                var genreEntities = await repo.GetAll();
-                return genreEntities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var genreEntities = await repo.GetAll();
+            return genreEntities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),

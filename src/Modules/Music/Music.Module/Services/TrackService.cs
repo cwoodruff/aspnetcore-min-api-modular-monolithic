@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
 using SharedKernel.Persistence.Extensions;
@@ -10,9 +11,11 @@ public class TrackService(
     ITrackRepository repository,
     ICacheFacade cache,
     ICacheKeyComposer keys,
-    IValidator<TrackApiModel> validator) : ITrackService
+    IValidator<TrackApiModel> validator,
+    ILogger<TrackService> logger) : ITrackService
 {
     private static readonly string[] TrackTags = ["music:track", "music:track:by-id"];
+    private readonly ILogger<TrackService> _logger = logger;
     private readonly IValidator<TrackApiModel> _validator = validator;
 
     public async Task<object?> GetTrackByIdAsync(int id, CancellationToken ct)
@@ -24,16 +27,8 @@ public class TrackService(
             $"by-id:{id}");
 
         return await cache.GetOrAddAsync<object?>(key, async _ =>
-        {
-            try
-            {
-                return await repository.GetById(id);
-            }
-            catch
-            {
-                return null;
-            }
-        }, new CacheEntryOptions
+            await repository.GetById(id)
+        , new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
             Tags = TrackTags
@@ -50,16 +45,8 @@ public class TrackService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                await Task.Yield();
-                var entities = await repository.GetAll();
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetAll();
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -77,16 +64,8 @@ public class TrackService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                await Task.Yield();
-                var entities = await repository.GetByArtistId(id);
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetByArtistId(id);
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -104,16 +83,8 @@ public class TrackService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                await Task.Yield();
-                var entities = await repository.GetByPlaylistId(id);
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetByPlaylistId(id);
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -131,16 +102,8 @@ public class TrackService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                await Task.Yield();
-                var entities = await repository.GetByAlbumId(id);
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetByAlbumId(id);
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -158,16 +121,8 @@ public class TrackService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                await Task.Yield();
-                var entities = await repository.GetByGenreId(id);
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetByGenreId(id);
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -185,16 +140,8 @@ public class TrackService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                await Task.Yield();
-                var entities = await repository.GetByMediaTypeId(id);
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetByMediaTypeId(id);
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -212,15 +159,8 @@ public class TrackService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                var entities = await repository.GetByInvoiceId(id);
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetByInvoiceId(id);
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),

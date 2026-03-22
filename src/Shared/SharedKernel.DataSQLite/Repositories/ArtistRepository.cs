@@ -8,7 +8,7 @@ namespace SharedKernel.DataSQLite.Repositories;
 
 public class ArtistRepository(AppDbContext context) : BaseRepository<Artist>(context), IArtistRepository
 {
-    public async Task<ArtistApiModel> GetById(int id)
+    public async Task<ArtistApiModel?> GetById(int id)
     {
         // Load entity graph with split queries
         var artistEntity = await _context.Artists
@@ -18,7 +18,10 @@ public class ArtistRepository(AppDbContext context) : BaseRepository<Artist>(con
             .ThenInclude(album => album.Tracks).ThenInclude(track => track.MediaType)
             .AsNoTracking()
             .AsSplitQuery() // important on SQLite for large graphs
-            .SingleAsync();
+            .SingleOrDefaultAsync();
+
+        if (artistEntity is null)
+            return null;
 
         // Project to DTO in memory (no APPLY needed)
         var artistDto = new ArtistApiModel

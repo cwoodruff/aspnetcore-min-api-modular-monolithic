@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
 using SharedKernel.Persistence.Extensions;
@@ -10,9 +11,11 @@ public class InvoiceService(
     IInvoiceRepository repository,
     ICacheFacade cache,
     ICacheKeyComposer keys,
-    IValidator<InvoiceApiModel> validator) : IInvoiceService
+    IValidator<InvoiceApiModel> validator,
+    ILogger<InvoiceService> logger) : IInvoiceService
 {
     private static readonly string[] InvoiceTags = ["orders:invoice", "orders:invoice:by-id"];
+    private readonly ILogger<InvoiceService> _logger = logger;
     private readonly IValidator<InvoiceApiModel> _validator = validator;
 
     public async Task<object?> GetInvoiceByIdAsync(int id, CancellationToken ct)
@@ -24,16 +27,8 @@ public class InvoiceService(
             $"by-id:{id}");
 
         return await cache.GetOrAddAsync<object?>(key, async _ =>
-        {
-            try
-            {
-                return await repository.GetById(id);
-            }
-            catch
-            {
-                return null;
-            }
-        }, new CacheEntryOptions
+            await repository.GetById(id)
+        , new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
             Tags = InvoiceTags
@@ -50,16 +45,8 @@ public class InvoiceService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                await Task.Yield();
-                var entities = await repository.GetAll();
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetAll();
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -77,16 +64,8 @@ public class InvoiceService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                await Task.Yield();
-                var entities = await repository.GetByCustomerId(id);
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetByCustomerId(id);
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),

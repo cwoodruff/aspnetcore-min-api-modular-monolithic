@@ -128,6 +128,20 @@ public sealed class InMemoryUserStore : IUserStore
             (false, string.Empty, null, Array.Empty<string>(), Array.Empty<string>(), null, null));
     }
 
+    public Task<(bool found, string? displayName, string[] roles, string[] permissions, string? email, string? tenant)>
+        GetUserByIdAsync(string userId, CancellationToken ct = default)
+    {
+        var user = Users.Values.FirstOrDefault(u => string.Equals(u.UserId, userId, StringComparison.Ordinal));
+        if (user is not null)
+        {
+            return Task.FromResult<(bool, string?, string[], string[], string?, string?)>(
+                (true, user.Display, user.Roles, user.Perms, user.Email, user.Tenant));
+        }
+
+        return Task.FromResult<(bool, string?, string[], string[], string?, string?)>(
+            (false, null, Array.Empty<string>(), Array.Empty<string>(), null, null));
+    }
+
     private sealed record UserRecord(
         string Username,
         string Password,

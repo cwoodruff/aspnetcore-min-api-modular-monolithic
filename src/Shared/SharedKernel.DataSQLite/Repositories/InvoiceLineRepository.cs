@@ -19,10 +19,10 @@ public class InvoiceLineRepository(AppDbContext context) : BaseRepository<Invoic
             .AsNoTracking().ToListAsync();
     }
 
-    public async Task<InvoiceLine> GetById(int id)
+    public async Task<InvoiceLine?> GetById(int id)
     {
         return await _context.InvoiceLines
             .AsNoTracking()
-            .SingleAsync(e => e.Id == id);
+            .SingleOrDefaultAsync(e => e.Id == id);
     }
 }

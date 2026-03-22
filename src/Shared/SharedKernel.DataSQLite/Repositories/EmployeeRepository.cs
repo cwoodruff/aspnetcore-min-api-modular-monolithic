@@ -18,7 +18,7 @@ public class EmployeeRepository(AppDbContext context) : BaseRepository<Employee>
         return await _context.Employees.Where(e => e.ReportsTo == id).AsNoTracking().ToListAsync();
     }
 
-    public async Task<EmployeeApiModel> GetById(int id)
+    public async Task<EmployeeApiModel?> GetById(int id)
     {
         return await _context.Employees
             .Where(e => e.Id == id)
@@ -46,7 +46,7 @@ public class EmployeeRepository(AppDbContext context) : BaseRepository<Employee>
                 InverseReportsToNavigation = new List<EmployeeApiModel>()
             })
             .AsNoTracking()
-            .SingleAsync();
+            .SingleOrDefaultAsync();
     }
 
     public async Task<Employee> GetToReports(int id)

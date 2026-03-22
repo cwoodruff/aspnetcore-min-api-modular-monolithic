@@ -4,5 +4,5 @@ namespace SharedKernel.Persistence.Repositories;
 
 public interface IMediaTypeRepository : IRepository<MediaType>, IDisposable
 {
-    Task<MediaType> GetById(int id);
+    Task<MediaType?> GetById(int id);
 }

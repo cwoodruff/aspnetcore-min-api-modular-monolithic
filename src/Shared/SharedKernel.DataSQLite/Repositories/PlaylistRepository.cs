@@ -14,14 +14,17 @@ public class PlaylistRepository(AppDbContext context) : BaseRepository<Playlist>
             .AsNoTracking().ToListAsync();
     }
 
-    public async Task<PlaylistApiModel> GetById(int id)
+    public async Task<PlaylistApiModel?> GetById(int id)
     {
         // Option A: Two lean queries with direct projection to DTOs (no entity graph materialization)
         var header = await _context.Playlists
             .AsNoTracking()
             .Where(p => p.Id == id)
             .Select(p => new { p.Id, p.Name })
-            .SingleAsync();
+            .SingleOrDefaultAsync();
+
+        if (header is null)
+            return null;
 
         var tracks = await _context.PlaylistTracks
             .AsNoTracking()

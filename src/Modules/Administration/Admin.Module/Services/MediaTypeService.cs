@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
 using SharedKernel.Persistence.Extensions;
@@ -10,9 +11,11 @@ public sealed class MediaTypeService(
     IMediaTypeRepository repo,
     ICacheFacade cache,
     ICacheKeyComposer keys,
-    IValidator<MediaTypeApiModel> validator) : IMediaTypeService
+    IValidator<MediaTypeApiModel> validator,
+    ILogger<MediaTypeService> logger) : IMediaTypeService
 {
     private static readonly string[] MediaTypeTags = ["administration:mediatype", "administration:mediatype:by-id"];
+    private readonly ILogger<MediaTypeService> _logger = logger;
     private readonly IValidator<MediaTypeApiModel> _validator = validator;
 
     public async Task<MediaTypeApiModel?> GetMediaTypeByIdAsync(int id, CancellationToken ct)
@@ -25,15 +28,8 @@ public sealed class MediaTypeService(
 
         return await cache.GetOrAddAsync<MediaTypeApiModel?>(key, async _ =>
         {
-            try
-            {
-                var m = await repo.GetById(id);
-                return m.Convert();
-            }
-            catch
-            {
-                return null;
-            }
+            var m = await repo.GetById(id);
+            return m?.Convert();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -51,15 +47,8 @@ public sealed class MediaTypeService(
 
         return await cache.GetOrAddAsync<IEnumerable<MediaTypeApiModel>>(key, async _ =>
         {
-            try
-            {
-                var mediaTypeEntities = await repo.GetAll();
-                return mediaTypeEntities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var mediaTypeEntities = await repo.GetAll();
+            return mediaTypeEntities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),

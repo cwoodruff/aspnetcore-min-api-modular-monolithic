@@ -18,7 +18,7 @@ public class AlbumRepository(AppDbContext context) : BaseRepository<Album>(conte
             .ToListAsync();
     }
 
-    public async Task<AlbumApiModel> GetById(int id)
+    public async Task<AlbumApiModel?> GetById(int id)
     {
         // Album with Tracks (and Artist) via split queries, no tracking
         var albumEntity = await _context.Albums
@@ -30,7 +30,10 @@ public class AlbumRepository(AppDbContext context) : BaseRepository<Album>(conte
             .ThenInclude(t => t.MediaType) // optional if you need MediaTypeName
             .AsNoTracking()
             .AsSplitQuery() // important on SQLite to avoid cartesian explosion
-            .SingleAsync();
+            .SingleOrDefaultAsync();
+
+        if (albumEntity is null)
+            return null;
 
         var albumDto = new AlbumApiModel
         {

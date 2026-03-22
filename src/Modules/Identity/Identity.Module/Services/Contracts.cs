@@ -4,6 +4,9 @@ public interface IUserStore
 {
     Task<(bool success, string userId, string? displayName, string[] roles, string[] permissions, string? email, string?
         tenant)> ValidateCredentialsAsync(string username, string password, CancellationToken ct = default);
+
+    Task<(bool found, string? displayName, string[] roles, string[] permissions, string? email, string? tenant)>
+        GetUserByIdAsync(string userId, CancellationToken ct = default);
 }
 
 public interface IRefreshTokenStore

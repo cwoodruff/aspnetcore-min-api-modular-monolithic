@@ -51,8 +51,12 @@ public static class IdentityAuthExtensions
             {
                 var jwtOpts = jwtOptsAccessor.Value;
 
-                options.IncludeErrorDetails = true;
-                options.RequireHttpsMetadata = false; // enable in production behind TLS
+                // OWASP A05: Do not expose JWT validation error details to clients
+                options.IncludeErrorDetails = false;
+                // OWASP A02: Require HTTPS for token metadata in non-development environments
+                options.RequireHttpsMetadata = !string.Equals(
+                    Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"),
+                    "Development", StringComparison.OrdinalIgnoreCase);
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -60,7 +64,7 @@ public static class IdentityAuthExtensions
                     ValidateAudience = true,
                     ValidAudience = jwtOpts.Audience,
                     ValidateLifetime = true,
-                    ClockSkew = TimeSpan.FromMinutes(2),
+                    ClockSkew = TimeSpan.FromSeconds(30),
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKeys = keys.GetValidationKeys(),
                     NameClaimType = ClaimTypes.Name,

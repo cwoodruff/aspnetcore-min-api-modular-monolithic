@@ -7,5 +7,5 @@ public interface ICustomerRepository : IRepository<Customer>, IDisposable
 {
     Task<List<Customer>> GetBySupportRepId(int id);
 
-    Task<CustomerApiModel> GetById(int id);
+    Task<CustomerApiModel?> GetById(int id);
 }

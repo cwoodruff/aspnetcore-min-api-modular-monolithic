@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
 using SharedKernel.Persistence.Extensions;
@@ -10,9 +11,11 @@ public class PlaylistService(
     IPlaylistRepository repository,
     ICacheFacade cache,
     ICacheKeyComposer keys,
-    IValidator<PlaylistApiModel> validator) : IPlaylistService
+    IValidator<PlaylistApiModel> validator,
+    ILogger<PlaylistService> logger) : IPlaylistService
 {
     private static readonly string[] PlaylistTags = ["music:playlist", "music:playlist:by-id"];
+    private readonly ILogger<PlaylistService> _logger = logger;
     private readonly IValidator<PlaylistApiModel> _validator = validator;
 
     public async Task<PlaylistApiModel?> GetPlaylistByIdAsync(int id, CancellationToken ct)
@@ -24,16 +27,8 @@ public class PlaylistService(
             $"by-id:{id}");
 
         return await cache.GetOrAddAsync<PlaylistApiModel?>(key, async _ =>
-        {
-            try
-            {
-                return await repository.GetById(id);
-            }
-            catch
-            {
-                return null;
-            }
-        }, new CacheEntryOptions
+            await repository.GetById(id)
+        , new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
             Tags = PlaylistTags
@@ -50,16 +45,8 @@ public class PlaylistService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            try
-            {
-                await Task.Yield();
-                var entities = await repository.GetAll();
-                return entities.ConvertAll();
-            }
-            catch
-            {
-                return [];
-            }
+            var entities = await repository.GetAll();
+            return entities.ConvertAll();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
