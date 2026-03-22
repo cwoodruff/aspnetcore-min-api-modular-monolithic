@@ -1,6 +1,6 @@
 ### OWASP Top Threats & Mitigations for the Modular Monolith API (ASP.NET Core 10)
 
-Last updated: 2026-01
+Last updated: 2026-03
 
 #### Executive summary
 
@@ -123,17 +123,202 @@ solution, and highlights overlaps with the general OWASP Top 10 (2021).
 
 ---
 
-### High‑impact items from OWASP Top 10 (2021) — relevant overlaps
+### OWASP Top 10 Application Security Risks (2021) — full coverage
 
-- Injection (`A03`): Parameterized SQL/EF Core; validate inputs; never build SQL
-  by string concatenation.
-- Cryptographic Failures (`A02`): TLS 1.2+; strong ciphers; keys in Key Vault;
-  modern password hashing; no custom crypto.
-- Insecure Design (`A04`): Least privilege by module; threat model critical
-  flows; plan for abuse cases.
-- Security Logging & Monitoring (`A09`): Log auth failures and 429s; alert on
-  spikes; secure log retention.
-- SSRF (`A10`): Covered above; enforce egress controls and URL allowlists.
+#### A01:2021 — Broken Access Control
+
+- What: Users act outside their intended permissions — viewing other tenants'
+  data, escalating to admin, or bypassing authorization on endpoints.
+- Relevance: This solution uses policy-based authorization (`music.read`,
+  `orders.write`, `tenant.scoped`, `role.admin`) and tenant scoping via
+  `X-Tenant-Id` header with `TenantAuthorizationHandler`.
+- Mitigations:
+    - Default-deny: all non-public endpoints require `.RequireAuthorization()`.
+    - Named permission policies enforce least-privilege per module and operation.
+    - Tenant isolation via `TenantAuthorizationHandler` validates `X-Tenant-Id`
+      against user claims on every tenant-scoped request.
+    - Repository-level query filters should enforce tenant boundaries so that
+      even a logic bug in a handler cannot leak cross-tenant data.
+    - Negative integration tests assert `401` (no token), `403` (wrong
+      permission/tenant), and correct `200` for valid requests.
+    - Avoid exposing sequential integer IDs externally where possible; prefer
+      opaque identifiers (UUIDs/ULIDs) for new entities.
+
+#### A02:2021 — Cryptographic Failures
+
+- What: Weak or missing encryption exposes sensitive data in transit or at rest.
+- Relevance: JWT signing keys, password hashing, TLS configuration, and SQLite
+  database storage.
+- Mitigations:
+    - TLS 1.2+ enforced; HSTS enabled in production (see
+      `docs/https-enforcement-plan.md`).
+    - JWT signing uses asymmetric keys (RSA/ECDSA); keys stored in Key Vault or
+      HSM in production — never in source control.
+    - JWKS endpoint (`/.well-known/jwks.json`) publishes public keys; `kid`
+      pinning prevents key confusion attacks.
+    - Password hashing via PBKDF2/Argon2/bcrypt with sufficient iterations; no
+      custom cryptographic implementations.
+    - SQLite database file permissions restricted; consider SQLCipher or
+      filesystem encryption for sensitive deployments.
+    - No secrets (connection strings, API keys, tokens) in `appsettings.json` for
+      production; use `dotnet user-secrets` locally and Key Vault in deployed
+      environments.
+
+#### A03:2021 — Injection
+
+- What: Untrusted data sent as part of a command or query causes unintended
+  execution (SQL injection, command injection, LDAP injection).
+- Relevance: EF Core is the primary data access layer; FluentValidation guards
+  all write endpoints.
+- Mitigations:
+    - EF Core generates parameterized queries by default — never concatenate user
+      input into raw SQL.
+    - If `FromSqlRaw` or `FromSqlInterpolated` is used, always use
+      parameterized overloads; ban string concatenation in code reviews.
+    - FluentValidation validates all request bodies before they reach persistence
+      (length, format, regex, range constraints).
+    - Route and query parameters are strongly typed (`int id`, `string name`)
+      which prevents many injection vectors.
+    - No shell/process execution from user input; no dynamic LINQ from untrusted
+      strings.
+
+#### A04:2021 — Insecure Design
+
+- What: Architectural flaws that cannot be fixed by implementation alone —
+  missing threat models, abuse case analysis, or defense-in-depth.
+- Relevance: Modular monolith architecture provides natural boundaries but
+  requires deliberate design choices.
+- Mitigations:
+    - Module isolation: each module has its own service layer, endpoints, and
+      internal types (`internal` by default); only `IModule` is public.
+    - Layered defense: authorization checked at endpoint level AND can be
+      re-verified in service/handler for critical operations.
+    - Threat model critical flows: login, token refresh, order creation, admin
+      operations — document expected abuse cases and rate-limit accordingly.
+    - Separation of read and write policies: `music.read` vs `music.write`,
+      `orders.read` vs `orders.write` — prevents read-only users from mutating.
+    - Design for tenant isolation from day one: `TenantAuthorizationHandler`,
+      tenant-scoped cache keys, and (planned) EF global query filters.
+
+#### A05:2021 — Security Misconfiguration
+
+- What: Insecure defaults, incomplete configurations, verbose error messages,
+  unnecessary features enabled, or permissive CORS.
+- Relevance: Maps to API8 above. The solution uses `ProblemDetails`, CORS
+  allowlists, and environment-aware middleware.
+- Mitigations:
+    - `ProblemDetails` middleware returns structured errors without stack traces
+      in production.
+    - CORS policy "Default" allowlists only specific localhost origins (ports
+      3000, 4200, 5173); never uses `*` with credentials.
+    - Swagger UI should be disabled or auth-protected in production deployments.
+    - `TreatWarningsAsErrors` is enabled in build; StyleCop analyzers available
+      via `EnableStyleCop=true`.
+    - Security headers applied per `docs/secure-headers-plan.md`:
+      `X-Content-Type-Options: nosniff`, `Referrer-Policy`,
+      `Permissions-Policy`, CSP.
+    - Keep .NET SDK, NuGet packages, and runtime patched; use `dotnet outdated`
+      or Dependabot to track vulnerable dependencies.
+    - Remove or restrict debug/diagnostic endpoints before production deployment.
+
+#### A06:2021 — Vulnerable and Outdated Components
+
+- What: Using components with known vulnerabilities, or failing to track and
+  update dependencies.
+- Relevance: The solution depends on numerous NuGet packages (EF Core,
+  FluentValidation, JWT libraries, etc.) and the .NET runtime.
+- Mitigations:
+    - Use Central Package Management (`Directory.Packages.props`) to pin and
+      manage versions consistently across all projects.
+    - Run `dotnet list package --vulnerable` regularly to detect known CVEs.
+    - Enable Dependabot or GitHub security alerts on the repository.
+    - Subscribe to .NET security advisories and ASP.NET Core patch announcements.
+    - Audit transitive dependencies — a direct package may pull in a vulnerable
+      transitive dependency.
+    - Pin exact package versions in library projects; update deliberately with
+      testing, not automatically in production builds.
+    - Remove unused NuGet packages to reduce attack surface.
+
+#### A07:2021 — Identification and Authentication Failures
+
+- What: Weak authentication mechanisms allow brute force, credential stuffing,
+  session hijacking, or token theft.
+- Relevance: Maps to API2 above. The Identity module handles login, token
+  issuance, refresh, and logout.
+- Mitigations:
+    - JWT Bearer validation enforces `iss`, `aud`, `exp`, `nbf`, `iat`,
+      signature, and `kid`; `alg=none` is disallowed.
+    - Short access token TTL (~15 minutes); refresh token rotation with reuse
+      detection and revocation on logout.
+    - Login lockout/backoff after repeated failures; monitor for credential
+      stuffing patterns (unusual IP/user-agent churn).
+    - Refresh tokens are single-use; reuse triggers revocation of the entire
+      token family.
+    - Password requirements enforced; hashing with modern algorithms (PBKDF2 with
+      high iteration count minimum, or Argon2/bcrypt).
+    - `jti` claim in tokens enables replay detection and revocation lists.
+
+#### A08:2021 — Software and Data Integrity Failures
+
+- What: Code and infrastructure that does not protect against integrity
+  violations — insecure CI/CD pipelines, unsigned packages, or untrusted
+  deserialization.
+- Relevance: NuGet package supply chain, CI/CD pipeline security, and JSON
+  deserialization in API endpoints.
+- Mitigations:
+    - Verify NuGet package signatures; use `nuget.org` as the sole trusted
+      package source; avoid unvetted third-party feeds.
+    - CI/CD pipelines should use locked/pinned dependency versions
+      (`dotnet restore --locked-mode` with `packages.lock.json`).
+    - Protect CI/CD secrets (deploy keys, service principals) — never expose in
+      logs or artifacts.
+    - JSON deserialization uses `System.Text.Json` with strict options;
+      `PropertyNamingPolicy` is null (PascalCase); unknown properties are
+      ignored by default but never bound to privileged fields.
+    - Never deserialize untrusted data into domain entities directly — always use
+      explicit DTOs (request/response models in `SharedKernel.Persistence/ApiModels/`).
+    - Sign release artifacts and Docker images in production pipelines.
+
+#### A09:2021 — Security Logging and Monitoring Failures
+
+- What: Insufficient logging, monitoring, or alerting allows attacks to go
+  undetected and unresponded.
+- Relevance: The solution uses built-in ASP.NET Core logging; no Serilog or
+  OpenTelemetry is configured out-of-the-box.
+- Mitigations:
+    - Log all authentication failures (`401`), authorization denials (`403`),
+      rate limit rejections (`429`), and validation errors (`400`).
+    - Use structured logging with `ILogger<T>` and correlation IDs for request
+      tracing across modules.
+    - Never log secrets, raw tokens, passwords, or PII — log `jti` or a token
+      fingerprint only.
+    - Alert on spikes in `401/403/429/5xx` responses and unusual tenant/user
+      activity patterns.
+    - Retain logs securely with tamper-evident storage; restrict log access to
+      authorized personnel.
+    - Plan for Application Insights, OpenTelemetry, or equivalent for production
+      deployments — the logging abstraction (`ILogger<T>`) makes this a
+      configuration change, not a code change.
+    - Document runbooks for: token/key rotation, cache purge, rate limiter kill
+      switch, CORS/CSP misconfiguration remediation.
+
+#### A10:2021 — Server-Side Request Forgery (SSRF)
+
+- What: The application fetches attacker-supplied URLs, allowing access to
+  internal services, cloud metadata endpoints, or private networks.
+- Relevance: Maps to API7 above. Currently the API does not fetch external URLs
+  based on user input, but this must be guarded if such features are added.
+- Mitigations:
+    - Allowlist permitted schemes (`https` only) and hosts; block
+      link-local/loopback/metadata IP ranges (`169.254.x.x`, `127.0.0.1`,
+      `[::1]`, cloud metadata IPs).
+    - Resolve DNS and re-check the target IP before making the request to prevent
+      DNS rebinding attacks.
+    - Disable automatic HTTP redirects to untrusted hosts.
+    - Enforce timeouts and response size caps on all outbound HTTP calls.
+    - Never forward internal tokens or credentials to third-party hosts.
+    - Use `IHttpClientFactory` with named/typed clients that have pre-configured
+      base addresses and timeouts.
 
 ---
 
@@ -232,27 +417,42 @@ solution, and highlights overlaps with the general OWASP Top 10 (2021).
 
 ---
 
+### Cross-reference: OWASP Top 10 (2021) ↔ API Security Top 10 (2023)
+
+| OWASP Top 10 (2021)                  | API Security Top 10 (2023) | Status          |
+|---------------------------------------|----------------------------|-----------------|
+| A01 Broken Access Control             | API1, API5                 | Implemented     |
+| A02 Cryptographic Failures            | —                          | Partially impl. |
+| A03 Injection                         | —                          | Implemented     |
+| A04 Insecure Design                   | —                          | Implemented     |
+| A05 Security Misconfiguration         | API8                       | Partially impl. |
+| A06 Vulnerable & Outdated Components  | —                          | Process needed  |
+| A07 Identification & Auth Failures    | API2                       | Implemented     |
+| A08 Software & Data Integrity         | API10                      | Process needed  |
+| A09 Security Logging & Monitoring     | —                          | Planned         |
+| A10 SSRF                              | API7                       | N/A (no feature)|
+
 ### Quick, prioritized checklist
 
-1) Identity/JWT
+1) Identity/JWT (A07, API2)
 
 - Strict `JwtBearer` validation; asymmetric signing; JWKS; short TTLs; refresh
   rotation.
 
-2) Authorization
+2) Authorization (A01, API1, API5)
 
 - Default‑deny; named policies; per‑entity BOLA checks; tenant scoping.
 
-3) Inputs & outputs
+3) Inputs & outputs (A03, API3)
 
 - DTO whitelist; validate inputs; cap payloads; paginate; hide sensitive fields.
 
-4) Abuse safeguards
+4) Abuse safeguards (API4, API6)
 
 - Central rate limiting; concurrency caps for heavy endpoints; safe output
   caching.
 
-5) Transport & headers
+5) Transport & headers (A02, A05, API8)
 
 - Enforce HTTPS at edge; HSTS; strict CORS; CSP for Swagger; baseline security
   headers.
@@ -262,14 +462,24 @@ solution, and highlights overlaps with the general OWASP Top 10 (2021).
 - No tokens/PII/authorization decisions in cache; namespaced keys; invalidate on
   role/user changes.
 
-7) Secrets & crypto
+7) Secrets & crypto (A02)
 
 - Keys in Key Vault; regular rotation; strong TLS; modern password hashing.
 
-8) Hardening & ops
+8) Supply chain & integrity (A06, A08)
 
-- No verbose errors in prod; patch dependencies; structured logs/metrics/alerts;
-  tested runbooks.
+- Verify NuGet signatures; pin dependency versions; lock files in CI; sign
+  release artifacts; audit transitive dependencies.
+
+9) Logging & monitoring (A09)
+
+- Structured logs with correlation IDs; alert on auth/rate-limit spikes; no
+  secrets in logs; runbooks for incident response.
+
+10) Hardening & ops (A05, API8, API9)
+
+- No verbose errors in prod; patch dependencies; disable Swagger in production;
+  maintain endpoint inventory; tested runbooks.
 
 ---
 
