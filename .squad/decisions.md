@@ -55,6 +55,11 @@
 **What:** Updated `src/Modules/Identity/Identity.Module/Extensions/IdentityAuthExtensions.cs` to select key providers by environment/config, enhanced `src/Modules/Identity/Identity.Module/KeyManagement/DevKeyMaterialService.cs` to persist a generated RSA key to disk with safe file locking/atomic writes, added `src/Modules/Identity/Identity.Module/KeyManagement/KeyVaultKeyMaterialService.cs` for Azure Key Vault-backed signing/JWKS, added Azure Key Vault package references in `src/Modules/Identity/Identity.Module/Identity.Module.csproj`, documented dev/prod key configuration in `src/ModularMonolith.Api/appsettings.Development.json` and `README.md`, and added restart/gating coverage in `tests/ModularMonolith.Api.Tests/IdentityEndpointsTests.cs`.
 **Why:** Zoe's review found JWT signing keys were generated only in memory and the existing `Jwt:KeyProvider` / Key Vault configuration was ignored, which invalidated tokens on restart and made shared deployment trust material impossible. This change makes development keys survive restarts while wiring the existing external-provider config path so non-development environments must use a real signing key source.
 
+### 2026-07-18T16:05:29-04:00: Expanded identity user account documentation
+**By:** Kaylee
+**What:** Expanded `README.md` documentation for the Identity module's development-only in-memory user accounts, including the account field model, authorization policy mapping, fuller user-secrets examples, multi-user array indexing, and the non-production security model. Added this decision record in `.squad/decisions/inbox/kaylee-user-account-model-docs.md`.
+**Why:** Chris requested clearer user account documentation after the recent identity security fixes removed hard-coded demo credentials and moved demo users to configuration.
+
 ## Governance
 
 - All meaningful changes require team consensus

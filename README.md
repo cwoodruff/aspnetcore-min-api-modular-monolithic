@@ -276,7 +276,50 @@ The app no longer ships with baked-in usernames/passwords. Configure your own
 development-only users with user secrets or environment variables before
 calling `POST /api/identity/login`.
 
-Example setup:
+##### User account model
+
+`Identity:InMemoryUsers` binds to the `InMemoryUserRecord` options model in the
+Identity module. Each array item becomes one login account if it has
+`Username`, `Password`, and `UserId`; entries missing any of those three values
+are ignored. The configured password is compared as-is by the in-memory store,
+so treat it as a dev/demo-only secret and do not reuse production credentials.
+
+| Field | Required | How the current code uses it |
+| --- | --- | --- |
+| `Username` | Yes | Login identifier for `POST /api/identity/login`. The in-memory store trims it, stores it case-insensitively, and uses it as the lookup key. |
+| `Password` | Yes | Password for `POST /api/identity/login`. The in-memory store compares the configured value directly against the submitted password. |
+| `UserId` | Yes | Stable subject identifier. Issued into the JWT `sub` claim and used by refresh/logout flows (`POST /api/identity/refresh`, `POST /api/identity/logout`). |
+| `DisplayName` | No | If set, issued into the token as the name claim and returned by `GET /api/identity/userinfo` as `name`. If omitted, the store falls back to the trimmed `Username`. |
+| `Roles` | No | Each value becomes a role claim in the JWT. The built-in `role.admin` policy requires the `Admin` role. |
+| `Permissions` | No | Each value becomes a `permissions` claim in the JWT. Authorization policies registered in `PolicyRegistry` use these values directly as policy names (for example `music.read`, `music.write`, `orders.read`, `orders.write`, `admin.users.manage`, `administration.read`, `administration.write`, `report.view`). |
+| `Email` | No | If set, issued into the token as the email claim and returned by `GET /api/identity/userinfo` as `email`. |
+| `Tenant` | No | If set, issued into the token as the `tenant` claim. The `tenant.scoped` policy uses that claim to enforce tenant matching. |
+
+##### Authorization mapping for roles, permissions, and tenant
+
+- **Roles**
+    - Roles are emitted as standard role claims.
+    - The built-in role convenience policy is `role.admin`, which requires the
+      `Admin` role.
+- **Permissions**
+    - `PolicyRegistry` registers permission policies whose names exactly match
+      the claim values in `Permissions`.
+    - A user only satisfies one of those policies when the JWT contains a
+      matching `permissions` claim.
+- **Tenant**
+    - `tenant.scoped` requires an authenticated user plus the custom
+      `TenantAuthorizationHandler`.
+    - The handler reads the JWT `tenant` claim and compares it to the request
+      tenant resolved in this order: route value `tenant`, route value
+      `tenantId`, then header `X-Tenant-Id`.
+    - If no route/header tenant is supplied, the handler implicitly scopes the
+      request to the user's own tenant claim.
+    - If the token has no `tenant` claim, `tenant.scoped` authorization fails.
+
+##### Full user-secrets example
+
+The following creates two development/demo accounts. The first can read Music
+data in `tenant-1`; the second is an admin-oriented account in `tenant-admin`.
 
 ```bash
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Username" "demo"
@@ -287,11 +330,40 @@ dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUser
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Permissions:0" "music.read"
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Email" "demo@example.com"
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Tenant" "tenant-1"
+
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:Username" "admin-demo"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:Password" "<choose-another-strong-password>"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:UserId" "user-2"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:DisplayName" "Admin Demo"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:Roles:0" "Admin"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:Permissions:0" "admin.users.manage"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:Permissions:1" "administration.read"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:Permissions:2" "administration.write"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:Email" "admin-demo@example.com"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:Tenant" "tenant-admin"
 ```
 
-Add more users by incrementing the array index (`1`, `2`, ...). Outside
-`Development`/`Demo`, the in-memory store is not registered, so this login path
-stays disabled by default.
+To add more accounts, increment the array index (`0`, `1`, `2`, ...). Nested
+arrays use the same pattern for multi-value fields such as roles and
+permissions, for example:
+
+```bash
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:2:Roles:0" "User"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:2:Permissions:0" "orders.read"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:2:Permissions:1" "orders.write"
+```
+
+##### Security model
+
+- These accounts exist only when the app runs in the `Development` or `Demo`
+  environment **and** `Identity:InMemoryUsers` is configured.
+- Outside `Development`/`Demo`, the in-memory user store is replaced with a
+  disabled implementation, so the demo login path does not provide accounts by
+  default.
+- This store is for local development/demo scenarios only. It is not a
+  production identity system.
+- For production, integrate a real identity provider and signing key source;
+  do not treat `Identity:InMemoryUsers` as production-ready authentication.
 
 #### JWT signing key configuration
 
