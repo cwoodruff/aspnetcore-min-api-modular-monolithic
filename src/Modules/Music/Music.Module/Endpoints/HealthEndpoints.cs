@@ -8,7 +8,7 @@ using SharedKernel.TrafficControl;
 
 namespace Music.Modules.Endpoints;
 
-public static class MusicHealthEndpoints
+internal static class MusicHealthEndpoints
 {
     public static void MapMusicHealthEndpoints(this IEndpointRouteBuilder group)
     {

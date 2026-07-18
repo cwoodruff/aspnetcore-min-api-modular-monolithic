@@ -8,7 +8,7 @@ using SharedKernel.Persistence.Repositories;
 
 namespace Admin.Modules.Services;
 
-public sealed class GenreService(
+internal sealed class GenreService(
     IGenreRepository repo,
     ICacheFacade cache,
     ICacheKeyComposer keys,

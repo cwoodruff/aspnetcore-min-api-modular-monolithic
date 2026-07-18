@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Identity.Modules.Authorization;
 
-public static class PolicyRegistry
+internal static class PolicyRegistry
 {
     public const string AdminPolicy = "role.admin";
     public const string TenantScopedPolicy = "tenant.scoped";

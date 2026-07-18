@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 
 namespace Identity.Modules.Services;
 
-public sealed class InMemoryRefreshTokenStore : IRefreshTokenStore
+internal sealed class InMemoryRefreshTokenStore : IRefreshTokenStore
 {
     private readonly ConcurrentDictionary<string, (string token, DateTimeOffset expires)> _store = new();
 
@@ -40,7 +40,7 @@ public sealed class InMemoryRefreshTokenStore : IRefreshTokenStore
     }
 }
 
-public sealed class InMemoryUserStore : IUserStore
+internal sealed class InMemoryUserStore : IUserStore
 {
     private readonly IReadOnlyDictionary<string, UserRecord> _users;
 
@@ -101,7 +101,7 @@ public sealed class InMemoryUserStore : IUserStore
     );
 }
 
-public sealed class DisabledUserStore : IUserStore
+internal sealed class DisabledUserStore : IUserStore
 {
     public Task<(bool success, string userId, string? displayName, string[] roles, string[] permissions, string? email,
         string? tenant)> ValidateCredentialsAsync(string username, string password, CancellationToken ct = default)
@@ -118,12 +118,12 @@ public sealed class DisabledUserStore : IUserStore
     }
 }
 
-public sealed class InMemoryUserStoreOptions
+internal sealed class InMemoryUserStoreOptions
 {
     public List<InMemoryUserRecord> Users { get; set; } = [];
 }
 
-public sealed class InMemoryUserRecord
+internal sealed class InMemoryUserRecord
 {
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;

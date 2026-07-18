@@ -7,7 +7,7 @@ using SharedKernel.TrafficControl;
 
 namespace Music.Modules.Endpoints;
 
-public static class ArtistEndpoints
+internal static class ArtistEndpoints
 {
     public static void MapArtistEndpoints(this IEndpointRouteBuilder group)
     {

@@ -7,7 +7,7 @@ using SharedKernel.Persistence.Repositories;
 
 namespace Music.Modules.Services;
 
-public class TrackService(
+internal class TrackService(
     ITrackRepository repository,
     ICacheFacade cache,
     ICacheKeyComposer keys,

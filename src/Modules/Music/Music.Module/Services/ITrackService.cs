@@ -2,7 +2,7 @@ using SharedKernel.Persistence.ApiModels;
 
 namespace Music.Modules.Services;
 
-public interface ITrackService
+internal interface ITrackService
 {
     Task<object?> GetTrackByIdAsync(int id, CancellationToken ct);
     Task<IEnumerable<object>> GetAllTracksAsync(CancellationToken ct);

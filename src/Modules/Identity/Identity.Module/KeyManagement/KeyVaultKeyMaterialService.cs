@@ -9,7 +9,7 @@ using MicrosoftJsonWebKey = Microsoft.IdentityModel.Tokens.JsonWebKey;
 
 namespace Identity.Modules.KeyManagement;
 
-public sealed class KeyVaultKeyMaterialService : IKeyMaterialService
+internal sealed class KeyVaultKeyMaterialService : IKeyMaterialService
 {
     private readonly string _kid;
     private readonly string _n;

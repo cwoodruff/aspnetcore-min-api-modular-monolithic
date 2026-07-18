@@ -7,7 +7,7 @@ using SharedKernel.TrafficControl;
 
 namespace Music.Modules.Endpoints;
 
-public static class TrackEndpoints
+internal static class TrackEndpoints
 {
     public static void MapTrackEndpoints(this IEndpointRouteBuilder group)
     {

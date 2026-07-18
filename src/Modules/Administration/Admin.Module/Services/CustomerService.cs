@@ -7,7 +7,7 @@ using SharedKernel.Persistence.Repositories;
 
 namespace Admin.Modules.Services;
 
-public sealed class CustomerService(
+internal sealed class CustomerService(
     ICustomerRepository repo,
     ICacheFacade cache,
     ICacheKeyComposer keys,

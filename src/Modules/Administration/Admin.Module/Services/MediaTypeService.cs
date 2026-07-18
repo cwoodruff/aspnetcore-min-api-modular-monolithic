@@ -7,7 +7,7 @@ using SharedKernel.Persistence.Repositories;
 
 namespace Admin.Modules.Services;
 
-public sealed class MediaTypeService(
+internal sealed class MediaTypeService(
     IMediaTypeRepository repo,
     ICacheFacade cache,
     ICacheKeyComposer keys,

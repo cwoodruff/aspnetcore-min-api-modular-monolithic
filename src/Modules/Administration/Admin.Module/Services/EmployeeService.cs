@@ -7,7 +7,7 @@ using SharedKernel.Persistence.Repositories;
 
 namespace Admin.Modules.Services;
 
-public sealed class EmployeeService(
+internal sealed class EmployeeService(
     IEmployeeRepository repo,
     ICacheFacade cache,
     ICacheKeyComposer keys,

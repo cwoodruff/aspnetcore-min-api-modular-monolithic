@@ -9,7 +9,7 @@ using SharedKernel.TrafficControl;
 
 namespace Identity.Modules.Endpoints;
 
-public static class IdentityDataHealthEndpoints
+internal static class IdentityDataHealthEndpoints
 {
     public static void MapIdentityDataHealthEndpoints(this IEndpointRouteBuilder group)
     {

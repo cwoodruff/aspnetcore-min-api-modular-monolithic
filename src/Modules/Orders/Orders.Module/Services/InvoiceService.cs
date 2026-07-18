@@ -7,7 +7,7 @@ using SharedKernel.Persistence.Repositories;
 
 namespace Orders.Modules.Services;
 
-public class InvoiceService(
+internal class InvoiceService(
     IInvoiceRepository repository,
     ICacheFacade cache,
     ICacheKeyComposer keys,

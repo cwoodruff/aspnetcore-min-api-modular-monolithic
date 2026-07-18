@@ -2,7 +2,7 @@ using SharedKernel.Persistence.ApiModels;
 
 namespace Orders.Modules.Services;
 
-public interface IInvoiceLineService
+internal interface IInvoiceLineService
 {
     Task<object?> GetInvoiceLineByIdAsync(int id, CancellationToken ct);
     Task<IEnumerable<object>> GetAllInvoiceLinesAsync(CancellationToken ct);

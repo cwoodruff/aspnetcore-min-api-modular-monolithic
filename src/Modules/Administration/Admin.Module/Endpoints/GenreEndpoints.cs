@@ -8,7 +8,7 @@ using SharedKernel.TrafficControl;
 
 namespace Admin.Modules.Endpoints;
 
-public static class GenreEndpoints
+internal static class GenreEndpoints
 {
     public static void MapGenreEndpoints(this IEndpointRouteBuilder group)
     {

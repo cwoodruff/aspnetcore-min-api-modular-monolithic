@@ -10,7 +10,7 @@ using SharedKernel.TrafficControl;
 
 namespace Identity.Modules.Endpoints;
 
-public static partial class AuthEndpoints
+internal static partial class AuthEndpoints
 {
     public static void MapIdentityAuthEndpoints(this IEndpointRouteBuilder group)
     {

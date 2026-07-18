@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Identity.Modules.Authorization;
 
-public sealed class HttpContextTenantResolutionService : ITenantResolutionService
+internal sealed class HttpContextTenantResolutionService : ITenantResolutionService
 {
     private const string HeaderName = "X-Tenant-Id";
 

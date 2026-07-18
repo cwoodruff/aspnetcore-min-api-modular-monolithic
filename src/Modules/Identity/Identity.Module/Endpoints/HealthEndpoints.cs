@@ -8,7 +8,7 @@ using SharedKernel.TrafficControl;
 
 namespace Identity.Modules.Endpoints;
 
-public static class IdentityHealthEndpoints
+internal static class IdentityHealthEndpoints
 {
     public static void MapIdentityHealthEndpoints(this IEndpointRouteBuilder group)
     {

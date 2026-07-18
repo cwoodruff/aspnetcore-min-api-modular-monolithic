@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Identity.Modules.Authorization;
 
-public sealed partial class TenantAuthorizationHandler(
+internal sealed partial class TenantAuthorizationHandler(
     ITenantResolutionService resolver,
     IHttpContextAccessor httpContextAccessor,
     ILogger<TenantAuthorizationHandler> logger)

@@ -7,7 +7,7 @@ using SharedKernel.Persistence.Repositories;
 
 namespace Orders.Modules.Services;
 
-public class InvoiceLineService(
+internal class InvoiceLineService(
     IInvoiceLineRepository repository,
     ICacheFacade cache,
     ICacheKeyComposer keys,

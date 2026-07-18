@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace Identity.Modules.Services;
 
-public sealed class TokenService(
+internal sealed class TokenService(
     IOptions<JwtAuthOptions> options,
     IKeyMaterialService keys,
     IRefreshTokenStore refreshStore,

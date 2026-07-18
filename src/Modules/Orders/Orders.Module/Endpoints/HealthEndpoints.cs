@@ -8,7 +8,7 @@ using SharedKernel.TrafficControl;
 
 namespace Orders.Modules.Endpoints;
 
-public static class OrdersHealthEndpoints
+internal static class OrdersHealthEndpoints
 {
     public static void MapOrdersHealthEndpoints(this IEndpointRouteBuilder group)
     {

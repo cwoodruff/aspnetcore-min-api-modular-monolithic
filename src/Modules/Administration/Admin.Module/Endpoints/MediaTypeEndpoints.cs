@@ -7,7 +7,7 @@ using SharedKernel.TrafficControl;
 
 namespace Admin.Modules.Endpoints;
 
-public static class MediaTypeEndpoints
+internal static class MediaTypeEndpoints
 {
     public static void MapMediaTypeEndpoints(this IEndpointRouteBuilder group)
     {

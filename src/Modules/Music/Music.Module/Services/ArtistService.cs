@@ -7,7 +7,7 @@ using SharedKernel.Persistence.Repositories;
 
 namespace Music.Modules.Services;
 
-public class ArtistService(
+internal class ArtistService(
     IArtistRepository repository,
     ICacheFacade cache,
     ICacheKeyComposer keys,

@@ -7,7 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Identity.Modules.KeyManagement;
 
-public sealed class DevKeyMaterialService : IKeyMaterialService
+internal sealed class DevKeyMaterialService : IKeyMaterialService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

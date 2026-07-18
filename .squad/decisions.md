@@ -24,6 +24,7 @@
 **By:** Zoe
 **What:** Modules expose many public services and endpoint classes instead of keeping everything internal except the IModule entry point.
 **Why:** This weakens the modular-monolith boundary, enlarges the public API surface between assemblies, and makes accidental cross-module coupling easier over time.
+**Status:** RESOLVED by `2026-07-18T16:08:19-04:00: Tighten module public surface` below.
 
 ### 2026-07-18T15:28:34-04:00: Review finding
 **By:** Zoe
@@ -59,6 +60,11 @@
 **By:** Kaylee
 **What:** Expanded `README.md` documentation for the Identity module's development-only in-memory user accounts, including the account field model, authorization policy mapping, fuller user-secrets examples, multi-user array indexing, and the non-production security model. Added this decision record in `.squad/decisions/inbox/kaylee-user-account-model-docs.md`.
 **Why:** Chris requested clearer user account documentation after the recent identity security fixes removed hard-coded demo credentials and moved demo users to configuration.
+
+### 2026-07-18T16:08:19-04:00: Tighten module public surface
+**By:** Zoe
+**What:** Changed leaky module implementation types from public to internal across Music (`Services/*`, `Endpoints/*`), Orders (`Services/*`, `Endpoints/*`), Administration (`Services/*`, `Endpoints/*`), Reporting (`Endpoints/*`), and Identity (`Authorization/*`, `Services/*`, `KeyManagement/*`, `Endpoints/*`, `JwtAuthOptions`). Kept module composition entry points public (`<ModuleName>Module`, nested `Modules`, and `IdentityAuthExtensions`). Added friend assembly access in `src/Modules/{Music,Orders,Administration,Identity}/*/Properties/AssemblyInfo.cs` for `ModularMonolith.Services.Tests` (Music/Orders/Admin) and `ModularMonolith.Api.Tests` (Identity). Added `tests/ModularMonolith.Architecture.Tests/PublicSurfaceTests.cs` to lock each module’s exported type list to composition-only types.
+**Why:** The README module contract and Zoe's original review both identified public services, endpoints, and auth internals as boundary leaks. Tightening visibility restores the modular-monolith contract so modules are composed through `IModule` and explicit host registration only, instead of exposing implementation types as accidental API surface. Resolves Zoe's `2026-07-18T15:28:34-04:00: Review finding` about leaky module boundaries.
 
 ## Governance
 

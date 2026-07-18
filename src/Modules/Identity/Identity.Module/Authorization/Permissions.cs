@@ -1,7 +1,7 @@
 namespace Identity.Modules.Authorization;
 
 // Note: In a later iteration, move these to SharedKernel to share constants across modules.
-public static class Permissions
+internal static class Permissions
 {
     // Music
     public const string MusicRead = "music.read";

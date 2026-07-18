@@ -2,7 +2,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Identity.Modules.KeyManagement;
 
-public interface IKeyMaterialService
+internal interface IKeyMaterialService
 {
     SigningCredentials GetCurrentSigningCredentials();
     IEnumerable<SecurityKey> GetValidationKeys();

@@ -12,3 +12,7 @@
 - Top findings: hardcoded demo credentials, ephemeral JWT signing keys, validation failures surfacing as 500s, leaky module boundaries, and build restore blocked by NuGet vulnerability audit warnings.
 - Additional findings: service tests excluded from the solution, public operational metadata exposed by default endpoints, plus docs/config drift.
 
+## 2026-07-18T16:08:19-04:00
+- Tightened module boundaries by changing implementation types to `internal` across Music, Orders, Administration, Reporting, and Identity while preserving public composition entry points.
+- Added `InternalsVisibleTo` only for legitimate test projects and introduced `tests/ModularMonolith.Architecture.Tests/PublicSurfaceTests.cs` to guard exported module surfaces.
+- Validation finished cleanly with `dotnet build` and `dotnet test` passing (179/179).

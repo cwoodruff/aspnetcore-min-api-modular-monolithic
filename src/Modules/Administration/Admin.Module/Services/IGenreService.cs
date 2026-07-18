@@ -2,7 +2,7 @@ using SharedKernel.Persistence.ApiModels;
 
 namespace Admin.Modules.Services;
 
-public interface IGenreService
+internal interface IGenreService
 {
     Task<GenreApiModel?> GetGenreByIdAsync(int id, CancellationToken ct);
     Task<IEnumerable<GenreApiModel>> GetAllGenresAsync(CancellationToken ct);

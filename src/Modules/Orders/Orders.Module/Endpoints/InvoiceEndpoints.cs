@@ -7,7 +7,7 @@ using SharedKernel.TrafficControl;
 
 namespace Orders.Modules.Endpoints;
 
-public static class InvoiceEndpoints
+internal static class InvoiceEndpoints
 {
     public static void MapInvoiceEndpoints(this IEndpointRouteBuilder group)
     {

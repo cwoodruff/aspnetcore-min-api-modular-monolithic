@@ -2,7 +2,7 @@ using SharedKernel.Persistence.ApiModels;
 
 namespace Admin.Modules.Services;
 
-public interface ICustomerService
+internal interface ICustomerService
 {
     Task<CustomerApiModel?> GetCustomerByIdAsync(int id, CancellationToken ct);
     Task<IEnumerable<CustomerApiModel>> GetAllCustomersAsync(CancellationToken ct);

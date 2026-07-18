@@ -165,7 +165,7 @@ public static class IdentityAuthExtensions
     }
 }
 
-public sealed class JwtAuthOptions
+internal sealed class JwtAuthOptions
 {
     public string Issuer { get; set; } = "https://auth.local";
     public string Audience { get; set; } = "modular-api";

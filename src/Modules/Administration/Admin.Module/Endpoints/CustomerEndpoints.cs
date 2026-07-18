@@ -7,7 +7,7 @@ using SharedKernel.TrafficControl;
 
 namespace Admin.Modules.Endpoints;
 
-public static class CustomerEndpoints
+internal static class CustomerEndpoints
 {
     public static void MapCustomerEndpoints(this IEndpointRouteBuilder group)
     {
