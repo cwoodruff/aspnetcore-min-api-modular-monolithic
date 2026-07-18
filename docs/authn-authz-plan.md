@@ -176,7 +176,7 @@ group.MapPost("/customers", [Authorize] async (
     - Add bearer scheme and global requirement.
 - Quickstart:
     - curl -X POST http://localhost:5000/api/identity/login -H "Content-Type:
-      application/json" -d '{"username":"demo","password":"demo123!"}'
+      application/json" -d '{"username":"demo","password":"<configured-demo-password>"}'
     - curl http://localhost:5000/api/music/health -H "Authorization:
       Bearer <token>"
 - Optional: Postman collection with auth and protected endpoint examples.

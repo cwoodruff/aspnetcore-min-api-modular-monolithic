@@ -2,8 +2,14 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Identity.Modules.Extensions;
+using Identity.Modules.KeyManagement;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace ModularMonolith.Api.Tests;
 
@@ -13,7 +19,7 @@ namespace ModularMonolith.Api.Tests;
 public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory = factory.WithWebHostBuilder(_ => { });
+    private readonly WebApplicationFactory<Program> _factory = factory.WithSeededIdentityUsers();
 
     #region Health Endpoint Tests
 
@@ -42,7 +48,11 @@ public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
     {
         var client = _factory.CreateClient();
 
-        var payload = JsonSerializer.Serialize(new { username = "demo", password = "demo123!" });
+        var payload = JsonSerializer.Serialize(new
+        {
+            username = TestAuthHelpers.DemoUser.Username,
+            password = TestAuthHelpers.DemoUser.Password
+        });
         var response = await client.PostAsync("/api/identity/login",
             new StringContent(payload, Encoding.UTF8, "application/json"));
 
@@ -66,7 +76,11 @@ public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
     {
         var client = _factory.CreateClient();
 
-        var payload = JsonSerializer.Serialize(new { username = "wronguser", password = "demo123!" });
+        var payload = JsonSerializer.Serialize(new
+        {
+            username = "wronguser",
+            password = TestAuthHelpers.DemoUser.Password
+        });
         var response = await client.PostAsync("/api/identity/login",
             new StringContent(payload, Encoding.UTF8, "application/json"));
 
@@ -78,7 +92,27 @@ public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
     {
         var client = _factory.CreateClient();
 
-        var payload = JsonSerializer.Serialize(new { username = "demo", password = "wrongpass" });
+        var payload = JsonSerializer.Serialize(new
+        {
+            username = TestAuthHelpers.DemoUser.Username,
+            password = "wrongpass"
+        });
+        var response = await client.PostAsync("/api/identity/login",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Login_ShouldReturn401_WhenInMemoryUsersAreConfiguredOutsideDevelopment()
+    {
+        var client = factory.WithConfiguredIdentityUsers().CreateClient();
+
+        var payload = JsonSerializer.Serialize(new
+        {
+            username = TestAuthHelpers.DemoUser.Username,
+            password = TestAuthHelpers.DemoUser.Password
+        });
         var response = await client.PostAsync("/api/identity/login",
             new StringContent(payload, Encoding.UTF8, "application/json"));
 
@@ -86,14 +120,21 @@ public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
     }
 
     [Theory]
-    [InlineData("demo", "demo123!")]
-    [InlineData("admin", "admin123!")]
-    [InlineData("usermo", "usermo123!")]
-    public async Task Login_ShouldSucceed_ForAllDemoUsers(string username, string password)
+    [InlineData("demo")]
+    [InlineData("admin")]
+    [InlineData("usermo")]
+    public async Task Login_ShouldSucceed_ForAllDemoUsers(string username)
     {
         var client = _factory.CreateClient();
+        var user = username switch
+        {
+            "demo" => TestAuthHelpers.DemoUser,
+            "admin" => TestAuthHelpers.AdminUser,
+            "usermo" => TestAuthHelpers.UserMoUser,
+            _ => throw new ArgumentOutOfRangeException(nameof(username), username, null)
+        };
 
-        var payload = JsonSerializer.Serialize(new { username, password });
+        var payload = JsonSerializer.Serialize(new { username = user.Username, password = user.Password });
         var response = await client.PostAsync("/api/identity/login",
             new StringContent(payload, Encoding.UTF8, "application/json"));
 
@@ -112,7 +153,11 @@ public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
         var client = tenantFactory.CreateClient();
 
         // First login to get tokens
-        var loginPayload = JsonSerializer.Serialize(new { username = "demo", password = "demo123!" });
+        var loginPayload = JsonSerializer.Serialize(new
+        {
+            username = TestAuthHelpers.DemoUser.Username,
+            password = TestAuthHelpers.DemoUser.Password
+        });
         var loginResponse = await client.PostAsync("/api/identity/login",
             new StringContent(loginPayload, Encoding.UTF8, "application/json"));
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -160,7 +205,11 @@ public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
         var client = tenantFactory.CreateClient();
 
         // Login first
-        var loginPayload = JsonSerializer.Serialize(new { username = "demo", password = "demo123!" });
+        var loginPayload = JsonSerializer.Serialize(new
+        {
+            username = TestAuthHelpers.DemoUser.Username,
+            password = TestAuthHelpers.DemoUser.Password
+        });
         var loginResponse = await client.PostAsync("/api/identity/login",
             new StringContent(loginPayload, Encoding.UTF8, "application/json"));
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -307,5 +356,101 @@ public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
         }
     }
 
+    [Fact]
+    public async Task AccessToken_ShouldRemainValidAcrossRestart_WhenUsingPersistedDevelopmentKey()
+    {
+        var artifactDirectory = Path.Combine(AppContext.BaseDirectory, "TestArtifacts");
+        var keyPath = Path.Combine(artifactDirectory, $"dev-jwt-key-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            var factory1 = _factory.WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Development");
+                builder.ConfigureAppConfiguration((_, config) =>
+                {
+                    config.AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["Jwt:KeyProvider"] = "Dev",
+                        ["Jwt:DevelopmentKeyPath"] = keyPath
+                    });
+                });
+            });
+
+            var client1 = factory1.CreateClient();
+            var token = await TestAuthHelpers.GetAccessTokenAsync(client1);
+
+            var factory2 = _factory.WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Development");
+                builder.ConfigureAppConfiguration((_, config) =>
+                {
+                    config.AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["Jwt:KeyProvider"] = "Dev",
+                        ["Jwt:DevelopmentKeyPath"] = keyPath
+                    });
+                });
+            });
+
+            var client2 = factory2.CreateClient();
+            client2.UseBearer(token, "tenant-1");
+
+            var response = await client2.GetAsync("/api/music/albums/1");
+            response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
+        }
+        finally
+        {
+            if (File.Exists(keyPath))
+            {
+                File.Delete(keyPath);
+            }
+
+            if (Directory.Exists(artifactDirectory) &&
+                !Directory.EnumerateFileSystemEntries(artifactDirectory).Any())
+            {
+                Directory.Delete(artifactDirectory);
+            }
+        }
+    }
+
     #endregion
+}
+
+public class IdentityAuthRegistrationTests
+{
+    [Fact]
+    public void AddIdentityAuth_ShouldRejectDevKeyProviderOutsideDevelopmentOrDemo()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IHostEnvironment>(new FakeHostEnvironment
+        {
+            ApplicationName = "Tests",
+            EnvironmentName = Environments.Production,
+            ContentRootPath = Directory.GetCurrentDirectory()
+        });
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Jwt:KeyProvider"] = "Dev"
+            })
+            .Build();
+
+        services.AddIdentityAuth(configuration);
+
+        using var provider = services.BuildServiceProvider();
+        var resolve = () => provider.GetRequiredService<IKeyMaterialService>();
+
+        resolve.Should().Throw<InvalidOperationException>()
+            .WithMessage("*external provider outside the Development or Demo environment*");
+    }
+
+    private sealed class FakeHostEnvironment : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = Environments.Production;
+        public string ApplicationName { get; set; } = "Tests";
+        public string ContentRootPath { get; set; } = Directory.GetCurrentDirectory();
+        public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; } = null!;
+    }
 }

@@ -206,7 +206,7 @@ Prerequisites
     - curl http://localhost:5043/api/identity/health
 - Obtain a JWT (example):
     - curl -X POST http://localhost:5043/api/identity/login -H 'Content-Type:
-      application/json' -d '{"username":"demo","password":"demo123!"}'
+      application/json' -d '{"username":"demo","password":"<configured-demo-password>"}'
     - Use the access_token in Swagger UI Authorize dialog
 
 12. Optional: Dockerize

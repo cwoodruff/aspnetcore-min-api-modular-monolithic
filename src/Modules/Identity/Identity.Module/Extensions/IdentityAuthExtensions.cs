@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -22,13 +23,45 @@ public static class IdentityAuthExtensions
         // Bind options
         services.Configure<JwtAuthOptions>(configuration.GetSection("Jwt"));
 
-        // Key material service (dev default; swappable via config later)
-        services.AddSingleton<IKeyMaterialService, DevKeyMaterialService>();
+        // Key material service
+        services.AddSingleton<IKeyMaterialService>(sp =>
+        {
+            var environment = sp.GetRequiredService<IHostEnvironment>();
+            var jwtOptions = sp.GetRequiredService<IOptions<JwtAuthOptions>>().Value;
+            var provider = jwtOptions.KeyProvider?.Trim();
+
+            if (string.Equals(provider, "KeyVault", StringComparison.OrdinalIgnoreCase))
+            {
+                return ActivatorUtilities.CreateInstance<KeyVaultKeyMaterialService>(sp);
+            }
+
+            if (string.IsNullOrWhiteSpace(provider) || string.Equals(provider, "Dev", StringComparison.OrdinalIgnoreCase))
+            {
+                if (environment.IsDevelopment() || environment.IsEnvironment("Demo"))
+                {
+                    return ActivatorUtilities.CreateInstance<DevKeyMaterialService>(sp);
+                }
+
+                throw new InvalidOperationException(
+                    "JWT signing keys must use an external provider outside the Development or Demo environment. " +
+                    "Set Jwt:KeyProvider=KeyVault and configure Jwt:KeyVaultVaultUri plus Jwt:KeyVaultKeyName.");
+            }
+
+            throw new InvalidOperationException(
+                $"Unsupported Jwt:KeyProvider value '{provider}'. Supported values are 'Dev' and 'KeyVault'.");
+        });
 
         // Core services
         services.AddSingleton<ITokenService, TokenService>();
         services.AddSingleton<IRefreshTokenStore, InMemoryRefreshTokenStore>();
-        services.AddSingleton<IUserStore, InMemoryUserStore>();
+        services.Configure<InMemoryUserStoreOptions>(configuration.GetSection("Identity:InMemoryUsers"));
+        services.AddSingleton<IUserStore>(sp =>
+        {
+            var environment = sp.GetRequiredService<IHostEnvironment>();
+            return environment.IsDevelopment() || environment.IsEnvironment("Demo")
+                ? ActivatorUtilities.CreateInstance<InMemoryUserStore>(sp)
+                : new DisabledUserStore();
+        });
 
         // HttpContext + tenant resolution + authorization handlers
         services.AddHttpContextAccessor();
@@ -124,7 +157,6 @@ public static class IdentityAuthExtensions
 
         return services;
     }
-
     public static IApplicationBuilder UseIdentityAuth(this IApplicationBuilder app)
     {
         app.UseAuthentication();
@@ -139,7 +171,8 @@ public sealed class JwtAuthOptions
     public string Audience { get; set; } = "modular-api";
     public int AccessTokenMinutes { get; set; } = 15;
     public int RefreshTokenDays { get; set; } = 7;
-    public string KeyProvider { get; set; } = "Dev"; // Dev|KeyVault (future)
+    public string KeyProvider { get; set; } = "Dev";
+    public string DevelopmentKeyPath { get; set; } = "data/identity/dev-jwt-signing-key.json";
     public string? KeyVaultVaultUri { get; set; }
     public string? KeyVaultKeyName { get; set; }
 }

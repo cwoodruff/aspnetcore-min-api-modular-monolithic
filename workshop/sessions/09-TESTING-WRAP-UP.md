@@ -123,7 +123,7 @@ public static class TestAuthHelpers
     {
         public Task<(bool success, string userId, string? displayName, string[] roles, string[] permissions, string? email, string? tenant)> ValidateCredentialsAsync(string username, string password, CancellationToken ct = default)
         {
-            if (string.Equals(username, "demo", StringComparison.OrdinalIgnoreCase) && password == "demo123!")
+            if (string.Equals(username, "demo", StringComparison.OrdinalIgnoreCase) && password == "<configured-demo-password>")
             {
                 return Task.FromResult<(bool, string, string?, string[], string[], string?, string?)>((true, "user-1", "Demo User", roles, permissions, "demo@example.com", tenantId));
             }
@@ -132,7 +132,7 @@ public static class TestAuthHelpers
         }
     }
 
-    public static async Task<string> GetAccessTokenAsync(HttpClient client, string username = "demo", string password = "demo123!")
+    public static async Task<string> GetAccessTokenAsync(HttpClient client, string username = "demo", string password = "<configured-demo-password>")
     {
         var payload = JsonSerializer.Serialize(new { username, password });
         var resp = await client.PostAsync("/api/identity/login", new StringContent(payload, Encoding.UTF8, "application/json"));

@@ -265,33 +265,54 @@ app.MapGet("/api/reporting/exports", Handler)
     - Click the "Authorize" button in Swagger UI and paste the access token
       only (do NOT include the `Bearer ` prefix). Swagger will add it
       automatically.
-    - Obtain a token via `POST /api/identity/login` with one of the demo users
-      below.
+    - In-memory login is only enabled in the `Development` or `Demo`
+      environment when `Identity:InMemoryUsers` is configured.
 - Once authorized, protected endpoints (e.g., Music Albums) can be executed
   directly from Swagger UI.
 
-#### Demo users and module access
+#### Development-only in-memory users
 
-Use these credentials with `POST /api/identity/login` to receive an
-access_token:
+The app no longer ships with baked-in usernames/passwords. Configure your own
+development-only users with user secrets or environment variables before
+calling `POST /api/identity/login`.
 
-- demo / demo123! — Music module only
-    - permissions: [music.read]
-    - roles: [User]
-    - tenant: tenant-1
-- usermo / usermo123! — Music and Orders modules
-    - permissions: [music.read, orders.read]
-    - roles: [User]
-    - tenant: tenant-1
-- report / report123! — Reporting module only
-    - permissions: [report.view]
-    - roles: [User]
-    - tenant: tenant-1
-- admin / admin123! — All modules (administrator)
-    -
-    permissions: [music.read, music.write, orders.read, orders.write, admin.users.manage, report.view]
-    - roles: [Admin]
-    - tenant: tenant-1
+Example setup:
+
+```bash
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Username" "demo"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Password" "<choose-a-strong-password>"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:UserId" "user-1"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:DisplayName" "Demo User"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Roles:0" "User"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Permissions:0" "music.read"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Email" "demo@example.com"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Tenant" "tenant-1"
+```
+
+Add more users by incrementing the array index (`1`, `2`, ...). Outside
+`Development`/`Demo`, the in-memory store is not registered, so this login path
+stays disabled by default.
+
+#### JWT signing key configuration
+
+- `Development`/`Demo` now persists the RSA signing key to
+  `src/ModularMonolith.Api/data/identity/dev-jwt-signing-key.json` by default
+  (configured via `Jwt:DevelopmentKeyPath` in
+  `src/ModularMonolith.Api/appsettings.Development.json`).
+- Reuse that file or point `Jwt:DevelopmentKeyPath` at another persistent path
+  if you need tokens to survive local restarts.
+- Outside `Development`/`Demo`, the app refuses to fall back to the dev key and
+  requires an external signing key provider.
+- Azure Key Vault is supported via:
+
+```bash
+export Jwt__KeyProvider=KeyVault
+export Jwt__KeyVaultVaultUri=https://<your-vault>.vault.azure.net/
+export Jwt__KeyVaultKeyName=<your-rsa-signing-key-name>
+```
+
+The configured RSA key is used for token signing and its public key is exposed
+through `GET /api/identity/.well-known/jwks.json`.
 
 #### JWT for Music endpoints
 
@@ -339,8 +360,8 @@ How it works
 - Non-existent IDs return 404 (not cached). Existing albums are cached for
   faster subsequent reads.
 - The endpoint is protected; include Authorization: Bearer <token> header.
-  Obtain a token via POST /api/identity/login with demo credentials: {"
-  username":"demo","password":"demo123!"}.
+  Obtain a token via POST /api/identity/login with your configured development
+  credentials.
 
 Example
 
@@ -349,7 +370,7 @@ Example
 ```
 curl -s -X POST http://localhost:5043/api/identity/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"demo","password":"demo123!"}'
+  -d "{\"username\":\"$IDENTITY_USERNAME\",\"password\":\"$IDENTITY_PASSWORD\"}"
 ```
 
 Response contains access_token.

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Identity.Modules.Authorization;
+using Microsoft.Extensions.Options;
 
 namespace Identity.Modules.Services;
 
@@ -41,84 +42,30 @@ public sealed class InMemoryRefreshTokenStore : IRefreshTokenStore
 
 public sealed class InMemoryUserStore : IUserStore
 {
-    // Static demo users for module-scoped authorization scenarios.
-    // All users share the same tenant for simplicity in demos.
-    private const string DefaultTenant = "tenant-1";
+    private readonly IReadOnlyDictionary<string, UserRecord> _users;
 
-    private static readonly string[] RolesUser = ["User"]; // reused immutable array
-    private static readonly string[] RolesAdmin = ["Admin"]; // reused immutable array
-
-    private static readonly string[] PermsMusicRead = [Permissions.MusicRead];
-    private static readonly string[] PermsMusicOrdersRead = [Permissions.MusicRead, Permissions.OrdersRead];
-    private static readonly string[] PermsReportOnly = [Permissions.ReportView];
-
-    private static readonly string[] PermsAdminAll =
-    [
-        Permissions.MusicRead,
-        Permissions.MusicWrite,
-        Permissions.OrdersRead,
-        Permissions.OrdersWrite,
-        Permissions.AdminUsersManage,
-        Permissions.AdministrationRead,
-        Permissions.AdministrationWrite,
-        Permissions.ReportView
-    ];
-
-    private static readonly Dictionary<string, UserRecord> Users = new(StringComparer.OrdinalIgnoreCase)
+    public InMemoryUserStore(IOptions<InMemoryUserStoreOptions> options)
     {
-        // 1) Demo user: Music only
-        ["demo"] = new UserRecord(
-            "demo",
-            "demo123!",
-            "user-1",
-            "Demo User",
-            RolesUser,
-            PermsMusicRead,
-            "demo@example.com",
-            DefaultTenant
-        ),
-
-        // 2) New user: Music + Orders
-        ["usermo"] = new UserRecord(
-            "usermo",
-            "usermo123!",
-            "user-2",
-            "Music+Orders User",
-            RolesUser,
-            PermsMusicOrdersRead,
-            "usermo@example.com",
-            DefaultTenant
-        ),
-
-        // 3) Reporting-only user
-        ["report"] = new UserRecord(
-            "report",
-            "report123!",
-            "user-3",
-            "Reporting User",
-            RolesUser,
-            PermsReportOnly,
-            "report@example.com",
-            DefaultTenant
-        ),
-
-        // 4) Admin user: can access all modules
-        ["admin"] = new UserRecord(
-            "admin",
-            "admin123!",
-            "admin-1",
-            "Administrator",
-            RolesAdmin,
-            PermsAdminAll,
-            "admin@example.com",
-            DefaultTenant
-        )
-    };
+        _users = options.Value.Users
+            .Where(user => !string.IsNullOrWhiteSpace(user.Username)
+                           && !string.IsNullOrWhiteSpace(user.Password)
+                           && !string.IsNullOrWhiteSpace(user.UserId))
+            .Select(user => new UserRecord(
+                user.Username.Trim(),
+                user.Password,
+                user.UserId.Trim(),
+                string.IsNullOrWhiteSpace(user.DisplayName) ? user.Username.Trim() : user.DisplayName.Trim(),
+                user.Roles.Where(role => !string.IsNullOrWhiteSpace(role)).ToArray(),
+                user.Permissions.Where(permission => !string.IsNullOrWhiteSpace(permission)).ToArray(),
+                string.IsNullOrWhiteSpace(user.Email) ? null : user.Email.Trim(),
+                string.IsNullOrWhiteSpace(user.Tenant) ? null : user.Tenant.Trim()))
+            .ToDictionary(user => user.Username, StringComparer.OrdinalIgnoreCase);
+    }
 
     public Task<(bool success, string userId, string? displayName, string[] roles, string[] permissions, string? email,
         string? tenant)> ValidateCredentialsAsync(string username, string password, CancellationToken ct = default)
     {
-        if (Users.TryGetValue(username, out var user) && password == user.Password)
+        if (_users.TryGetValue(username, out var user) && password == user.Password)
         {
             return Task.FromResult<(bool, string, string?, string[], string[], string?, string?)>(
                 (true, user.UserId, user.Display, user.Roles, user.Perms, user.Email, user.Tenant));
@@ -131,7 +78,7 @@ public sealed class InMemoryUserStore : IUserStore
     public Task<(bool found, string? displayName, string[] roles, string[] permissions, string? email, string? tenant)>
         GetUserByIdAsync(string userId, CancellationToken ct = default)
     {
-        var user = Users.Values.FirstOrDefault(u => string.Equals(u.UserId, userId, StringComparison.Ordinal));
+        var user = _users.Values.FirstOrDefault(u => string.Equals(u.UserId, userId, StringComparison.Ordinal));
         if (user is not null)
         {
             return Task.FromResult<(bool, string?, string[], string[], string?, string?)>(
@@ -149,7 +96,41 @@ public sealed class InMemoryUserStore : IUserStore
         string Display,
         string[] Roles,
         string[] Perms,
-        string Email,
-        string Tenant
+        string? Email,
+        string? Tenant
     );
+}
+
+public sealed class DisabledUserStore : IUserStore
+{
+    public Task<(bool success, string userId, string? displayName, string[] roles, string[] permissions, string? email,
+        string? tenant)> ValidateCredentialsAsync(string username, string password, CancellationToken ct = default)
+    {
+        return Task.FromResult<(bool, string, string?, string[], string[], string?, string?)>(
+            (false, string.Empty, null, Array.Empty<string>(), Array.Empty<string>(), null, null));
+    }
+
+    public Task<(bool found, string? displayName, string[] roles, string[] permissions, string? email, string? tenant)>
+        GetUserByIdAsync(string userId, CancellationToken ct = default)
+    {
+        return Task.FromResult<(bool, string?, string[], string[], string?, string?)>(
+            (false, null, Array.Empty<string>(), Array.Empty<string>(), null, null));
+    }
+}
+
+public sealed class InMemoryUserStoreOptions
+{
+    public List<InMemoryUserRecord> Users { get; set; } = [];
+}
+
+public sealed class InMemoryUserRecord
+{
+    public string Username { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string[] Roles { get; set; } = [];
+    public string[] Permissions { get; set; } = [];
+    public string? Email { get; set; }
+    public string? Tenant { get; set; }
 }

@@ -507,9 +507,9 @@ public sealed class InMemoryUserStore : IUserStore
 {
     private static readonly Dictionary<string, DemoUser> Users = new()
     {
-        ["demo"] = new("user-1", "Demo User", "demo@example.com", "demo123!",
+        ["demo"] = new("user-1", "Demo User", "demo@example.com", "<configured-demo-password>",
             ["User"], ["music.read"], "tenant-1"),
-        ["admin"] = new("user-2", "Admin User", "admin@example.com", "admin123!",
+        ["admin"] = new("user-2", "Admin User", "admin@example.com", "<configured-admin-password>",
             ["Admin"], ["music.read", "music.write", "orders.read", "orders.write",
                        "administration.read", "administration.write"], "tenant-1")
     };
@@ -1266,7 +1266,7 @@ public async Task GetGenres_WithValidToken_ReturnsOk()
 
     // Login first
     var loginResponse = await client.PostAsJsonAsync("/api/identity/login",
-        new { username = "admin", password = "admin123!" });
+        new { username = "admin", password = "<configured-admin-password>" });
     var tokens = await loginResponse.Content.ReadFromJsonAsync<JsonElement>();
     var accessToken = tokens.GetProperty("access_token").GetString();
 

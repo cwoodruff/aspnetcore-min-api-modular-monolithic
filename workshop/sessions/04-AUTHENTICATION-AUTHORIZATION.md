@@ -653,7 +653,7 @@ public static class AlbumEndpoints
 ```bash
 curl -X POST http://localhost:5043/api/identity/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"demo","password":"demo123!"}'
+  -d '{"username":"demo","password":"<configured-demo-password>"}'
 ```
 
 Response:
@@ -707,8 +707,8 @@ Before moving to Session 5, verify:
 
 | Username | Password  | Permissions                                  |
 |----------|-----------|----------------------------------------------|
-| demo     | demo123!  | music.read, orders.read, administration.read |
-| admin    | admin123! | All permissions                              |
+| demo     | <configured-demo-password>  | music.read, orders.read, administration.read |
+| admin    | <configured-admin-password> | All permissions                              |
 
 ### Common Authorization Patterns
 

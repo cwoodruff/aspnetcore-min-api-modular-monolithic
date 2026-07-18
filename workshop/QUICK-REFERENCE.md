@@ -39,10 +39,10 @@ dotnet watch --project src/ModularMonolith.Api
 
 | Username | Password   | Permissions                         |
 |----------|------------|-------------------------------------|
-| demo     | demo123!   | music.read                          |
-| admin    | admin123!  | music.*, orders.*, administration.* |
-| usermo   | usermo123! | music.read, orders.read             |
-| report   | report123! | report.view                         |
+| demo     | <configured-demo-password>   | music.read                          |
+| admin    | <configured-admin-password>  | music.*, orders.*, administration.* |
+| usermo   | <configured-usermo-password> | music.read, orders.read             |
+| report   | <configured-report-password> | report.view                         |
 
 ---
 
@@ -345,7 +345,7 @@ public class MyTests : IClassFixture<WebApplicationFactory<Program>>
     {
         // Get token
         var loginResponse = await _client.PostAsJsonAsync("/api/identity/login",
-            new { username = "admin", password = "admin123!" });
+            new { username = "admin", password = "<configured-admin-password>" });
         var tokens = await loginResponse.Content.ReadFromJsonAsync<JsonElement>();
         var token = tokens.GetProperty("access_token").GetString();
 
@@ -386,7 +386,7 @@ curl http://localhost:5043/api/music/health
 # Login
 curl -X POST http://localhost:5043/api/identity/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123!"}'
+  -d '{"username":"admin","password":"<configured-admin-password>"}'
 
 # Authenticated request
 TOKEN="<paste-token-here>"
