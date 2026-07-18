@@ -1,0 +1,25 @@
+{
+  "universe_usage_history": [
+    "Firefly"
+  ],
+  "assignment_cast_snapshots": {
+    "assignment-2026-07-18T15-23-33-04-00": {
+      "universe": "Firefly",
+      "agents": [
+        "Zoe",
+        "Kaylee",
+        "River",
+        "Wash"
+      ],
+      "timestamp": "2026-07-18T15:23:33-04:00"
+    },
+    "assignment-2026-07-18T15-25-49-04-00": {
+      "universe": "Firefly",
+      "agents": [
+        "Inara"
+      ],
+      "timestamp": "2026-07-18T15:25:49-04:00",
+      "note": "added to existing Firefly cast"
+    }
+  }
+}
