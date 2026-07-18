@@ -40,6 +40,7 @@
 **By:** Zoe
 **What:** Module services throw FluentValidation.ValidationException, but the host only wires generic exception handling and does not translate validation failures into structured 400 responses.
 **Why:** Invalid client input can bubble out as 500s, which breaks API contracts, confuses clients, and weakens observability around user-caused versus server-caused failures.
+**Status:** RESOLVED by `2026-07-18T16:13:46-04:00: Centralized validation problem details handling` below.
 
 ### 2026-07-18T15:48:10-04:00: NuGet audit remediation
 **By:** Wash
@@ -65,6 +66,11 @@
 **By:** Zoe
 **What:** Changed leaky module implementation types from public to internal across Music (`Services/*`, `Endpoints/*`), Orders (`Services/*`, `Endpoints/*`), Administration (`Services/*`, `Endpoints/*`), Reporting (`Endpoints/*`), and Identity (`Authorization/*`, `Services/*`, `KeyManagement/*`, `Endpoints/*`, `JwtAuthOptions`). Kept module composition entry points public (`<ModuleName>Module`, nested `Modules`, and `IdentityAuthExtensions`). Added friend assembly access in `src/Modules/{Music,Orders,Administration,Identity}/*/Properties/AssemblyInfo.cs` for `ModularMonolith.Services.Tests` (Music/Orders/Admin) and `ModularMonolith.Api.Tests` (Identity). Added `tests/ModularMonolith.Architecture.Tests/PublicSurfaceTests.cs` to lock each module’s exported type list to composition-only types.
 **Why:** The README module contract and Zoe's original review both identified public services, endpoints, and auth internals as boundary leaks. Tightening visibility restores the modular-monolith contract so modules are composed through `IModule` and explicit host registration only, instead of exposing implementation types as accidental API surface. Resolves Zoe's `2026-07-18T15:28:34-04:00: Review finding` about leaky module boundaries.
+
+### 2026-07-18T16:13:46-04:00: Centralized validation problem details handling
+**By:** Kaylee
+**What:** Added centralized exception handling in `src/ModularMonolith.Api/Program.cs` so `FluentValidation.ValidationException` now returns `400 Bad Request` with RFC 7807 `application/problem+json` payloads including an `errors` dictionary and `traceId`. The same handler also normalizes malformed request-body exceptions (`BadHttpRequestException`/`JsonException`) to structured 400 responses. Updated `tests/ModularMonolith.Api.Tests/ErrorScenarioTests.cs` to assert the new 400 contract instead of tolerating 500s.
+**Why:** Zoe’s review flagged that module services in Administration, Music, and Orders were throwing `ValidationException` while the host only used generic exception handling, letting client mistakes surface as 500s. Centralizing the mapping in the API host keeps error behavior consistent across modules without duplicating per-endpoint logic and clearly separates bad input from true server failures.
 
 ## Governance
 

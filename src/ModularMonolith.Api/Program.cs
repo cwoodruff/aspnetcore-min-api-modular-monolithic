@@ -1,8 +1,11 @@
 using System.Reflection;
+using System.Text.Json;
 using System.Threading.RateLimiting;
 using Admin.Modules;
+using FluentValidation;
 using Identity.Modules;
 using Identity.Modules.Extensions;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.OpenApi;
 using Music.Modules;
@@ -151,7 +154,10 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.UseExceptionHandler();
+app.UseExceptionHandler(exceptionHandlerApp =>
+{
+    exceptionHandlerApp.Run(WriteProblemDetailsResponseAsync);
+});
 app.UseStatusCodePages();
 
 // OWASP A05: Security headers to prevent clickjacking, MIME-sniffing, and XSS
@@ -229,6 +235,117 @@ static string[] GetAllowedOrigins()
         "http://localhost:3000", "http://localhost:4200", "http://localhost:5173",
         "https://localhost:3000", "https://localhost:4200", "https://localhost:5173"
     ];
+}
+
+static async Task WriteProblemDetailsResponseAsync(HttpContext context)
+{
+    var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+    var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("GlobalExceptionHandler");
+    var extensions = new Dictionary<string, object?>
+    {
+        ["traceId"] = context.TraceIdentifier
+    };
+
+    switch (exception)
+    {
+        case ValidationException validationException:
+            ExceptionHandlerLog.ValidationFailure(
+                logger,
+                context.Request.Method,
+                context.Request.Path.Value ?? string.Empty,
+                validationException);
+
+            var errors = validationException.Errors
+                .GroupBy(error => string.IsNullOrWhiteSpace(error.PropertyName) ? string.Empty : error.PropertyName)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Select(error => error.ErrorMessage).Distinct().ToArray());
+
+            if (errors.Count == 0 && !string.IsNullOrWhiteSpace(validationException.Message))
+            {
+                errors[string.Empty] = [validationException.Message];
+            }
+
+            await Results.ValidationProblem(
+                    errors,
+                    detail: "One or more validation errors occurred.",
+                    title: "Request validation failed.",
+                    type: "https://www.rfc-editor.org/rfc/rfc9110#section-15.5.1",
+                    extensions: extensions)
+                .ExecuteAsync(context);
+            return;
+
+        case BadHttpRequestException badHttpRequestException:
+            ExceptionHandlerLog.BadRequest(
+                logger,
+                context.Request.Method,
+                context.Request.Path.Value ?? string.Empty,
+                badHttpRequestException);
+            await Results.Problem(
+                    statusCode: badHttpRequestException.StatusCode,
+                    title: "Malformed request.",
+                    detail: badHttpRequestException.Message,
+                    type: "https://www.rfc-editor.org/rfc/rfc9110#section-15.5.1",
+                    extensions: extensions)
+                .ExecuteAsync(context);
+            return;
+
+        case JsonException jsonException:
+            ExceptionHandlerLog.JsonParsingFailure(
+                logger,
+                context.Request.Method,
+                context.Request.Path.Value ?? string.Empty,
+                jsonException);
+            await Results.Problem(
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "Malformed request.",
+                    detail: jsonException.Message,
+                    type: "https://www.rfc-editor.org/rfc/rfc9110#section-15.5.1",
+                    extensions: extensions)
+                .ExecuteAsync(context);
+            return;
+
+        case null:
+            ExceptionHandlerLog.ExceptionHandlerMissingException(
+                logger,
+                context.Request.Method,
+                context.Request.Path.Value ?? string.Empty);
+            break;
+
+        default:
+            ExceptionHandlerLog.UnhandledException(
+                logger,
+                context.Request.Method,
+                context.Request.Path.Value ?? string.Empty,
+                exception);
+            break;
+    }
+
+    await Results.Problem(
+            statusCode: StatusCodes.Status500InternalServerError,
+            title: "An unexpected error occurred.",
+            type: "https://www.rfc-editor.org/rfc/rfc9110#section-15.6.1",
+            extensions: extensions)
+        .ExecuteAsync(context);
+}
+
+static partial class ExceptionHandlerLog
+{
+    [LoggerMessage(EventId = 1001, Level = LogLevel.Warning, Message = "Validation failure for {Method} {Path}")]
+    public static partial void ValidationFailure(ILogger logger, string method, string path, Exception exception);
+
+    [LoggerMessage(EventId = 1002, Level = LogLevel.Warning, Message = "Bad request for {Method} {Path}")]
+    public static partial void BadRequest(ILogger logger, string method, string path, Exception exception);
+
+    [LoggerMessage(EventId = 1003, Level = LogLevel.Warning, Message = "JSON parsing failure for {Method} {Path}")]
+    public static partial void JsonParsingFailure(ILogger logger, string method, string path, Exception exception);
+
+    [LoggerMessage(EventId = 1004, Level = LogLevel.Error,
+        Message = "Unhandled exception handler invoked without an exception for {Method} {Path}")]
+    public static partial void ExceptionHandlerMissingException(ILogger logger, string method, string path);
+
+    [LoggerMessage(EventId = 1005, Level = LogLevel.Error, Message = "Unhandled exception for {Method} {Path}")]
+    public static partial void UnhandledException(ILogger logger, string method, string path, Exception exception);
 }
 
 

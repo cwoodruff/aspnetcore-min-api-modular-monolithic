@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
@@ -83,8 +84,8 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
         var response = await client.PostAsync("/api/admin/genres",
             new StringContent(malformedJson, Encoding.UTF8, "application/json"));
 
-        // Minimal APIs may return 400 or 500 for deserialization failures
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        await AssertProblemResponseAsync(response, "Malformed request.");
     }
 
     [Fact]
@@ -100,8 +101,8 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
         var response = await client.PostAsync("/api/admin/genres",
             new StringContent(incompleteJson, Encoding.UTF8, "application/json"));
 
-        // Minimal APIs may return 400 or 500 for deserialization failures
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        await AssertProblemResponseAsync(response, "Malformed request.");
     }
 
     [Fact]
@@ -115,8 +116,8 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
         var response = await client.PostAsync("/api/admin/genres",
             new StringContent("", Encoding.UTF8, "application/json"));
 
-        // Empty body may return 400 or 500
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        await AssertProblemResponseAsync(response, "Malformed request.");
     }
 
     [Fact]
@@ -128,8 +129,8 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
         var response = await client.PostAsync("/api/identity/login",
             new StringContent(malformedJson, Encoding.UTF8, "application/json"));
 
-        // Minimal APIs may return 400 or 500 for deserialization failures
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        await AssertProblemResponseAsync(response, "Malformed request.");
     }
 
     #endregion
@@ -149,8 +150,8 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
         var response = await client.PostAsync("/api/admin/genres",
             new StringContent(payload, Encoding.UTF8, "application/json"));
 
-        // Missing required field should fail
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        await AssertProblemResponseAsync(response, "Request validation failed.", "Name");
     }
 
     [Fact]
@@ -165,8 +166,8 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
         var response = await client.PostAsync("/api/admin/genres",
             new StringContent(payload, Encoding.UTF8, "application/json"));
 
-        // Should fail with validation error or model binding error
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        await AssertProblemResponseAsync(response, "Request validation failed.", "Name");
     }
 
     [Fact]
@@ -198,8 +199,8 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
         var response = await client.PutAsync("/api/admin/genres/1",
             new StringContent(payload, Encoding.UTF8, "application/json"));
 
-        // Should not be 401 since we have valid credentials
-        response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        await AssertProblemResponseAsync(response, "Request validation failed.", "Name");
     }
 
     #endregion
@@ -359,6 +360,27 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
         var response = await client.GetAsync("/api/music/albums/1");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    private static async Task AssertProblemResponseAsync(HttpResponseMessage response, string expectedTitle,
+        string? expectedErrorProperty = null)
+    {
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+
+        var content = await response.Content.ReadFromJsonAsync<JsonElement>();
+        content.GetProperty("title").GetString().Should().Be(expectedTitle);
+        content.GetProperty("status").GetInt32().Should().Be((int)response.StatusCode);
+        content.TryGetProperty("traceId", out _).Should().BeTrue();
+
+        if (expectedErrorProperty is null)
+        {
+            return;
+        }
+
+        content.TryGetProperty("errors", out var errors).Should().BeTrue();
+        errors.ValueKind.Should().Be(JsonValueKind.Object);
+        errors.EnumerateObject().Select(property => property.Name)
+            .Should().Contain(name => string.Equals(name, expectedErrorProperty, StringComparison.OrdinalIgnoreCase));
     }
 
     #endregion
