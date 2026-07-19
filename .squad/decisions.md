@@ -108,6 +108,12 @@ Reproduced Chris's persistent 403 with the current local user-secrets and confir
 **What:** Reproduced the failing solution build and confirmed 94 unique compiler errors (188 duplicated MSBuild log lines) with 0 in `src/` and all 94 in `tests/ModularMonolith.Services.Tests`. Fixed two test-only categories: (1) replaced 10 repeated `CallInfo` indexer-based `CacheKey` setups with a shared `TestCacheKeys.FromComposeCall` helper that guards required string arguments, eliminating 80 nullable conversion/argument errors; and (2) updated 14 `Arg.Is(...)` repository matchers to use explicit `!= null` checks so NSubstitute 6's nullable-annotated matcher parameter no longer trips nullable analysis. Final status: `dotnet build ModularMonolith.Api.sln` = 0 errors / 0 warnings, direct `dotnet build tests/ModularMonolith.Services.Tests/ModularMonolith.Services.Tests.csproj` = 0 errors / 0 warnings, and `dotnet test ModularMonolith.Api.sln --no-build` passed 244/244.
 **Why:** The breakage came from the `NSubstitute` 5.3.0 → 6.0.0 upgrade in `tests/ModularMonolith.Services.Tests.csproj`, not from EF Core, JwtBearer, Azure SDK, or production module code. NSubstitute 6 tightened nullable annotations on `CallInfo`/argument access and matcher predicates, which turned previously accepted test setups into CS8600/CS8604/CS8602 errors under nullable warnings-as-errors; one intermediate attempt using `is not null` in `Arg.Is` failed with CS8122 because those matcher lambdas compile as expression trees, so the final fix uses expression-tree-safe `!= null` checks.
 
+
+### 2026-07-19T17:52:55-04:00: README refresh after security, auth, and test changes
+**By:** Zoe
+**What:** Updated `README.md` to correct `/api/admin` routing, Swagger and health/data-health environment gating, centralized 400 ProblemDetails handling, development-only in-memory identity behavior, persisted JWT signing keys with optional Key Vault support, module boundary enforcement via `PublicSurfaceTests`, expanded test-project coverage descriptions, and the current Dockerfile .NET 9 vs `net10.0` drift note.
+**Why:** Keeping the primary project documentation aligned with the codebase avoids misleading setup, auth, and operational guidance after the team's session-wide fixes.
+
 ## Governance
 
 - All meaningful changes require team consensus

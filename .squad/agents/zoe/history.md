@@ -21,3 +21,7 @@
 - Took over a lead escalation after two earlier auth fixes did not fully resolve Chris's persistent local 403 on `/api/admin/customers`.
 - Verified the auth pipeline end-to-end, confirmed the remaining live failure was stale split local `Identity:InMemoryUsers` config rather than a claim-type or policy mismatch, and added startup logging to surface the effective loaded claims.
 - Fixed missing `role.admin` enforcement across admin endpoints and finished with `dotnet build` plus `dotnet test` passing (244/244).
+
+## 2026-07-19T17:52:55-04:00
+- Refreshed `README.md` to align documentation with the current codebase after the team's auth, boundary, testing, and operational fixes.
+- Captured the remaining Dockerfile/`Directory.Build.props` `net9.0` vs `net10.0` drift as a documentation note only; no code changes were made in this pass.

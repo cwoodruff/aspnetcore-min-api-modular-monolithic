@@ -1,9 +1,8 @@
 # ModularMonolith.Api (ASP.NET Core 10 Minimal APIs)
 
 Production-ready modular monolith starter using ASP.NET Core 10 (net10.0) and
-Minimal APIs. It demonstrates module
-composition via a simple IModule contract, clear boundaries, and integration
-tests.
+Minimal APIs. It demonstrates module composition via a simple IModule
+contract, clear boundaries, and integration, service, and architecture tests.
 
 Looking to recreate this solution from scratch? See the step-by-step guide in
 docs/Walkthrough.md.
@@ -42,6 +41,8 @@ docs/Walkthrough.md.
       /Repositories                        (AlbumRepository, ArtistRepository, BaseRepository<T>)
 /tests
   /ModularMonolith.Api.Tests               (xUnit integration tests using WebApplicationFactory)
+  /ModularMonolith.Services.Tests          (xUnit service-layer tests for Music, Orders, and Administration)
+  /ModularMonolith.Architecture.Tests      (Architecture tests, including module public-surface enforcement)
 ```
 
 ## Module contract
@@ -57,10 +58,14 @@ public interface IModule
 }
 ```
 
-Each module exposes a public static <ModuleName>Module with a nested public
-sealed class Modules : IModule that registers services and maps endpoints (note
-the plural "Modules", e.g., MusicModule.Modules). Only the IModule is public
-outside the module; all other types should remain internal by default.
+Each module exposes public composition entry points only: a public static
+<ModuleName>Module with a nested public sealed class Modules : IModule that
+registers services and maps endpoints (note the plural "Modules", e.g.,
+MusicModule.Modules). The Identity module also exposes
+`IdentityAuthExtensions` for host wiring. Implementation types stay internal by
+default, and `tests/ModularMonolith.Architecture.Tests/PublicSurfaceTests.cs`
+locks that boundary by asserting each module assembly exports only its intended
+composition surface.
 
 ## Service layer architecture
 
@@ -145,6 +150,12 @@ Validators are auto-registered via assembly scanning:
 services.AddValidatorsFromAssemblyContaining<CustomerValidator>();
 ```
 
+Validation failures and malformed request bodies are centralized in
+`src/ModularMonolith.Api/Program.cs`. `ValidationException`,
+`BadHttpRequestException`, and `JsonException` now return RFC 7807
+`application/problem+json` `400 Bad Request` responses (including `errors`
+and `traceId`) instead of surfacing as generic 500s.
+
 See [docs/validation-strategy.md](docs/validation-strategy.md) for complete
 documentation.
 
@@ -157,14 +168,15 @@ groups:
 - GET /api/music/data-health
 - GET /api/orders/health
 - GET /api/orders/data-health
-- GET /api/administration/health
-- GET /api/administration/data-health
+- GET /api/admin/health
+- GET /api/admin/data-health
 - GET /api/reporting/health
 - GET /api/reporting/data-health
 - GET /api/identity/health
 - GET /api/identity/data-health
 
-Each returns HTTP 200 with JSON:
+In `Development` and `Demo`, health, data-health, and root endpoints return
+HTTP 200 with operational metadata such as:
 
 ```
 {
@@ -177,18 +189,35 @@ Each returns HTTP 200 with JSON:
 }
 ```
 
-A root endpoint GET / returns similar metadata with module: "root".
+Outside `Development`/`Demo`, those same endpoints intentionally return a
+minimal payload:
+
+```
+{
+  "module": "<ModuleName>",
+  "status": "Healthy",
+  "timestampUtc": "<ISO 8601>"
+}
+```
+
+For `data-health`, the `status` value is `Data-Healthy` or `Degraded`.
+Swagger/OpenAPI and the extra operational metadata are only exposed in
+`Development` or `Demo`.
 
 ## Build, run, and test
 
 - Build: `dotnet build ModularMonolith.Api.sln`
 - Run: `dotnet run --project src/ModularMonolith.Api`
-- Swagger UI: http://localhost:5043/swagger (or the https port from launch
-  settings)
+- Swagger UI (Development/Demo only): http://localhost:5043/swagger (or the
+  https port from launch settings)
 - Tests: `dotnet test ModularMonolith.Api.sln`
-    - Test coverage examples include root health, per-module health endpoints,
-      and authenticated flows (e.g., obtaining a JWT and calling protected Music
-      endpoints).
+    - Solution-level runs include `ModularMonolith.Api.Tests`,
+      `ModularMonolith.Services.Tests`, and
+      `ModularMonolith.Architecture.Tests`.
+    - Test coverage examples include root and per-module health/data-health
+      gating, validation `ProblemDetails`, authenticated flows (e.g., obtaining
+      a JWT and calling protected Music endpoints), admin authorization, and
+      module public-surface enforcement.
     - The host exposes a public partial Program class to support
       Microsoft.AspNetCore.Mvc.Testing’s WebApplicationFactory.
 
@@ -197,7 +226,7 @@ A root endpoint GET / returns similar metadata with module: "root".
 ```
 curl http://localhost:5043/api/music/health
 curl http://localhost:5043/api/orders/health
-curl http://localhost:5043/api/administration/health
+curl http://localhost:5043/api/admin/health
 curl http://localhost:5043/api/reporting/health
 curl http://localhost:5043/api/identity/health
 curl http://localhost:5043/
@@ -212,12 +241,17 @@ docker build -t modular-monolith-api .
 docker run -p 8080:8080 modular-monolith-api
 ```
 
+- Current drift note: the checked-in `Dockerfile` still uses .NET 9 SDK/runtime
+  images even though the application projects target `net10.0`. Treat the file
+  as out of sync until it is updated; the local `dotnet` workflow above is the
+  authoritative path today.
 - Dev ports vs Docker ports: When running locally via launchSettings.json the
   app listens on http://localhost:5043 and https://localhost:7043. In the
   container, ASPNETCORE_URLS is set to http://+:8080, so
   expose/browse http://localhost:8080.
 
-Then browse http://localhost:8080/swagger
+If you do run the container in `Development` or `Demo` after aligning the
+Dockerfile, browse http://localhost:8080/swagger.
 
 ## Notes
 
@@ -259,8 +293,10 @@ app.MapGet("/api/reporting/exports", Handler)
   permissions). Requires Authorization.
 - GET /api/identity/.well-known/jwks.json — Exposes the JWKS document for the
   signing key. AllowAnonymous.
-- Swagger UI is enabled by default at /swagger when you run the API host.
-- The OpenAPI document is generated with title "Modular Monolith API" (v1).
+- Swagger UI is enabled at `/swagger` only when the app runs in the
+  `Development` or `Demo` environment.
+- The OpenAPI document is generated with title "Modular Monolith API" (v1)
+  when Swagger is enabled.
 - JWT Bearer auth is integrated into Swagger:
     - Click the "Authorize" button in Swagger UI and paste the access token
       only (do NOT include the `Bearer ` prefix). Swagger will add it
@@ -470,7 +506,9 @@ through `GET /api/identity/.well-known/jwks.json`.
 
 - Path: GET /api/music/albums/{id}
 - Module: Music
-- Authorization: Requires a valid JWT with the permission claim "music.read".
+- Authorization: Requires a valid JWT with the `music.read` permission and the
+  `tenant.scoped` policy (the token's `tenant` claim must match the request's
+  tenant hint when one is supplied).
 - Caching: Uses the central cache facade (ICacheFacade) with a namespaced key
   composed by CacheKeyComposer.
     - Key shape example: {env}:{app}:music:album:v1::::by-id:{id}
@@ -518,11 +556,12 @@ Notes
   corresponding cache key(s) or bump the version prefix (v1→v2) to ensure
   readers don’t see stale data.
 
-- Swagger is enabled with tags per module.
+- Swagger/OpenAPI is enabled in `Development`/`Demo` with tags per module.
 - CORS policy named "Default" allows common localhost dev origins: http(s):
   //localhost:3000, 4200, 5173.
 - ProblemDetails middleware is enabled via UseExceptionHandler and
-  AddProblemDetails.
+  AddProblemDetails, with centralized 400 responses for validation and malformed
+  request bodies.
 - No cross-module references; only the host references the modules and
   SharedKernel.
 
@@ -675,8 +714,16 @@ Detailed documentation is available in the `/docs` folder:
 
 ## Test Coverage
 
-The solution includes comprehensive integration tests in
-`tests/ModularMonolith.Api.Tests/`:
+The solution includes three test projects:
+
+- `tests/ModularMonolith.Api.Tests/` - integration tests using
+  `WebApplicationFactory`
+- `tests/ModularMonolith.Services.Tests/` - service-layer tests for Music,
+  Orders, and Administration
+- `tests/ModularMonolith.Architecture.Tests/` - architecture tests such as
+  `PublicSurfaceTests`
+
+Representative coverage areas include:
 
 | Test Category      | Description                                       |
 |--------------------|---------------------------------------------------|
@@ -686,11 +733,11 @@ The solution includes comprehensive integration tests in
 | Rate limiting      | 429 response behavior tests                       |
 | Caching behavior   | Cache consistency and stampede prevention tests   |
 | Error scenarios    | Invalid JSON, validation errors, edge cases       |
+| Architecture       | Module public-surface enforcement and boundaries  |
 
 Run tests with coverage:
 
 ```bash
-dotnet test --collect:"XPlat Code Coverage"
+dotnet test ModularMonolith.Api.sln --collect:"XPlat Code Coverage"
 ```
-
-Current coverage: **73% line coverage** across all modules
+Use the coverage report from that command as the current source of truth.
