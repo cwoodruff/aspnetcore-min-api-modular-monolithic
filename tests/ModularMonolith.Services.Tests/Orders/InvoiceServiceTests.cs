@@ -30,7 +30,7 @@ public class InvoiceServiceTests
         _service = new InvoiceService(_repo, _cache, _keys, _validator, _logger);
         
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));
+            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class InvoiceServiceTests
         // Assert
         result.Should().NotBeNull();
         result!.Total.Should().Be(1.98m);
-        await _repo.Received(1).Add(Arg.Is<Invoice>(i => i.Total == 1.98m));
+        await _repo.Received(1).Add(Arg.Is<Invoice>(i => i != null && i.Total == 1.98m));
         await _cache.Received(1).RemoveByTagAsync("orders:invoice", ct);
     }
 
@@ -84,7 +84,7 @@ public class InvoiceServiceTests
 
         // Assert
         result.Should().BeTrue();
-        await _repo.Received(1).Update(Arg.Is<Invoice>(i => i.Id == 1 && i.Total == 1.98m));
+        await _repo.Received(1).Update(Arg.Is<Invoice>(i => i != null && i.Id == 1 && i.Total == 1.98m));
         await _cache.Received(1).RemoveByTagAsync("orders:invoice", ct);
         await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
     }

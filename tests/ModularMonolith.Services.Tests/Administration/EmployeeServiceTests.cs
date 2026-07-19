@@ -30,7 +30,7 @@ public class EmployeeServiceTests
         _service = new EmployeeService(_repo, _cache, _keys, _validator, _logger);
         
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));
+            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class EmployeeServiceTests
         // Assert
         result.Should().NotBeNull();
         result!.FirstName.Should().Be("Andrew");
-        await _repo.Received(1).Add(Arg.Is<Employee>(e => e.FirstName == "Andrew"));
+        await _repo.Received(1).Add(Arg.Is<Employee>(e => e != null && e.FirstName == "Andrew"));
         await _cache.Received(1).RemoveByTagAsync("administration:employee", ct);
     }
 
@@ -84,7 +84,7 @@ public class EmployeeServiceTests
 
         // Assert
         result.Should().BeTrue();
-        await _repo.Received(1).Update(Arg.Is<Employee>(e => e.Id == 1 && e.FirstName == "Andrew"));
+        await _repo.Received(1).Update(Arg.Is<Employee>(e => e != null && e.Id == 1 && e.FirstName == "Andrew"));
         await _cache.Received(1).RemoveByTagAsync("administration:employee", ct);
         await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
     }

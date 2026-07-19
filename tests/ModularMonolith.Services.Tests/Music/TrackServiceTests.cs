@@ -30,7 +30,7 @@ public class TrackServiceTests
         _service = new TrackService(_repo, _cache, _keys, _validator, _logger);
         
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));
+            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class TrackServiceTests
         // Assert
         result.Should().NotBeNull();
         result!.Name.Should().Be("Track 1");
-        await _repo.Received(1).Add(Arg.Is<Track>(t => t.Name == "Track 1"));
+        await _repo.Received(1).Add(Arg.Is<Track>(t => t != null && t.Name == "Track 1"));
         await _cache.Received(1).RemoveByTagAsync("music:track", ct);
     }
 
@@ -84,7 +84,7 @@ public class TrackServiceTests
 
         // Assert
         result.Should().BeTrue();
-        await _repo.Received(1).Update(Arg.Is<Track>(t => t.Id == 1 && t.Name == "Track 1"));
+        await _repo.Received(1).Update(Arg.Is<Track>(t => t != null && t.Id == 1 && t.Name == "Track 1"));
         await _cache.Received(1).RemoveByTagAsync("music:track", ct);
         await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
     }

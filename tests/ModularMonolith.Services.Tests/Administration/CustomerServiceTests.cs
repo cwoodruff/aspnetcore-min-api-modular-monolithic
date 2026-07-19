@@ -31,7 +31,7 @@ public class CustomerServiceTests
         
         // Setup default key composition
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));
+            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class CustomerServiceTests
         // Assert
         result.Should().NotBeNull();
         result!.FirstName.Should().Be("John");
-        await _repo.Received(1).Add(Arg.Is<Customer>(c => c.FirstName == "John"));
+        await _repo.Received(1).Add(Arg.Is<Customer>(c => c != null && c.FirstName == "John"));
         await _cache.Received(1).RemoveByTagAsync("administration:customer", ct);
     }
 
@@ -85,7 +85,7 @@ public class CustomerServiceTests
 
         // Assert
         result.Should().BeTrue();
-        await _repo.Received(1).Update(Arg.Is<Customer>(c => c.Id == 1 && c.FirstName == "John"));
+        await _repo.Received(1).Update(Arg.Is<Customer>(c => c != null && c.Id == 1 && c.FirstName == "John"));
         await _cache.Received(1).RemoveByTagAsync("administration:customer", ct);
         await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
     }

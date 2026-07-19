@@ -30,7 +30,7 @@ public class InvoiceLineServiceTests
         _service = new InvoiceLineService(_repo, _cache, _keys, _validator, _logger);
         
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));
+            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class InvoiceLineServiceTests
         // Assert
         result.Should().NotBeNull();
         result!.UnitPrice.Should().Be(0.99m);
-        await _repo.Received(1).Add(Arg.Is<InvoiceLine>(il => il.UnitPrice == 0.99m));
+        await _repo.Received(1).Add(Arg.Is<InvoiceLine>(il => il != null && il.UnitPrice == 0.99m));
         await _cache.Received(1).RemoveByTagAsync("orders:invoiceline", ct);
     }
 
@@ -84,7 +84,7 @@ public class InvoiceLineServiceTests
 
         // Assert
         result.Should().BeTrue();
-        await _repo.Received(1).Update(Arg.Is<InvoiceLine>(il => il.Id == 1 && il.UnitPrice == 0.99m));
+        await _repo.Received(1).Update(Arg.Is<InvoiceLine>(il => il != null && il.Id == 1 && il.UnitPrice == 0.99m));
         await _cache.Received(1).RemoveByTagAsync("orders:invoiceline", ct);
         await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
     }

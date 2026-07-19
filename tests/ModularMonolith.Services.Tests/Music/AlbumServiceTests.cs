@@ -30,7 +30,7 @@ public class AlbumServiceTests
         _service = new AlbumService(_repo, _cache, _keys, _validator, _logger);
         
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));
+            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class AlbumServiceTests
         // Assert
         result.Should().NotBeNull();
         result!.Title.Should().Be("Big Ones");
-        await _repo.Received(1).Add(Arg.Is<Album>(a => a.Title == "Big Ones"));
+        await _repo.Received(1).Add(Arg.Is<Album>(a => a != null && a.Title == "Big Ones"));
         await _cache.Received(1).RemoveByTagAsync("music:album", ct);
     }
 
@@ -84,7 +84,7 @@ public class AlbumServiceTests
 
         // Assert
         result.Should().BeTrue();
-        await _repo.Received(1).Update(Arg.Is<Album>(a => a.Id == 1 && a.Title == "Big Ones"));
+        await _repo.Received(1).Update(Arg.Is<Album>(a => a != null && a.Id == 1 && a.Title == "Big Ones"));
         await _cache.Received(1).RemoveByTagAsync("music:album", ct);
         await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
     }

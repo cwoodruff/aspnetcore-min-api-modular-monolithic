@@ -24,7 +24,7 @@ public class GenreServiceTests
     public GenreServiceTests()
     {
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));
+            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
 
         // Default successful validation
         _validator.ValidateAsync(Arg.Any<GenreApiModel>(), Arg.Any<CancellationToken>())
@@ -74,7 +74,7 @@ public class GenreServiceTests
         // Assert
         result.Should().NotBeNull();
         result!.Name.Should().Be(name);
-        await _repo.Received(1).Add(Arg.Is<Genre>(g => g.Name == name));
+        await _repo.Received(1).Add(Arg.Is<Genre>(g => g != null && g.Name == name));
         await _cache.Received(1).RemoveByTagAsync("administration:genre", ct);
     }
 
@@ -111,7 +111,7 @@ public class GenreServiceTests
 
         // Assert
         result.Should().BeTrue();
-        await _repo.Received(1).Update(Arg.Is<Genre>(g => g.Id == id && g.Name == name));
+        await _repo.Received(1).Update(Arg.Is<Genre>(g => g != null && g.Id == id && g.Name == name));
         await _cache.Received(1).RemoveByTagAsync("administration:genre", ct);
         await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
     }
