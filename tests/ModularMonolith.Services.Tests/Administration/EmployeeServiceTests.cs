@@ -1,6 +1,8 @@
 using Admin.Modules.Services;
 using FluentAssertions;
 using FluentValidation;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
@@ -16,6 +18,7 @@ public class EmployeeServiceTests
     private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
     private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
     private readonly IValidator<EmployeeApiModel> _validator = Substitute.For<IValidator<EmployeeApiModel>>();
+    private readonly ILogger<EmployeeService> _logger = NullLogger<EmployeeService>.Instance;
     private readonly EmployeeService _service;
 
     public EmployeeServiceTests()
@@ -24,7 +27,7 @@ public class EmployeeServiceTests
         _validator.ValidateAsync(Arg.Any<EmployeeApiModel>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
 
-        _service = new EmployeeService(_repo, _cache, _keys, _validator);
+        _service = new EmployeeService(_repo, _cache, _keys, _validator, _logger);
         
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));

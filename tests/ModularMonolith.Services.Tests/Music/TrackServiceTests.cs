@@ -1,5 +1,7 @@
 using FluentAssertions;
 using FluentValidation;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Music.Modules.Services;
 using NSubstitute;
 using SharedKernel.Caching;
@@ -16,6 +18,7 @@ public class TrackServiceTests
     private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
     private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
     private readonly IValidator<TrackApiModel> _validator = Substitute.For<IValidator<TrackApiModel>>();
+    private readonly ILogger<TrackService> _logger = NullLogger<TrackService>.Instance;
     private readonly TrackService _service;
 
     public TrackServiceTests()
@@ -24,7 +27,7 @@ public class TrackServiceTests
         _validator.ValidateAsync(Arg.Any<TrackApiModel>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
 
-        _service = new TrackService(_repo, _cache, _keys, _validator);
+        _service = new TrackService(_repo, _cache, _keys, _validator, _logger);
         
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));

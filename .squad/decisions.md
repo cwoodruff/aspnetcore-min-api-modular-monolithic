@@ -35,6 +35,7 @@
 **By:** Zoe
 **What:** The service test project is not included in the solution, and running it directly currently fails to compile because service constructors now require ILogger dependencies.
 **Why:** A whole layer of tests is silently skipped by normal solution test runs, leaving service behavior and future refactors less protected than the repository suggests.
+**Status:** RESOLVED by `2026-07-18T16:17:41-04:00: Restore service test project compilation and solution wiring` below.
 
 ### 2026-07-18T15:28:34-04:00: Review finding
 **By:** Zoe
@@ -71,6 +72,11 @@
 **By:** Kaylee
 **What:** Added centralized exception handling in `src/ModularMonolith.Api/Program.cs` so `FluentValidation.ValidationException` now returns `400 Bad Request` with RFC 7807 `application/problem+json` payloads including an `errors` dictionary and `traceId`. The same handler also normalizes malformed request-body exceptions (`BadHttpRequestException`/`JsonException`) to structured 400 responses. Updated `tests/ModularMonolith.Api.Tests/ErrorScenarioTests.cs` to assert the new 400 contract instead of tolerating 500s.
 **Why:** Zoe’s review flagged that module services in Administration, Music, and Orders were throwing `ValidationException` while the host only used generic exception handling, letting client mistakes surface as 500s. Centralizing the mapping in the API host keeps error behavior consistent across modules without duplicating per-endpoint logic and clearly separates bad input from true server failures.
+
+### 2026-07-18T16:17:41-04:00: Restore service test project compilation and solution wiring
+**By:** River
+**What:** Updated `tests/ModularMonolith.Services.Tests` to match current service constructor signatures by supplying `ILogger<T>` dependencies via `NullLogger<T>.Instance` in all 10 service test classes (`Administration/{Customer,Employee,Genre,MediaType}ServiceTests.cs`, `Music/{Album,Artist,Playlist,Track}ServiceTests.cs`, `Orders/{Invoice,InvoiceLine}ServiceTests.cs`). Added `tests/ModularMonolith.Services.Tests/ModularMonolith.Services.Tests.csproj` to `ModularMonolith.Api.sln`. Verified existing `InternalsVisibleTo("ModularMonolith.Services.Tests")` grants in `src/Modules/{Administration/Admin.Module,Music/Music.Module,Orders/Orders.Module}/Properties/AssemblyInfo.cs`; no new friend assembly entries were needed. Test count moved from 179 passing solution-level tests before (service tests excluded; standalone service project failed compile) to 222 passing solution-level tests after, including 43 service tests.
+**Why:** Zoe flagged that `ModularMonolith.Services.Tests` had fallen out of sync after service constructors gained `ILogger<T>` parameters and the project was missing from the solution, which let `dotnet test ModularMonolith.Api.sln` report green while silently skipping service-layer coverage. This restores accurate solution-level validation and resolves Zoe's `2026-07-18T15:28:34-04:00: Review finding` about the excluded service tests.
 
 ## Governance
 

@@ -1,6 +1,8 @@
 using Admin.Modules.Services;
 using FluentAssertions;
 using FluentValidation;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
@@ -16,6 +18,7 @@ public class CustomerServiceTests
     private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
     private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
     private readonly IValidator<CustomerApiModel> _validator = Substitute.For<IValidator<CustomerApiModel>>();
+    private readonly ILogger<CustomerService> _logger = NullLogger<CustomerService>.Instance;
     private readonly CustomerService _service;
 
     public CustomerServiceTests()
@@ -24,7 +27,7 @@ public class CustomerServiceTests
         _validator.ValidateAsync(Arg.Any<CustomerApiModel>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
 
-        _service = new CustomerService(_repo, _cache, _keys, _validator);
+        _service = new CustomerService(_repo, _cache, _keys, _validator, _logger);
         
         // Setup default key composition
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())

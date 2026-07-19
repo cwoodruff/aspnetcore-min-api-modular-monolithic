@@ -1,5 +1,7 @@
 using FluentAssertions;
 using FluentValidation;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Music.Modules.Services;
 using NSubstitute;
 using SharedKernel.Caching;
@@ -16,6 +18,7 @@ public class AlbumServiceTests
     private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
     private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
     private readonly IValidator<AlbumApiModel> _validator = Substitute.For<IValidator<AlbumApiModel>>();
+    private readonly ILogger<AlbumService> _logger = NullLogger<AlbumService>.Instance;
     private readonly AlbumService _service;
 
     public AlbumServiceTests()
@@ -24,7 +27,7 @@ public class AlbumServiceTests
         _validator.ValidateAsync(Arg.Any<AlbumApiModel>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
 
-        _service = new AlbumService(_repo, _cache, _keys, _validator);
+        _service = new AlbumService(_repo, _cache, _keys, _validator, _logger);
         
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));

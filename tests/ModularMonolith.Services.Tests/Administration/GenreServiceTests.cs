@@ -1,6 +1,8 @@
 using Admin.Modules.Services;
 using FluentAssertions;
 using FluentValidation;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
@@ -16,6 +18,7 @@ public class GenreServiceTests
     private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
     private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
     private readonly IValidator<GenreApiModel> _validator = Substitute.For<IValidator<GenreApiModel>>();
+    private readonly ILogger<GenreService> _logger = NullLogger<GenreService>.Instance;
     private readonly GenreService _service;
 
     public GenreServiceTests()
@@ -27,7 +30,7 @@ public class GenreServiceTests
         _validator.ValidateAsync(Arg.Any<GenreApiModel>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
 
-        _service = new GenreService(_repo, _cache, _keys, _validator);
+        _service = new GenreService(_repo, _cache, _keys, _validator, _logger);
     }
 
     [Fact]

@@ -1,5 +1,7 @@
 using FluentAssertions;
 using FluentValidation;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Orders.Modules.Services;
 using SharedKernel.Caching;
@@ -16,6 +18,7 @@ public class InvoiceLineServiceTests
     private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
     private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
     private readonly IValidator<InvoiceLineApiModel> _validator = Substitute.For<IValidator<InvoiceLineApiModel>>();
+    private readonly ILogger<InvoiceLineService> _logger = NullLogger<InvoiceLineService>.Instance;
     private readonly InvoiceLineService _service;
 
     public InvoiceLineServiceTests()
@@ -24,7 +27,7 @@ public class InvoiceLineServiceTests
         _validator.ValidateAsync(Arg.Any<InvoiceLineApiModel>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
 
-        _service = new InvoiceLineService(_repo, _cache, _keys, _validator);
+        _service = new InvoiceLineService(_repo, _cache, _keys, _validator, _logger);
         
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(callInfo => new CacheKey("test", "app", (string)callInfo[0], (string)callInfo[1], (string)callInfo[2], null, null, null, (string)callInfo[3]));
