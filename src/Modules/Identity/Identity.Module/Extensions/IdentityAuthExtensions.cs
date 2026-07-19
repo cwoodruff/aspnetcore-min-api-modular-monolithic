@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -54,7 +55,7 @@ public static class IdentityAuthExtensions
         // Core services
         services.AddSingleton<ITokenService, TokenService>();
         services.AddSingleton<IRefreshTokenStore, InMemoryRefreshTokenStore>();
-        services.Configure<InMemoryUserStoreOptions>(configuration.GetSection("Identity:InMemoryUsers"));
+        services.Configure<InMemoryUserStoreOptions>(configuration.GetSection("Identity"));
         services.AddSingleton<IUserStore>(sp =>
         {
             var environment = sp.GetRequiredService<IHostEnvironment>();
@@ -62,6 +63,7 @@ public static class IdentityAuthExtensions
                 ? ActivatorUtilities.CreateInstance<InMemoryUserStore>(sp)
                 : new DisabledUserStore();
         });
+        services.AddHostedService<InMemoryUserStoreDiagnosticsHostedService>();
 
         // HttpContext + tenant resolution + authorization handlers
         services.AddHttpContextAccessor();
@@ -175,4 +177,103 @@ internal sealed class JwtAuthOptions
     public string DevelopmentKeyPath { get; set; } = "data/identity/dev-jwt-signing-key.json";
     public string? KeyVaultVaultUri { get; set; }
     public string? KeyVaultKeyName { get; set; }
+}
+
+internal sealed partial class InMemoryUserStoreDiagnosticsHostedService(
+    IHostEnvironment environment,
+    IOptions<InMemoryUserStoreOptions> options,
+    ILogger<InMemoryUserStoreDiagnosticsHostedService> logger) : IHostedService
+{
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        var configuredUsers = options.Value.InMemoryUsers;
+        var configuredCount = configuredUsers.Count;
+        var validCount = configuredUsers.Count(IsValidUser);
+        var ignoredCount = configuredCount - validCount;
+        var isDevelopmentOrDemo = environment.IsDevelopment() || environment.IsEnvironment("Demo");
+
+        if (!isDevelopmentOrDemo)
+        {
+            if (configuredCount > 0)
+            {
+                LogInMemoryUsersDisabledOutsideDevelopment(logger, configuredCount, environment.EnvironmentName);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        if (validCount == 0)
+        {
+            if (configuredCount == 0)
+            {
+                LogNoInMemoryUsersConfigured(logger, environment.EnvironmentName);
+            }
+            else
+            {
+                LogNoValidInMemoryUsersConfigured(logger, environment.EnvironmentName, configuredCount);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        if (ignoredCount > 0)
+        {
+            LogIgnoredIncompleteInMemoryUsers(logger, validCount, ignoredCount);
+        }
+
+        LogLoadedInMemoryUsers(logger, validCount, environment.EnvironmentName);
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    private static bool IsValidUser(InMemoryUserRecord user)
+    {
+        return !string.IsNullOrWhiteSpace(user.Username)
+               && !string.IsNullOrWhiteSpace(user.Password)
+               && !string.IsNullOrWhiteSpace(user.UserId);
+    }
+
+    [LoggerMessage(
+        EventId = 2001,
+        Level = LogLevel.Warning,
+        Message =
+            "Identity:InMemoryUsers is configured with {ConfiguredCount} entries, but in-memory login is disabled in the {EnvironmentName} environment. Set ASPNETCORE_ENVIRONMENT=Development or Demo to enable it.")]
+    private static partial void LogInMemoryUsersDisabledOutsideDevelopment(
+        ILogger logger,
+        int configuredCount,
+        string environmentName);
+
+    [LoggerMessage(
+        EventId = 2002,
+        Level = LogLevel.Warning,
+        Message =
+            "In-memory login is enabled for the {EnvironmentName} environment, but no Identity:InMemoryUsers entries are configured.")]
+    private static partial void LogNoInMemoryUsersConfigured(ILogger logger, string environmentName);
+
+    [LoggerMessage(
+        EventId = 2003,
+        Level = LogLevel.Warning,
+        Message =
+            "In-memory login is enabled for the {EnvironmentName} environment, but none of the {ConfiguredCount} configured Identity:InMemoryUsers entries are usable. Each entry must include Username, Password, and UserId.")]
+    private static partial void LogNoValidInMemoryUsersConfigured(
+        ILogger logger,
+        string environmentName,
+        int configuredCount);
+
+    [LoggerMessage(
+        EventId = 2004,
+        Level = LogLevel.Warning,
+        Message =
+            "Loaded {ValidCount} in-memory login users and ignored {IgnoredCount} incomplete Identity:InMemoryUsers entries. Each entry must include Username, Password, and UserId.")]
+    private static partial void LogIgnoredIncompleteInMemoryUsers(ILogger logger, int validCount, int ignoredCount);
+
+    [LoggerMessage(
+        EventId = 2005,
+        Level = LogLevel.Information,
+        Message = "Loaded {ValidCount} in-memory login user(s) for the {EnvironmentName} environment.")]
+    private static partial void LogLoadedInMemoryUsers(ILogger logger, int validCount, string environmentName);
 }

@@ -276,13 +276,23 @@ The app no longer ships with baked-in usernames/passwords. Configure your own
 development-only users with user secrets or environment variables before
 calling `POST /api/identity/login`.
 
+> [!IMPORTANT]
+> In-memory login only works when the app runs in the `Development` or `Demo`
+> environment. If you launch the API outside the default `dotnet run` launch
+> profile, set `ASPNETCORE_ENVIRONMENT=Development` (or `Demo`) yourself.
+> Also note that each `Identity:InMemoryUsers:<index>` entry must include
+> `Username`, `Password`, and `UserId`; entries missing any of those fields are
+> ignored.
+
 ##### User account model
 
-`Identity:InMemoryUsers` binds to the `InMemoryUserRecord` options model in the
-Identity module. Each array item becomes one login account if it has
-`Username`, `Password`, and `UserId`; entries missing any of those three values
-are ignored. The configured password is compared as-is by the in-memory store,
-so treat it as a dev/demo-only secret and do not reuse production credentials.
+The `Identity` configuration section binds to the `InMemoryUserStoreOptions`
+options model in the Identity module, and its `InMemoryUsers` array contains
+`InMemoryUserRecord` entries. Each array item becomes one login account if it
+has `Username`, `Password`, and `UserId`; entries missing any of those three
+values are ignored. The configured password is compared as-is by the in-memory
+store, so treat it as a dev/demo-only secret and do not reuse production
+credentials.
 
 | Field | Required | How the current code uses it |
 | --- | --- | --- |

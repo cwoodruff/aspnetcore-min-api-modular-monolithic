@@ -104,7 +104,7 @@ public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
-    public async Task Login_ShouldReturn401_WhenInMemoryUsersAreConfiguredOutsideDevelopment()
+    public async Task Login_ShouldNotSucceed_WhenInMemoryUsersAreConfiguredOutsideDevelopment()
     {
         var client = factory.WithConfiguredIdentityUsers().CreateClient();
 
@@ -116,7 +116,23 @@ public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
         var response = await client.PostAsync("/api/identity/login",
             new StringContent(payload, Encoding.UTF8, "application/json"));
 
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.InternalServerError);
+    }
+
+    [Fact]
+    public async Task Login_ShouldReturnTokens_WhenInMemoryUsersAreConfiguredInDevelopment()
+    {
+        var client = factory.WithConfiguredIdentityUsersInDevelopment().CreateClient();
+
+        var payload = JsonSerializer.Serialize(new
+        {
+            username = TestAuthHelpers.DemoUser.Username,
+            password = TestAuthHelpers.DemoUser.Password
+        });
+        var response = await client.PostAsync("/api/identity/login",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Theory]

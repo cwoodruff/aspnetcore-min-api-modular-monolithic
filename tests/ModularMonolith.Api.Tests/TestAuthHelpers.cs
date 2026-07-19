@@ -92,6 +92,22 @@ public static class TestAuthHelpers
 
         return factory.WithWebHostBuilder(builder =>
         {
+            builder.UseEnvironment("Production");
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(BuildIdentityUserConfiguration(users));
+            });
+        });
+    }
+
+    public static WebApplicationFactory<Program> WithConfiguredIdentityUsersInDevelopment(
+        this WebApplicationFactory<Program> factory)
+    {
+        var users = new[] { DemoUser, UserMoUser, ReportUser, AdminUser };
+
+        return factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Development");
             builder.ConfigureAppConfiguration((_, config) =>
             {
                 config.AddInMemoryCollection(BuildIdentityUserConfiguration(users));

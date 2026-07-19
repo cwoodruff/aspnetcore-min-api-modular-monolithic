@@ -46,7 +46,7 @@ internal sealed class InMemoryUserStore : IUserStore
 
     public InMemoryUserStore(IOptions<InMemoryUserStoreOptions> options)
     {
-        _users = options.Value.Users
+        _users = options.Value.InMemoryUsers
             .Where(user => !string.IsNullOrWhiteSpace(user.Username)
                            && !string.IsNullOrWhiteSpace(user.Password)
                            && !string.IsNullOrWhiteSpace(user.UserId))
@@ -120,7 +120,7 @@ internal sealed class DisabledUserStore : IUserStore
 
 internal sealed class InMemoryUserStoreOptions
 {
-    public List<InMemoryUserRecord> Users { get; set; } = [];
+    public List<InMemoryUserRecord> InMemoryUsers { get; set; } = [];
 }
 
 internal sealed class InMemoryUserRecord

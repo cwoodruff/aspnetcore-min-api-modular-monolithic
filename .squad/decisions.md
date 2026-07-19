@@ -84,6 +84,11 @@
 **What:** Updated `src/ModularMonolith.Api/Program.cs` to enable Swagger/OpenAPI only in Development or Demo and to return a minimal root payload outside those environments. Added `BuildInfoProvider.ShouldExposeOperationalMetadata(...)` in `src/Shared/SharedKernel/BuildInfoProvider.cs` and applied it across all module `*HealthEndpoints.cs` and `*DataHealthEndpoints.cs` files in Music, Orders, Administration, Reporting, and Identity so non-Development/Demo callers only get module/status/timestamp while Development/Demo retains environment/version/service and data-health connectivity details. Expanded `tests/ModularMonolith.Api.Tests/HealthEndpointsTests.cs` to cover all `/api/*/data-health` routes plus Swagger and metadata gating behavior by environment.
 **Why:** Addresses Zoe's review finding in `.squad/decisions.md` about unauthenticated exposure of operational metadata and database connectivity details, while keeping detailed diagnostics available for Development/Demo with the same environment-gating convention already used elsewhere in the app.
 
+### 2026-07-19T07:38:03-04:00: Fix in-memory identity login binding and diagnostics
+**By:** Kaylee
+**What:** Fixed the `Identity:InMemoryUsers` configuration binding bug by binding the parent `Identity` section so configured users actually populate `InMemoryUserStoreOptions.InMemoryUsers`, added startup warnings in `src/Modules/Identity/Identity.Module/Extensions/IdentityAuthExtensions.cs` and `src/Modules/Identity/Identity.Module/Services/InMemoryStores.cs` for disabled or incomplete in-memory user configuration, updated `README.md` to emphasize the `ASPNETCORE_ENVIRONMENT` requirement plus required identity user fields, and added regression coverage in `tests/ModularMonolith.Api.Tests/IdentityEndpointsTests.cs` and `tests/ModularMonolith.Api.Tests/TestAuthHelpers.cs`.
+**Why:** This was a new user-reported bug from Chris after the earlier identity hardening work: `POST /api/identity/login` returned 401 for configured development users such as `admin-demo` because valid `Identity:InMemoryUsers` secrets were never reaching the store. The fix restores config-driven login in Development/Demo and adds diagnostics/documentation so future misconfiguration is much easier to detect.
+
 ## Governance
 
 - All meaningful changes require team consensus
