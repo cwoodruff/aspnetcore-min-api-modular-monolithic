@@ -180,18 +180,33 @@ app.UseRateLimiter();
 // AuthN/AuthZ middleware from Identity module
 app.UseIdentityAuth();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+if (BuildInfoProvider.ShouldExposeOperationalMetadata(app.Environment))
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 
 // Root endpoint with service metadata
 app.MapGet("/", (IConfiguration cfg, IWebHostEnvironment env) =>
     {
+        var timestampUtc = DateTime.UtcNow.ToString("O");
+
+        if (!BuildInfoProvider.ShouldExposeOperationalMetadata(env))
+        {
+            return Results.Json(new
+            {
+                module = "root",
+                status = "Healthy",
+                timestampUtc
+            });
+        }
+
         var response = new
         {
             module = "root",
             status = "Healthy",
-            timestampUtc = DateTime.UtcNow.ToString("O"),
+            timestampUtc,
             environment = env.EnvironmentName,
             version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
                           ?.InformationalVersion

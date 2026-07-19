@@ -26,11 +26,24 @@ internal static class IdentityDataHealthEndpoints
                         canConnect = false;
                     }
 
+                    var timestampUtc = DateTime.UtcNow.ToString("O");
+                    var status = canConnect ? "Data-Healthy" : "Degraded";
+
+                    if (!BuildInfoProvider.ShouldExposeOperationalMetadata(env))
+                    {
+                        return Results.Json(new
+                        {
+                            module = "Identity",
+                            status,
+                            timestampUtc
+                        });
+                    }
+
                     var response = new
                     {
                         module = "Identity",
-                        status = canConnect ? "Data-Healthy" : "Degraded",
-                        timestampUtc = DateTime.UtcNow.ToString("O"),
+                        status,
+                        timestampUtc,
                         environment = BuildInfoProvider.GetEnvironment(env),
                         version = BuildInfoProvider.GetInformationalVersion(typeof(IdentityModule).Assembly),
                         service = BuildInfoProvider.GetServiceName(cfg),

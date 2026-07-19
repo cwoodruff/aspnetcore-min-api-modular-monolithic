@@ -14,11 +14,23 @@ internal static class AdministrationHealthEndpoints
     {
         group.MapGet("/health", (IHostEnvironment env, IConfiguration cfg) =>
             {
+                var timestampUtc = DateTime.UtcNow.ToString("O");
+
+                if (!BuildInfoProvider.ShouldExposeOperationalMetadata(env))
+                {
+                    return Results.Json(new
+                    {
+                        module = "Administration",
+                        status = "Healthy",
+                        timestampUtc
+                    });
+                }
+
                 var response = new
                 {
                     module = "Administration",
                     status = "Healthy",
-                    timestampUtc = DateTime.UtcNow.ToString("O"),
+                    timestampUtc,
                     environment = BuildInfoProvider.GetEnvironment(env),
                     version = BuildInfoProvider.GetInformationalVersion(typeof(AdministrationModule).Assembly),
                     service = BuildInfoProvider.GetServiceName(cfg)

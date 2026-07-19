@@ -26,11 +26,24 @@ internal static class OrdersDataHealthEndpoints
                         canConnect = false;
                     }
 
+                    var timestampUtc = DateTime.UtcNow.ToString("O");
+                    var status = canConnect ? "Data-Healthy" : "Degraded";
+
+                    if (!BuildInfoProvider.ShouldExposeOperationalMetadata(env))
+                    {
+                        return Results.Json(new
+                        {
+                            module = "Orders",
+                            status,
+                            timestampUtc
+                        });
+                    }
+
                     var response = new
                     {
                         module = "Orders",
-                        status = canConnect ? "Data-Healthy" : "Degraded",
-                        timestampUtc = DateTime.UtcNow.ToString("O"),
+                        status,
+                        timestampUtc,
                         environment = BuildInfoProvider.GetEnvironment(env),
                         version = BuildInfoProvider.GetInformationalVersion(typeof(OrdersModule).Assembly),
                         service = BuildInfoProvider.GetServiceName(cfg),

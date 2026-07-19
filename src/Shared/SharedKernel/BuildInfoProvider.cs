@@ -18,6 +18,11 @@ public static class BuildInfoProvider
         return env.EnvironmentName;
     }
 
+    public static bool ShouldExposeOperationalMetadata(IHostEnvironment env)
+    {
+        return env.IsDevelopment() || env.IsEnvironment("Demo");
+    }
+
     public static string GetServiceName(IConfiguration config)
     {
         return config["ServiceName"] ?? "ModularMonolith.Api";
