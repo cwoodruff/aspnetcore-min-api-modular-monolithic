@@ -30,6 +30,7 @@
 **By:** Zoe
 **What:** Swagger and health/data-health endpoints are exposed in all environments and return environment, version, and database connectivity metadata without authentication.
 **Why:** This increases public reconnaissance value and may disclose operational details that are useful to attackers or inappropriate for internet-facing deployments.
+**Status:** RESOLVED by `2026-07-19T07:15:50-04:00: Gate Swagger and operational health metadata` below.
 
 ### 2026-07-18T15:28:34-04:00: Review finding
 **By:** Zoe
@@ -77,6 +78,11 @@
 **By:** River
 **What:** Updated `tests/ModularMonolith.Services.Tests` to match current service constructor signatures by supplying `ILogger<T>` dependencies via `NullLogger<T>.Instance` in all 10 service test classes (`Administration/{Customer,Employee,Genre,MediaType}ServiceTests.cs`, `Music/{Album,Artist,Playlist,Track}ServiceTests.cs`, `Orders/{Invoice,InvoiceLine}ServiceTests.cs`). Added `tests/ModularMonolith.Services.Tests/ModularMonolith.Services.Tests.csproj` to `ModularMonolith.Api.sln`. Verified existing `InternalsVisibleTo("ModularMonolith.Services.Tests")` grants in `src/Modules/{Administration/Admin.Module,Music/Music.Module,Orders/Orders.Module}/Properties/AssemblyInfo.cs`; no new friend assembly entries were needed. Test count moved from 179 passing solution-level tests before (service tests excluded; standalone service project failed compile) to 222 passing solution-level tests after, including 43 service tests.
 **Why:** Zoe flagged that `ModularMonolith.Services.Tests` had fallen out of sync after service constructors gained `ILogger<T>` parameters and the project was missing from the solution, which let `dotnet test ModularMonolith.Api.sln` report green while silently skipping service-layer coverage. This restores accurate solution-level validation and resolves Zoe's `2026-07-18T15:28:34-04:00: Review finding` about the excluded service tests.
+
+### 2026-07-19T07:15:50-04:00: Gate Swagger and operational health metadata
+**By:** Wash
+**What:** Updated `src/ModularMonolith.Api/Program.cs` to enable Swagger/OpenAPI only in Development or Demo and to return a minimal root payload outside those environments. Added `BuildInfoProvider.ShouldExposeOperationalMetadata(...)` in `src/Shared/SharedKernel/BuildInfoProvider.cs` and applied it across all module `*HealthEndpoints.cs` and `*DataHealthEndpoints.cs` files in Music, Orders, Administration, Reporting, and Identity so non-Development/Demo callers only get module/status/timestamp while Development/Demo retains environment/version/service and data-health connectivity details. Expanded `tests/ModularMonolith.Api.Tests/HealthEndpointsTests.cs` to cover all `/api/*/data-health` routes plus Swagger and metadata gating behavior by environment.
+**Why:** Addresses Zoe's review finding in `.squad/decisions.md` about unauthenticated exposure of operational metadata and database connectivity details, while keeping detailed diagnostics available for Development/Demo with the same environment-gating convention already used elsewhere in the app.
 
 ## Governance
 

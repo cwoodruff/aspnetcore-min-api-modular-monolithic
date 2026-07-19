@@ -11,3 +11,7 @@
 - Fixed the NuGet audit build failure by upgrading `Swashbuckle.AspNetCore` from 10.1.5 to 10.2.3 in `src/ModularMonolith.Api/ModularMonolith.Api.csproj`.
 - Added `SQLitePCLRaw.bundle_e_sqlite3` 3.0.4 overrides in `src/Shared/SharedKernel.Persistence/SharedKernel.Persistence.csproj` and `tests/ModularMonolith.Api.Tests/ModularMonolith.Api.Tests.csproj` to bypass vulnerable `SQLitePCLRaw.lib.e_sqlite3` 2.1.11.
 - Verified success with `dotnet build` and `dotnet test` (171/171 passing).
+
+## 2026-07-19T07:15:50-04:00
+- Gated Swagger/OpenAPI JSON and detailed health/data-health metadata to Development/Demo via shared `BuildInfoProvider` checks across all five modules and the API host.
+- Verified the hardening with `dotnet build` and `dotnet test` passing at 239/239, closing the last outstanding finding from Zoe's original review.
