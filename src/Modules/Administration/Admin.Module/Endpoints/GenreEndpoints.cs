@@ -22,7 +22,7 @@ internal static class GenreEndpoints
 
                 return genre is not null ? Results.Json(genre) : Results.NotFound();
             })
-            .RequireAuthorization("administration.read").RequireAuthorization("tenant.scoped")
+            .RequireAdministrationReadAccess()
             .WithName("AdministrationGetGenreById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -41,7 +41,7 @@ internal static class GenreEndpoints
 
                 return Results.Json(genres);
             })
-            .RequireAuthorization("administration.read").RequireAuthorization("tenant.scoped")
+            .RequireAdministrationReadAccess()
             .WithName("GetAllGenres")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -61,7 +61,7 @@ internal static class GenreEndpoints
 
                 return Results.Created($"/api/admin/genres/{created!.Id}", created);
             })
-            .RequireAuthorization("administration.write").RequireAuthorization("tenant.scoped")
+            .RequireAdministrationWriteAccess()
             .WithName("CreateGenre")
             .Produces(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
@@ -82,7 +82,7 @@ internal static class GenreEndpoints
 
                 return updated ? Results.Ok(new { id, name = request.Name }) : Results.NotFound();
             })
-            .RequireAuthorization("administration.write").RequireAuthorization("tenant.scoped")
+            .RequireAdministrationWriteAccess()
             .WithName("UpdateGenre")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
@@ -103,7 +103,7 @@ internal static class GenreEndpoints
 
                 return deleted ? Results.NoContent() : Results.NotFound();
             })
-            .RequireAuthorization("administration.write").RequireAuthorization("tenant.scoped")
+            .RequireAdministrationWriteAccess()
             .WithName("DeleteGenre")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status401Unauthorized)

@@ -187,9 +187,26 @@ internal sealed partial class InMemoryUserStoreDiagnosticsHostedService(
     public Task StartAsync(CancellationToken cancellationToken)
     {
         var configuredUsers = options.Value.InMemoryUsers;
+        var validUsers = configuredUsers
+            .Select((user, index) => new
+            {
+                Index = index,
+                User = user,
+                MissingRequiredFields = GetMissingRequiredFields(user)
+            })
+            .Where(entry => entry.MissingRequiredFields.Length == 0)
+            .ToArray();
         var configuredCount = configuredUsers.Count;
-        var validCount = configuredUsers.Count(IsValidUser);
-        var ignoredCount = configuredCount - validCount;
+        var invalidUsers = configuredUsers
+            .Select((user, index) => new
+            {
+                Index = index,
+                MissingRequiredFields = GetMissingRequiredFields(user)
+            })
+            .Where(entry => entry.MissingRequiredFields.Length > 0)
+            .ToArray();
+        var validCount = validUsers.Length;
+        var ignoredCount = invalidUsers.Length;
         var isDevelopmentOrDemo = environment.IsDevelopment() || environment.IsEnvironment("Demo");
 
         if (!isDevelopmentOrDemo)
@@ -218,7 +235,32 @@ internal sealed partial class InMemoryUserStoreDiagnosticsHostedService(
 
         if (ignoredCount > 0)
         {
+            foreach (var invalidUser in invalidUsers)
+            {
+                LogIncompleteInMemoryUserEntry(
+                    logger,
+                    invalidUser.Index,
+                    string.Join(", ", invalidUser.MissingRequiredFields));
+            }
+
             LogIgnoredIncompleteInMemoryUsers(logger, validCount, ignoredCount);
+        }
+
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            foreach (var validUser in validUsers)
+            {
+#pragma warning disable CA1873
+                LogLoadedInMemoryUser(
+                    logger,
+                    validUser.Index,
+                    validUser.User.Username.Trim(),
+                    validUser.User.UserId.Trim(),
+                    FormatValues(validUser.User.Roles),
+                    FormatValues(validUser.User.Permissions),
+                    string.IsNullOrWhiteSpace(validUser.User.Tenant) ? "(none)" : validUser.User.Tenant.Trim());
+#pragma warning restore CA1873
+            }
         }
 
         LogLoadedInMemoryUsers(logger, validCount, environment.EnvironmentName);
@@ -230,11 +272,36 @@ internal sealed partial class InMemoryUserStoreDiagnosticsHostedService(
         return Task.CompletedTask;
     }
 
-    private static bool IsValidUser(InMemoryUserRecord user)
+    private static string FormatValues(IEnumerable<string> values)
     {
-        return !string.IsNullOrWhiteSpace(user.Username)
-               && !string.IsNullOrWhiteSpace(user.Password)
-               && !string.IsNullOrWhiteSpace(user.UserId);
+        var normalized = values
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value.Trim())
+            .ToArray();
+
+        return normalized.Length == 0 ? "(none)" : string.Join(", ", normalized);
+    }
+
+    private static string[] GetMissingRequiredFields(InMemoryUserRecord user)
+    {
+        var missingFields = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(user.Username))
+        {
+            missingFields.Add(nameof(InMemoryUserRecord.Username));
+        }
+
+        if (string.IsNullOrWhiteSpace(user.Password))
+        {
+            missingFields.Add(nameof(InMemoryUserRecord.Password));
+        }
+
+        if (string.IsNullOrWhiteSpace(user.UserId))
+        {
+            missingFields.Add(nameof(InMemoryUserRecord.UserId));
+        }
+
+        return missingFields.ToArray();
     }
 
     [LoggerMessage(
@@ -272,8 +339,32 @@ internal sealed partial class InMemoryUserStoreDiagnosticsHostedService(
     private static partial void LogIgnoredIncompleteInMemoryUsers(ILogger logger, int validCount, int ignoredCount);
 
     [LoggerMessage(
+        EventId = 2006,
+        Level = LogLevel.Warning,
+        Message =
+            "Ignoring Identity:InMemoryUsers:{Index} because it is missing required field(s): {MissingRequiredFields}. Keep Username, Password, UserId, Roles, Permissions, Email, and Tenant for one account on the same array index.")]
+    private static partial void LogIncompleteInMemoryUserEntry(
+        ILogger logger,
+        int index,
+        string missingRequiredFields);
+
+    [LoggerMessage(
         EventId = 2005,
         Level = LogLevel.Information,
         Message = "Loaded {ValidCount} in-memory login user(s) for the {EnvironmentName} environment.")]
     private static partial void LogLoadedInMemoryUsers(ILogger logger, int validCount, string environmentName);
+
+    [LoggerMessage(
+        EventId = 2007,
+        Level = LogLevel.Information,
+        Message =
+            "Effective Identity:InMemoryUsers:{Index} => Username='{Username}', UserId='{UserId}', Roles='{Roles}', Permissions='{Permissions}', Tenant='{Tenant}'.")]
+    private static partial void LogLoadedInMemoryUser(
+        ILogger logger,
+        int index,
+        string username,
+        string userId,
+        string roles,
+        string permissions,
+        string tenant);
 }

@@ -21,7 +21,7 @@ internal static class MediaTypeEndpoints
 
                 return mediaType is not null ? Results.Json(mediaType) : Results.NotFound();
             })
-            .RequireAuthorization("administration.read").RequireAuthorization("tenant.scoped")
+            .RequireAdministrationReadAccess()
             .WithName("AdministrationGetMediaTypeById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -40,7 +40,7 @@ internal static class MediaTypeEndpoints
 
                 return Results.Json(mediaTypes);
             })
-            .RequireAuthorization("administration.read").RequireAuthorization("tenant.scoped")
+            .RequireAdministrationReadAccess()
             .WithName("GetAllMediaTypes")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)

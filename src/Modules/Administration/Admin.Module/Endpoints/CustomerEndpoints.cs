@@ -21,7 +21,7 @@ internal static class CustomerEndpoints
 
                 return customer is not null ? Results.Json(customer) : Results.NotFound();
             })
-            .RequireAuthorization("administration.read").RequireAuthorization("tenant.scoped")
+            .RequireAdministrationReadAccess()
             .WithName("AdministrationGetCustomerById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -40,7 +40,7 @@ internal static class CustomerEndpoints
 
                 return Results.Json(customers);
             })
-            .RequireAuthorization("administration.read").RequireAuthorization("tenant.scoped")
+            .RequireAdministrationReadAccess()
             .WithName("GetAllCustomers")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -60,7 +60,7 @@ internal static class CustomerEndpoints
 
                 return Results.Json(customers);
             })
-            .RequireAuthorization("administration.read").RequireAuthorization("tenant.scoped")
+            .RequireAdministrationReadAccess()
             .WithName("GetCustomersBySupportRepId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)

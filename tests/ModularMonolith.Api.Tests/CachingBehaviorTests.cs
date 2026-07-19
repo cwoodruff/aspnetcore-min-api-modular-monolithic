@@ -18,7 +18,7 @@ public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task GetAlbum_ShouldReturnCachedResult_OnSubsequentRequests()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -43,7 +43,7 @@ public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task GetGenres_ShouldReturnConsistentResults()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -66,7 +66,7 @@ public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task CreateGenre_WriteShouldNotBeUnauthorized()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -84,7 +84,7 @@ public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task UpdateGenre_WriteShouldNotBeUnauthorized()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -102,7 +102,7 @@ public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task DeleteGenre_WriteShouldNotBeUnauthorized()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -117,7 +117,7 @@ public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task ConcurrentRequests_ShouldNotCauseCacheStampede()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -144,7 +144,7 @@ public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task DifferentEndpoints_ShouldHaveSeparateCaches()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -158,19 +158,19 @@ public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
         if (albumResponse.IsSuccessStatusCode)
         {
             var albumContent = await albumResponse.Content.ReadAsStringAsync();
-            albumContent.Should().Contain("title", "album response should have album structure");
+            albumContent.Should().Contain("\"Title\"", "album response should have album structure");
         }
 
         if (artistResponse.IsSuccessStatusCode)
         {
             var artistContent = await artistResponse.Content.ReadAsStringAsync();
-            artistContent.Should().Contain("name", "artist response should have artist structure");
+            artistContent.Should().Contain("\"Name\"", "artist response should have artist structure");
         }
 
         if (genreResponse.IsSuccessStatusCode)
         {
             var genreContent = await genreResponse.Content.ReadAsStringAsync();
-            genreContent.Should().Contain("name", "genre response should have genre structure");
+            genreContent.Should().Contain("\"Name\"", "genre response should have genre structure");
         }
     }
 }

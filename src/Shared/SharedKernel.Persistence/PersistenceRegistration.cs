@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,24 +14,7 @@ public static class PersistenceRegistration
     public static IServiceCollection AddKernelPersistence(this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString(ConnectionName);
-
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            // Fallback: build absolute path relative to current content root
-            var baseDir = AppContext.BaseDirectory;
-            // Try to locate repo root by walking up until we find a 'data' folder or give up
-            var current = new DirectoryInfo(baseDir);
-            while (current is not null && !Directory.Exists(Path.Combine(current.FullName, "data")))
-            {
-                current = current.Parent;
-            }
-
-            var root = current?.FullName ?? AppContext.BaseDirectory;
-            var dbPath = Path.Combine(root, "data", "chinook.db");
-            Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
-            connectionString = $"Data Source={dbPath}";
-        }
+        var connectionString = ResolveConnectionString(configuration.GetConnectionString(ConnectionName));
 
         services.AddDbContextPool<AppDbContext>(
             (sp, options) =>
@@ -46,5 +30,51 @@ public static class PersistenceRegistration
         services.AddValidatorsFromAssemblyContaining<CustomerValidator>();
 
         return services;
+    }
+
+    private static string ResolveConnectionString(string? configuredConnectionString)
+    {
+        if (!string.IsNullOrWhiteSpace(configuredConnectionString))
+        {
+            var builder = new SqliteConnectionStringBuilder(configuredConnectionString);
+            if (!string.IsNullOrWhiteSpace(builder.DataSource))
+            {
+                var candidatePath = Path.IsPathRooted(builder.DataSource)
+                    ? builder.DataSource
+                    : Path.GetFullPath(builder.DataSource, AppContext.BaseDirectory);
+
+                if (HasUsableDb(candidatePath))
+                {
+                    builder.DataSource = candidatePath;
+                    return builder.ToString();
+                }
+            }
+        }
+
+        var dbPath = FindUsableDatabasePath() ?? Path.Combine(AppContext.BaseDirectory, "data", "chinook.db");
+        Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+        return new SqliteConnectionStringBuilder { DataSource = dbPath }.ToString();
+    }
+
+    private static string? FindUsableDatabasePath()
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current is not null)
+        {
+            var candidate = Path.Combine(current.FullName, "data", "chinook.db");
+            if (HasUsableDb(candidate))
+            {
+                return candidate;
+            }
+
+            current = current.Parent;
+        }
+
+        return null;
+    }
+
+    private static bool HasUsableDb(string path)
+    {
+        return File.Exists(path) && new FileInfo(path).Length > 0;
     }
 }

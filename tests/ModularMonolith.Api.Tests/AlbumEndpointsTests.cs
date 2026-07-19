@@ -38,9 +38,9 @@ public class AlbumEndpointsTests(WebApplicationFactory<Program> factory)
             using var doc = await JsonDocument.ParseAsync(stream);
             var root = doc.RootElement;
 
-            root.TryGetProperty("id", out var idProp).Should().BeTrue();
+            root.TryGetProperty("Id", out var idProp).Should().BeTrue();
             idProp.GetInt32().Should().BeGreaterThan(0);
-            root.TryGetProperty("title", out var titleProp).Should().BeTrue();
+            root.TryGetProperty("Title", out var titleProp).Should().BeTrue();
             titleProp.GetString().Should().NotBeNullOrWhiteSpace();
         }
     }

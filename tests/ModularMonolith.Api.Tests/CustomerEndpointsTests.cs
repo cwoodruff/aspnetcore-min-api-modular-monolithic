@@ -21,7 +21,7 @@ public class CustomerEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task GetCustomerById_ShouldReturn200Shape_WhenAuthorized()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -35,17 +35,33 @@ public class CustomerEndpointsTests(WebApplicationFactory<Program> factory)
             await using var stream = await response.Content.ReadAsStreamAsync();
             using var doc = await JsonDocument.ParseAsync(stream);
             var root = doc.RootElement;
-            root.TryGetProperty("id", out var idProp).Should().BeTrue();
+            root.TryGetProperty("Id", out var idProp).Should().BeTrue();
             idProp.GetInt32().Should().BeGreaterThan(0);
-            root.TryGetProperty("firstName", out var fnProp).Should().BeTrue();
+            root.TryGetProperty("FirstName", out var fnProp).Should().BeTrue();
             fnProp.GetString().Should().NotBeNullOrWhiteSpace();
         }
     }
 
     [Fact]
+    public async Task GetCustomerById_ShouldNotReturn401Or403_WhenConfiguredAdminUserHasRequiredPermissionAndTenant()
+    {
+        var client = factory.WithConfiguredIdentityUsersInDevelopment().CreateClient();
+        var token = await TestAuthHelpers.GetAccessTokenAsync(
+            client,
+            TestAuthHelpers.AdminUser.Username,
+            TestAuthHelpers.AdminUser.Password);
+        client.UseBearer(token, TestAuthHelpers.AdminUser.Tenant);
+
+        var response = await client.GetAsync("/api/admin/customers/1");
+
+        response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
     public async Task GetCustomerById_ShouldReturn404_WhenNotFound()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -56,7 +72,7 @@ public class CustomerEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task GetCustomerById_ShouldReturn403_WhenTenantMismatch()
     {
-        var tenantFactory = _factory.WithTenantUser("tenant-user");
+        var tenantFactory = _factory.WithAdminTenantUser("tenant-user");
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token, "tenant-other");
@@ -67,7 +83,7 @@ public class CustomerEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task GetCustomersBySupportRep_ShouldReturn200_WhenAuthorized()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);

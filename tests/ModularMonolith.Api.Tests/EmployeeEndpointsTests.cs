@@ -21,7 +21,7 @@ public class EmployeeEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task GetEmployeeById_ShouldReturn200Shape_WhenAuthorized()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -35,9 +35,9 @@ public class EmployeeEndpointsTests(WebApplicationFactory<Program> factory)
             await using var stream = await response.Content.ReadAsStreamAsync();
             using var doc = await JsonDocument.ParseAsync(stream);
             var root = doc.RootElement;
-            root.TryGetProperty("id", out var idProp).Should().BeTrue();
+            root.TryGetProperty("Id", out var idProp).Should().BeTrue();
             idProp.GetInt32().Should().BeGreaterThan(0);
-            root.TryGetProperty("firstName", out var fnProp).Should().BeTrue();
+            root.TryGetProperty("FirstName", out var fnProp).Should().BeTrue();
             fnProp.GetString().Should().NotBeNullOrWhiteSpace();
         }
     }
@@ -45,7 +45,7 @@ public class EmployeeEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task GetEmployeeDirectReports_ShouldReturn200_WhenAuthorized()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -56,7 +56,7 @@ public class EmployeeEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task GetEmployeeReportsTo_ShouldReturn403_WhenTenantMismatch()
     {
-        var tenantFactory = _factory.WithTenantUser("tenant-user");
+        var tenantFactory = _factory.WithAdminTenantUser("tenant-user");
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token, "tenant-other");

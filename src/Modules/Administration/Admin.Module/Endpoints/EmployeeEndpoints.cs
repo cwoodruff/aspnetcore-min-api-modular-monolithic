@@ -21,7 +21,7 @@ internal static class EmployeeEndpoints
 
                 return employee is not null ? Results.Json(employee) : Results.NotFound();
             })
-            .RequireAuthorization("administration.read").RequireAuthorization("tenant.scoped")
+            .RequireAdministrationReadAccess()
             .WithName("AdministrationGetEmployeeById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -40,7 +40,7 @@ internal static class EmployeeEndpoints
 
                 return Results.Json(employees);
             })
-            .RequireAuthorization("administration.read").RequireAuthorization("tenant.scoped")
+            .RequireAdministrationReadAccess()
             .WithName("GetAllEmployees")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -60,7 +60,7 @@ internal static class EmployeeEndpoints
 
                 return Results.Json(employees);
             })
-            .RequireAuthorization("administration.read").RequireAuthorization("tenant.scoped")
+            .RequireAdministrationReadAccess()
             .WithName("GetEmployeeDirectReports")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -80,7 +80,7 @@ internal static class EmployeeEndpoints
 
                 return manager is not null ? Results.Json(manager) : Results.NotFound();
             })
-            .RequireAuthorization("administration.read").RequireAuthorization("tenant.scoped")
+            .RequireAdministrationReadAccess()
             .WithName("GetEmployeeReportsTo")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)

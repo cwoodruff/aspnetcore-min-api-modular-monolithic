@@ -311,6 +311,8 @@ credentials.
     - Roles are emitted as standard role claims.
     - The built-in role convenience policy is `role.admin`, which requires the
       `Admin` role.
+    - The Admin module endpoints now require `role.admin` in addition to the
+      appropriate `administration.*` permission.
 - **Permissions**
     - `PolicyRegistry` registers permission policies whose names exactly match
       the claim values in `Permissions`.
@@ -325,6 +327,30 @@ credentials.
     - If no route/header tenant is supplied, the handler implicitly scopes the
       request to the user's own tenant claim.
     - If the token has no `tenant` claim, `tenant.scoped` authorization fails.
+    - There is no hard-coded tenant value for admin users; any tenant string is
+      valid as long as the token's `tenant` claim and any supplied
+      `X-Tenant-Id` header match exactly.
+
+##### Admin module access requirements
+
+- `GET /api/admin/customers`, `GET /api/admin/employees`,
+  `GET /api/admin/genres`, and `GET /api/admin/media-types` currently require:
+    - `Roles` to include `Admin`
+    - `Permissions` to include `administration.read`
+    - `Tenant` to be set so the JWT carries a `tenant` claim
+- `POST`, `PUT`, and `DELETE` genre endpoints currently require:
+    - `Roles` to include `Admin`
+    - `Permissions` to include `administration.write`
+    - `Tenant` to be set
+- `Admin` does not replace `administration.read` or `administration.write`; the
+  current code requires both the role and the matching permission.
+- Keep every field for one user on the same `Identity:InMemoryUsers:<index>`
+  entry. Splitting one account across multiple indexes produces one valid user
+  with partial claims and one ignored incomplete record.
+- On startup in Development/Demo, the app now logs the effective username,
+  userId, roles, permissions, and tenant loaded from each valid in-memory user
+  entry (never the password). If login succeeds but authorization is wrong,
+  check that summary first.
 
 ##### Full user-secrets example
 
@@ -352,6 +378,25 @@ dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUser
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:Email" "admin-demo@example.com"
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:Tenant" "tenant-admin"
 ```
+
+If you only need one admin-capable account, keep the entire user on a single
+index, for example:
+
+```bash
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Username" "admin-demo"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Password" "<choose-a-strong-password>"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:UserId" "user-admin-1"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:DisplayName" "Admin Demo"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Roles:0" "Admin"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Permissions:0" "administration.read"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Permissions:1" "administration.write"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Permissions:2" "admin.users.manage"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Email" "admin-demo@example.com"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Tenant" "tenant-admin"
+```
+
+If you are repurposing an existing index, update or remove every stale key
+under that same index before testing again.
 
 To add more accounts, increment the array index (`0`, `1`, `2`, ...). Nested
 arrays use the same pattern for multi-value fields such as roles and

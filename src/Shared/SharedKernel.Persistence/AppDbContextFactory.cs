@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -20,20 +21,55 @@ public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
         var fromEnv = Environment.GetEnvironmentVariable("ConnectionStrings__AppDatabase");
         if (!string.IsNullOrWhiteSpace(fromEnv))
         {
-            return fromEnv;
+            return NormalizeConnectionString(fromEnv);
         }
 
-        // Otherwise build absolute path to data/chinook.db by walking up to repo root
-        var baseDir = AppContext.BaseDirectory;
-        var current = new DirectoryInfo(baseDir);
-        while (current is not null && !Directory.Exists(Path.Combine(current.FullName, "data")))
+        var dbPath = FindUsableDatabasePath() ?? Path.Combine(AppContext.BaseDirectory, "data", "chinook.db");
+        Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+        return new SqliteConnectionStringBuilder { DataSource = dbPath }.ToString();
+    }
+
+    private static string NormalizeConnectionString(string configuredConnectionString)
+    {
+        var builder = new SqliteConnectionStringBuilder(configuredConnectionString);
+        if (!string.IsNullOrWhiteSpace(builder.DataSource))
         {
+            var candidatePath = Path.IsPathRooted(builder.DataSource)
+                ? builder.DataSource
+                : Path.GetFullPath(builder.DataSource, AppContext.BaseDirectory);
+
+            if (HasUsableDb(candidatePath))
+            {
+                builder.DataSource = candidatePath;
+                return builder.ToString();
+            }
+        }
+
+        var fallbackPath = FindUsableDatabasePath() ?? Path.Combine(AppContext.BaseDirectory, "data", "chinook.db");
+        Directory.CreateDirectory(Path.GetDirectoryName(fallbackPath)!);
+        builder.DataSource = fallbackPath;
+        return builder.ToString();
+    }
+
+    private static string? FindUsableDatabasePath()
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current is not null)
+        {
+            var candidate = Path.Combine(current.FullName, "data", "chinook.db");
+            if (HasUsableDb(candidate))
+            {
+                return candidate;
+            }
+
             current = current.Parent;
         }
 
-        var root = current?.FullName ?? AppContext.BaseDirectory;
-        var dbPath = Path.Combine(root, "data", "chinook.db");
-        Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
-        return $"Data Source={dbPath}";
+        return null;
+    }
+
+    private static bool HasUsableDb(string path)
+    {
+        return File.Exists(path) && new FileInfo(path).Length > 0;
     }
 }

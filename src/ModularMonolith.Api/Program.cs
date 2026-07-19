@@ -66,23 +66,28 @@ var existing = builder.Configuration.GetConnectionString("AppDatabase")
                ?? Environment.GetEnvironmentVariable("ConnectionStrings__AppDatabase");
 if (string.IsNullOrWhiteSpace(existing))
 {
+    static bool HasUsableDb(string path)
+    {
+        return File.Exists(path) && new FileInfo(path).Length > 0;
+    }
+
     static string? TryFindDb(string contentRoot)
     {
         var contentDb = Path.Combine(contentRoot, "data", "chinook.db");
-        if (File.Exists(contentDb))
+        if (HasUsableDb(contentDb))
         {
             return contentDb;
         }
 
         var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null && !Directory.Exists(Path.Combine(current.FullName, "data")))
+        while (current is not null && !HasUsableDb(Path.Combine(current.FullName, "data", "chinook.db")))
         {
             current = current.Parent;
         }
 
         var root = current?.FullName;
         var rootDb = root is not null ? Path.Combine(root, "data", "chinook.db") : null;
-        return rootDb is not null && File.Exists(rootDb) ? rootDb : null;
+        return rootDb is not null && HasUsableDb(rootDb) ? rootDb : null;
     }
 
     var dbPath = TryFindDb(builder.Environment.ContentRootPath);

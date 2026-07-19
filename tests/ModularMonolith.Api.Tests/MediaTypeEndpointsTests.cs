@@ -21,7 +21,7 @@ public class MediaTypeEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task GetMediaTypeById_ShouldReturn200Shape_WhenAuthorized()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -35,9 +35,9 @@ public class MediaTypeEndpointsTests(WebApplicationFactory<Program> factory)
             await using var stream = await response.Content.ReadAsStreamAsync();
             using var doc = await JsonDocument.ParseAsync(stream);
             var root = doc.RootElement;
-            root.TryGetProperty("id", out var idProp).Should().BeTrue();
+            root.TryGetProperty("Id", out var idProp).Should().BeTrue();
             idProp.GetInt32().Should().BeGreaterThan(0);
-            root.TryGetProperty("name", out var nameProp).Should().BeTrue();
+            root.TryGetProperty("Name", out var nameProp).Should().BeTrue();
             nameProp.GetString().Should().NotBeNullOrWhiteSpace();
         }
     }
@@ -45,7 +45,7 @@ public class MediaTypeEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task GetMediaTypes_ShouldReturn200_WhenAuthorized()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);

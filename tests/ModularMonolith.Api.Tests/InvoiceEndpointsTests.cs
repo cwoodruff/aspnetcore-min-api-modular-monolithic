@@ -35,9 +35,9 @@ public class InvoiceEndpointsTests(WebApplicationFactory<Program> factory)
             await using var stream = await response.Content.ReadAsStreamAsync();
             using var doc = await JsonDocument.ParseAsync(stream);
             var root = doc.RootElement;
-            root.TryGetProperty("id", out var idProp).Should().BeTrue();
+            root.TryGetProperty("Id", out var idProp).Should().BeTrue();
             idProp.GetInt32().Should().BeGreaterThan(0);
-            root.TryGetProperty("total", out var totalProp).Should().BeTrue();
+            root.TryGetProperty("Total", out var totalProp).Should().BeTrue();
             totalProp.GetDecimal().Should().BeGreaterThan(0);
         }
     }

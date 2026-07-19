@@ -16,3 +16,8 @@
 - Tightened module boundaries by changing implementation types to `internal` across Music, Orders, Administration, Reporting, and Identity while preserving public composition entry points.
 - Added `InternalsVisibleTo` only for legitimate test projects and introduced `tests/ModularMonolith.Architecture.Tests/PublicSurfaceTests.cs` to guard exported module surfaces.
 - Validation finished cleanly with `dotnet build` and `dotnet test` passing (179/179).
+
+## 2026-07-19T09:01:58-04:00
+- Took over a lead escalation after two earlier auth fixes did not fully resolve Chris's persistent local 403 on `/api/admin/customers`.
+- Verified the auth pipeline end-to-end, confirmed the remaining live failure was stale split local `Identity:InMemoryUsers` config rather than a claim-type or policy mismatch, and added startup logging to surface the effective loaded claims.
+- Fixed missing `role.admin` enforcement across admin endpoints and finished with `dotnet build` plus `dotnet test` passing (244/244).

@@ -71,6 +71,7 @@ public static class TestAuthHelpers
             builder.UseEnvironment("Development");
             builder.ConfigureAppConfiguration((_, config) =>
             {
+                config.AddInMemoryCollection(BuildPersistenceConfiguration());
                 config.AddInMemoryCollection(BuildIdentityUserConfiguration(users));
             });
             builder.ConfigureServices(services =>
@@ -95,6 +96,7 @@ public static class TestAuthHelpers
             builder.UseEnvironment("Production");
             builder.ConfigureAppConfiguration((_, config) =>
             {
+                config.AddInMemoryCollection(BuildPersistenceConfiguration());
                 config.AddInMemoryCollection(BuildIdentityUserConfiguration(users));
             });
         });
@@ -110,6 +112,7 @@ public static class TestAuthHelpers
             builder.UseEnvironment("Development");
             builder.ConfigureAppConfiguration((_, config) =>
             {
+                config.AddInMemoryCollection(BuildPersistenceConfiguration());
                 config.AddInMemoryCollection(BuildIdentityUserConfiguration(users));
             });
         });
@@ -118,11 +121,15 @@ public static class TestAuthHelpers
     public static WebApplicationFactory<Program> WithTenantUser(this WebApplicationFactory<Program> factory,
         string tenantId = "tenant-123", string[]? permissions = null, string[]? roles = null)
     {
-        permissions ??= new[] { "music.read", "orders.read", "administration.read" };
+        permissions ??= new[] { "music.read", "orders.read" };
         roles ??= new[] { "User" };
 
         return factory.WithWebHostBuilder(builder =>
         {
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(BuildPersistenceConfiguration());
+            });
             builder.ConfigureServices(services =>
             {
                 var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IUserStore));
@@ -134,6 +141,22 @@ public static class TestAuthHelpers
                 services.AddSingleton<IUserStore>(new TenantUserStore(tenantId, roles, permissions));
             });
         });
+    }
+
+    public static WebApplicationFactory<Program> WithAdminTenantUser(this WebApplicationFactory<Program> factory,
+        string tenantId = "tenant-123", string[]? permissions = null, string[]? roles = null)
+    {
+        permissions ??=
+        [
+            Permissions.MusicRead,
+            Permissions.OrdersRead,
+            Permissions.AdminUsersManage,
+            Permissions.AdministrationRead,
+            Permissions.AdministrationWrite
+        ];
+        roles ??= ["Admin"];
+
+        return factory.WithTenantUser(tenantId, permissions, roles);
     }
 
     public static async Task<string> GetAccessTokenAsync(HttpClient client, string? username = null,
@@ -287,5 +310,42 @@ public static class TestAuthHelpers
         }
 
         return configuration;
+    }
+
+    private static Dictionary<string, string?> BuildPersistenceConfiguration()
+    {
+        var root = FindRepositoryRoot();
+        var sourceDbPath = Path.Combine(root, "src", "ModularMonolith.Api", "data", "chinook.db");
+        var testDataDirectory = Path.Combine(AppContext.BaseDirectory, "TestData");
+        Directory.CreateDirectory(testDataDirectory);
+
+        var dbPath = Path.Combine(testDataDirectory, $"chinook-{Guid.NewGuid():N}.db");
+        using (var source = new FileStream(sourceDbPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        using (var destination = new FileStream(dbPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+        {
+            source.CopyTo(destination);
+        }
+
+        return new Dictionary<string, string?>
+        {
+            ["ConnectionStrings:AppDatabase"] = $"Data Source={dbPath}"
+        };
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (current is not null)
+        {
+            if (File.Exists(Path.Combine(current.FullName, "ModularMonolith.Api.sln")))
+            {
+                return current.FullName;
+            }
+
+            current = current.Parent;
+        }
+
+        throw new InvalidOperationException("Could not locate repository root for test database configuration.");
     }
 }

@@ -21,7 +21,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task ConcurrentCreates_ShouldNotReturnUnauthorized()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -49,7 +49,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task PatchGenre_ShouldReturn405_MethodNotAllowed()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -74,7 +74,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task CreateGenre_ShouldReturnError_WhenJsonIsMalformed()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -91,7 +91,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task CreateGenre_ShouldReturnError_WhenJsonIsIncomplete()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -108,7 +108,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task CreateGenre_ShouldReturnError_WhenBodyIsEmpty()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -140,7 +140,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task CreateGenre_ShouldReturnError_WhenNameIsMissing()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -157,7 +157,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task CreateGenre_ShouldReturnError_WhenNameIsNull()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -173,7 +173,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task CreateGenre_ShouldNotBeUnauthorized_WithWhitespaceOnlyName()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -189,7 +189,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task UpdateGenre_ShouldNotBeUnauthorized_WhenNameTooLong()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -210,7 +210,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task CreateGenre_ShouldReturn415_WhenContentTypeIsWrong()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -228,7 +228,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task CreateGenre_ShouldNotBeUnauthorized_WhenContentTypeHasCharset()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -252,7 +252,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task GetGenre_ShouldReturn404_WhenIdIsNegative()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -267,7 +267,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task GetGenre_ShouldReturn404_WhenIdIsZero()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -281,7 +281,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task GetGenre_ShouldReturn404_WhenIdIsNonNumeric()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -295,7 +295,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task GetGenre_ShouldReturn404_WhenIdIsVeryLarge()
     {
-        var tenantFactory = _factory.WithTenantUser();
+        var tenantFactory = _factory.WithAdminTenantUser();
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);

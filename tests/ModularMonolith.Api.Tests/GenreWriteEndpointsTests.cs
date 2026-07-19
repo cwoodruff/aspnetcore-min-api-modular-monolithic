@@ -31,7 +31,7 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
     public async Task CreateGenre_ShouldReturn403_WhenNoWritePermission()
     {
         // User with only read permission
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -45,7 +45,7 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task CreateGenre_ShouldHandleRequest_WhenAuthorizedWithWritePermission()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -69,14 +69,14 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
         {
             response.Headers.Location.Should().NotBeNull();
             var content = await response.Content.ReadFromJsonAsync<JsonElement>();
-            content.GetProperty("id").GetInt32().Should().BeGreaterThan(0);
+            content.GetProperty("Id").GetInt32().Should().BeGreaterThan(0);
         }
     }
 
     [Fact]
     public async Task CreateGenre_ShouldHandleEmptyName()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -92,7 +92,7 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task CreateGenre_ShouldHandleNameTooLong()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -123,7 +123,7 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task UpdateGenre_ShouldReturn403_WhenNoWritePermission()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -137,7 +137,7 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task UpdateGenre_ShouldHandleRequest_WhenAuthorized()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -155,7 +155,7 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task UpdateGenre_ShouldNotBeUnauthorized_WhenNotExists()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -170,7 +170,7 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task UpdateGenre_ShouldNotBeUnauthorized_WhenNameIsEmpty()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -197,7 +197,7 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task DeleteGenre_ShouldReturn403_WhenNoWritePermission()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -209,7 +209,7 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task DeleteGenre_ShouldHandleRequest_WhenAuthorized()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
@@ -224,7 +224,7 @@ public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task DeleteGenre_ShouldNotBeUnauthorized_WhenNotExists()
     {
-        var tenantFactory = _factory.WithTenantUser(permissions: ["administration.read", "administration.write"]);
+        var tenantFactory = _factory.WithAdminTenantUser(permissions: ["administration.read", "administration.write"]);
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
