@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "toolVersion": "0.8.0",
+  "snapshot": {
+    "totalProjects": 12,
+    "totalFiles": 138,
+    "primaryPathFileCount": 53,
+    "abstractionLayerCount": 33,
+    "externalDependencyCount": 11,
+    "unusedDependencyCount": 2,
+    "interfacesWithSingleImplementation": 28,
+    "averageMethodComplexity": 2.4208333333333334,
+    "estimatedOnboardingTime": null,
+    "collectedAt": "2026-08-13T13:54:04.519677+00:00"
+  }
+}
