@@ -384,9 +384,9 @@ credentials.
   entry. Splitting one account across multiple indexes produces one valid user
   with partial claims and one ignored incomplete record.
 - On startup in Development/Demo, the app now logs the effective username,
-  userId, roles, permissions, and tenant loaded from each valid in-memory user
-  entry (never the password). If login succeeds but authorization is wrong,
-  check that summary first.
+  userId, roles, permissions, tenant, and password length loaded from each valid
+  in-memory user entry (the password value itself is never logged). If login
+  succeeds but authorization is wrong, check that summary first.
 
 ##### Full user-secrets example
 
@@ -443,6 +443,51 @@ dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUser
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:2:Permissions:0" "orders.read"
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:2:Permissions:1" "orders.write"
 ```
+
+##### Troubleshooting 401 responses from `/api/identity/login`
+
+A 401 from the login endpoint means the in-memory store found no user whose
+username and password both match the request. The store compares the configured
+password to the submitted password exactly, so any stray character stored in the
+secret causes a mismatch.
+
+Check what is actually stored:
+
+```bash
+dotnet user-secrets --project src/ModularMonolith.Api list
+```
+
+A common cause is a shell paste accident, where the password and the next
+command end up on the same line and are stored as a single value:
+
+```text
+Identity:InMemoryUsers:0:Password = hunter2curl -s localhost:5043/api/music/data-health
+```
+
+The startup log makes this visible without printing the secret. In
+Development/Demo each loaded entry logs as:
+
+```text
+Effective Identity:InMemoryUsers:0 => Username='demo', UserId='user-1', Roles='User', Permissions='music.read', Tenant='tenant-1', PasswordLength=8.
+```
+
+If `PasswordLength` does not match the password you are typing, re-set the
+secret and quote the value so nothing else can join the line:
+
+```bash
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Password" '<choose-a-strong-password>'
+```
+
+Other things to confirm when login returns 401:
+
+- The app is running with `ASPNETCORE_ENVIRONMENT` set to `Development` or
+  `Demo`. Outside those environments the in-memory store is replaced by a
+  disabled store that rejects every credential, and the startup log warns that
+  the configured entries are ignored.
+- The entry is complete. `Username`, `Password`, and `UserId` are all required;
+  an entry missing any of them is skipped with a warning naming the index.
+- The app was restarted after the secrets changed. User secrets are read at
+  startup only.
 
 ##### Security model
 

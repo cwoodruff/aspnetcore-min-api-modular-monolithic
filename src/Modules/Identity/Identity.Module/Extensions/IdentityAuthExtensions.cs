@@ -258,7 +258,8 @@ internal sealed partial class InMemoryUserStoreDiagnosticsHostedService(
                     validUser.User.UserId.Trim(),
                     FormatValues(validUser.User.Roles),
                     FormatValues(validUser.User.Permissions),
-                    string.IsNullOrWhiteSpace(validUser.User.Tenant) ? "(none)" : validUser.User.Tenant.Trim());
+                    string.IsNullOrWhiteSpace(validUser.User.Tenant) ? "(none)" : validUser.User.Tenant.Trim(),
+                    validUser.User.Password.Length);
 #pragma warning restore CA1873
             }
         }
@@ -358,7 +359,7 @@ internal sealed partial class InMemoryUserStoreDiagnosticsHostedService(
         EventId = 2007,
         Level = LogLevel.Information,
         Message =
-            "Effective Identity:InMemoryUsers:{Index} => Username='{Username}', UserId='{UserId}', Roles='{Roles}', Permissions='{Permissions}', Tenant='{Tenant}'.")]
+            "Effective Identity:InMemoryUsers:{Index} => Username='{Username}', UserId='{UserId}', Roles='{Roles}', Permissions='{Permissions}', Tenant='{Tenant}', PasswordLength={PasswordLength}.")]
     private static partial void LogLoadedInMemoryUser(
         ILogger logger,
         int index,
@@ -366,5 +367,6 @@ internal sealed partial class InMemoryUserStoreDiagnosticsHostedService(
         string userId,
         string roles,
         string permissions,
-        string tenant);
+        string tenant,
+        int passwordLength);
 }
