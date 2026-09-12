@@ -14,10 +14,10 @@ namespace ModularMonolith.Api.Tests;
 ///         should contain, so a test or a manual probe that writes to it can be committed unnoticed.
 ///     </para>
 ///     <para>
-///         That is not hypothetical. The copy at the repository root has had exactly that happen: it
-///         carries eight leftover rows, including <c>Genre</c> 1 renamed from <c>Rock</c> to
-///         <c>Updated_&lt;guid&gt;</c>. These tests cover the copy the host actually reads, which is
-///         still clean; see the note on <see cref="RepositoryRootCopyIsOutOfScope" />.
+///         That is not hypothetical. The repository used to track a second copy at its root which had
+///         exactly that happen — eight leftover rows, including <c>Genre</c> 1 renamed from
+///         <c>Rock</c> to <c>Updated_&lt;guid&gt;</c>. It has since been removed and the leak that
+///         fed it closed; see the note on <see cref="TheRepositoryRootCarriesNoSecondCopy" />.
 ///     </para>
 ///     <para>
 ///         A failure here means the committed database has been modified. Restore it rather than
@@ -47,8 +47,9 @@ public class SeedDatabaseIntegrityTests
     ///     row tends to take.
     /// </summary>
     /// <remarks>
-    ///     The eight rows in the polluted copy are named <c>Updated_</c>, <c>CacheTest_</c>,
-    ///     <c>TestGenre_</c>, <c>Concurrent_</c> and <c>CharsetTest_</c>, each with a GUID suffix.
+    ///     The eight rows the removed root copy had collected were named <c>Updated_</c>,
+    ///     <c>CacheTest_</c>, <c>TestGenre_</c>, <c>Concurrent_</c> and <c>CharsetTest_</c>, each with
+    ///     a GUID suffix.
     /// </remarks>
     public static readonly TheoryData<string, string> ArtifactPatterns = new()
     {
@@ -157,35 +158,37 @@ public class SeedDatabaseIntegrityTests
     }
 
     /// <summary>
-    ///     The repository also tracks <c>data/chinook.db</c> at its root, which the host never opens
-    ///     and which already carries test leftovers. These tests deliberately do not cover it, so that
-    ///     they pass today.
+    ///     The repository used to track a second copy at <c>data/chinook.db</c>, which the host never
+    ///     opened and which carried test leftovers. It has been removed, and this keeps it gone.
     /// </summary>
     /// <remarks>
     ///     <para>
-    ///         That copy is not merely stale — the suite writes to it on every run. A test class that
-    ///         uses a bare <c>WebApplicationFactory&lt;Program&gt;</c>, rather than one of the
-    ///         <c>TestAuthHelpers</c> factories, never receives <c>BuildPersistenceConfiguration()</c>,
-    ///         so the host falls back to <c>PersistenceRegistration.ResolveConnectionString</c>. Its
-    ///         <c>FindUsableDatabasePath()</c> walks up from <c>AppContext.BaseDirectory</c> — the test
-    ///         bin directory — and the first <c>data/chinook.db</c> it finds is the one at the
-    ///         repository root.
+    ///         That copy was not merely stale — the suite wrote to it on every run, and the isolation
+    ///         meant to prevent that never took effect. <c>AddKernelPersistence</c> resolved the
+    ///         connection string at registration time, before <c>WebApplicationFactory</c> had applied
+    ///         the <c>ConfigureAppConfiguration</c> hook that points each test at its own copy under
+    ///         <c>TestData</c>. The value it did see was the relative <c>./data/chinook.db</c> from
+    ///         appsettings.json, which resolves to nothing under the test bin directory, so
+    ///         <c>ResolveConnectionString</c> fell through to <c>FindUsableDatabasePath()</c> — and the
+    ///         first <c>data/chinook.db</c> that walk found was the one at the repository root. The
+    ///         per-test copies were created and then never opened.
     ///     </para>
     ///     <para>
-    ///         Running <c>dotnet test --filter "FullyQualifiedName~GenreWrite"</c> against a clean tree
-    ///         changes that file's checksum, and the rows it leaves behind carry the same
-    ///         <c>CacheTest_</c>, <c>Concurrent_</c> and <c>CharsetTest_</c> names already committed
-    ///         there. Covering it here would fail until the leak is closed and the file restored.
+    ///         The connection string is now read from the built host's configuration, so those copies
+    ///         are used. Removing the root file matters independently of that fix: it is what the
+    ///         fallback search finds whenever configuration does not resolve, so putting a database
+    ///         back at the repository root would hand any future such gap a tracked file to write to.
     ///     </para>
     /// </remarks>
     [Fact]
-    public void RepositoryRootCopyIsOutOfScope()
+    public void TheRepositoryRootCarriesNoSecondCopy()
     {
         var rootCopy = Path.Combine(FindRepositoryRoot(), "data", "chinook.db");
 
-        // Asserts nothing about its contents on purpose — only that the seed these tests guard is a
-        // different file from it.
-        rootCopy.Should().NotBe(SeedDatabasePath());
+        File.Exists(rootCopy).Should().BeFalse(
+            "a database at the repository root is what the persistence fallback finds when " +
+            "configuration does not resolve, and the copy that used to sit there collected writes " +
+            "from every test run");
     }
 
     private static SqliteConnection OpenSeedDatabase()

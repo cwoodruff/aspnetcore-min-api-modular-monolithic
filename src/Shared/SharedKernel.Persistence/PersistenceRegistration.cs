@@ -14,11 +14,16 @@ public static class PersistenceRegistration
     public static IServiceCollection AddKernelPersistence(this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = ResolveConnectionString(configuration.GetConnectionString(ConnectionName));
-
         services.AddDbContextPool<AppDbContext>(
             (sp, options) =>
             {
+                // Read from the provider rather than the captured configuration: sources added after
+                // registration — WebApplicationFactory.ConfigureAppConfiguration, which is how the
+                // tests point the host at their own copy — reach only the built host's configuration.
+                var hostConfiguration = sp.GetService<IConfiguration>() ?? configuration;
+                var connectionString =
+                    ResolveConnectionString(hostConfiguration.GetConnectionString(ConnectionName));
+
                 options.UseSqlite(connectionString,
                     sqlite => { sqlite.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName); });
             }, 128);
