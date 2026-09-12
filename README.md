@@ -569,11 +569,12 @@ Notes
 
 - EF Core plan (single SQLite DbContext shared by all modules): see
   docs/EFCore-Plan.md
-- Database file location: The app prefers
-  src/ModularMonolith.Api/data/chinook.db (under the host content root) and
-  falls back to repo-root /data/chinook.db if not found. At startup, Program.cs
-  auto-detects the file and populates ConnectionStrings:AppDatabase when not
-  provided.
+- Database file location: The app uses src/ModularMonolith.Api/data/chinook.db,
+  under the host content root. If that file is missing, the resolver walks up
+  the directory tree for any data/chinook.db; the repository deliberately no
+  longer keeps one at its root, because that fallback is what the test suite
+  used to end up writing to. At startup, Program.cs auto-detects the file and
+  populates ConnectionStrings:AppDatabase when not provided.
 
 ### DbContext pooling and Repository pattern
 
