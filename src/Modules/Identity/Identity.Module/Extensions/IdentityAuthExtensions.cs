@@ -219,6 +219,16 @@ internal sealed partial class InMemoryUserStoreDiagnosticsHostedService(
             return Task.CompletedTask;
         }
 
+        // Report each incomplete entry before the no-valid-users early return, so a first-time setup
+        // where every entry is incomplete still names the index and the missing field(s).
+        foreach (var invalidUser in invalidUsers)
+        {
+            LogIncompleteInMemoryUserEntry(
+                logger,
+                invalidUser.Index,
+                string.Join(", ", invalidUser.MissingRequiredFields));
+        }
+
         if (validCount == 0)
         {
             if (configuredCount == 0)
@@ -235,14 +245,6 @@ internal sealed partial class InMemoryUserStoreDiagnosticsHostedService(
 
         if (ignoredCount > 0)
         {
-            foreach (var invalidUser in invalidUsers)
-            {
-                LogIncompleteInMemoryUserEntry(
-                    logger,
-                    invalidUser.Index,
-                    string.Join(", ", invalidUser.MissingRequiredFields));
-            }
-
             LogIgnoredIncompleteInMemoryUsers(logger, validCount, ignoredCount);
         }
 
