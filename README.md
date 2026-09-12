@@ -387,6 +387,10 @@ credentials.
   userId, roles, permissions, tenant, and password length loaded from each valid
   in-memory user entry (the password value itself is never logged). If login
   succeeds but authorization is wrong, check that summary first.
+- Any entry that is missing `Username`, `Password`, or `UserId` is reported
+  separately as a warning naming its index and missing field(s), so a split or
+  half-finished account is visible at startup rather than at login time. See
+  [Troubleshooting 401 responses](#troubleshooting-401-responses-from-apiidentitylogin).
 
 ##### Full user-secrets example
 
@@ -484,8 +488,20 @@ Other things to confirm when login returns 401:
   `Demo`. Outside those environments the in-memory store is replaced by a
   disabled store that rejects every credential, and the startup log warns that
   the configured entries are ignored.
-- The entry is complete. `Username`, `Password`, and `UserId` are all required;
-  an entry missing any of them is skipped with a warning naming the index.
+- The entry is complete. `Username`, `Password`, and `UserId` are all required.
+  An entry missing any of them is skipped, and startup logs one warning per bad
+  entry naming the index and every missing field:
+
+  ```text
+  Ignoring Identity:InMemoryUsers:1 because it is missing required field(s): Password. Keep Username, Password, UserId, Roles, Permissions, Email, and Tenant for one account on the same array index.
+  ```
+
+  These per-index warnings are emitted whenever the app starts in
+  Development/Demo, including when no entry is usable at all, so a first-time
+  setup always shows which index needs fixing. They are followed by a summary
+  line: `Loaded 2 in-memory login users and ignored 1 incomplete ...` when at
+  least one entry loaded, or `none of the N configured Identity:InMemoryUsers
+  entries are usable` when none did.
 - The app was restarted after the secrets changed. User secrets are read at
   startup only.
 
