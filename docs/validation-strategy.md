@@ -66,10 +66,10 @@ src/Shared/SharedKernel.Persistence/Validation/
 | `EmployeeValidator` | `EmployeeApiModel` | Administration |
 | `GenreValidator` | `GenreApiModel` | Administration |
 | `MediaTypeValidator` | `MediaTypeApiModel` | Administration |
-| `ArtistValidator` | `ArtistApiModel` | Music |
-| `AlbumValidator` | `AlbumApiModel` | Music |
-| `TrackValidator` | `TrackApiModel` | Music |
-| `PlaylistValidator` | `PlaylistApiModel` | Music |
+| `ArtistValidator` | `ArtistApiModel` | Catalog |
+| `AlbumValidator` | `AlbumApiModel` | Catalog |
+| `TrackValidator` | `TrackApiModel` | Catalog |
+| `PlaylistValidator` | `PlaylistApiModel` | Catalog |
 | `InvoiceValidator` | `InvoiceApiModel` | Orders |
 | `InvoiceLineValidator` | `InvoiceLineApiModel` | Orders |
 

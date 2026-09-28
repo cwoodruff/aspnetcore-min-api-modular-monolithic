@@ -7,11 +7,11 @@ using SharedKernel;
 using SharedKernel.Persistence;
 using SharedKernel.TrafficControl;
 
-namespace Music.Modules.Endpoints;
+namespace Catalog.Modules.Endpoints;
 
-internal static class MusicDataHealthEndpoints
+internal static class CatalogDataHealthEndpoints
 {
-    public static void MapMusicDataHealthEndpoints(this IEndpointRouteBuilder group)
+    public static void MapCatalogDataHealthEndpoints(this IEndpointRouteBuilder group)
     {
         group.MapGet("/data-health",
                 async (AppDbContext db, IHostEnvironment env, IConfiguration cfg, CancellationToken ct) =>
@@ -33,7 +33,7 @@ internal static class MusicDataHealthEndpoints
                     {
                         return Results.Json(new
                         {
-                            module = "Music",
+                            module = "Catalog",
                             status,
                             timestampUtc
                         });
@@ -41,19 +41,19 @@ internal static class MusicDataHealthEndpoints
 
                     var response = new
                     {
-                        module = "Music",
+                        module = "Catalog",
                         status,
                         timestampUtc,
                         environment = BuildInfoProvider.GetEnvironment(env),
-                        version = BuildInfoProvider.GetInformationalVersion(typeof(MusicModule).Assembly),
+                        version = BuildInfoProvider.GetInformationalVersion(typeof(CatalogModule).Assembly),
                         service = BuildInfoProvider.GetServiceName(cfg),
                         database = new { connected = canConnect }
                     };
                     return Results.Json(response);
                 })
-            .WithName("MusicDataHealth")
+            .WithName("CatalogDataHealth")
             .Produces(200)
-            .WithTags("Music")
+            .WithTags("Catalog")
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }

@@ -6,11 +6,11 @@ using Microsoft.Extensions.Hosting;
 using SharedKernel;
 using SharedKernel.TrafficControl;
 
-namespace Music.Modules.Endpoints;
+namespace Catalog.Modules.Endpoints;
 
-internal static class MusicHealthEndpoints
+internal static class CatalogHealthEndpoints
 {
-    public static void MapMusicHealthEndpoints(this IEndpointRouteBuilder group)
+    public static void MapCatalogHealthEndpoints(this IEndpointRouteBuilder group)
     {
         group.MapGet("/health", (IHostEnvironment env, IConfiguration cfg) =>
             {
@@ -20,7 +20,7 @@ internal static class MusicHealthEndpoints
                 {
                     return Results.Json(new
                     {
-                        module = "Music",
+                        module = "Catalog",
                         status = "Healthy",
                         timestampUtc
                     });
@@ -28,18 +28,18 @@ internal static class MusicHealthEndpoints
 
                 var response = new
                 {
-                    module = "Music",
+                    module = "Catalog",
                     status = "Healthy",
                     timestampUtc,
                     environment = BuildInfoProvider.GetEnvironment(env),
-                    version = BuildInfoProvider.GetInformationalVersion(typeof(MusicModule).Assembly),
+                    version = BuildInfoProvider.GetInformationalVersion(typeof(CatalogModule).Assembly),
                     service = BuildInfoProvider.GetServiceName(cfg)
                 };
                 return Results.Json(response);
             })
-            .WithName("MusicHealth")
+            .WithName("CatalogHealth")
             .Produces(200)
-            .WithTags("Music")
+            .WithTags("Catalog")
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }

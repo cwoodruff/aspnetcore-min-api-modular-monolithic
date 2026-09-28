@@ -107,7 +107,7 @@ public class RateLimitingTests(WebApplicationFactory<Program> factory)
 
         for (var i = 0; i < totalRequests; i++)
         {
-            tasks.Add(client.GetAsync("/api/music/albums/1"));
+            tasks.Add(client.GetAsync("/api/catalog/albums/1"));
         }
 
         var responses = await Task.WhenAll(tasks);
@@ -157,8 +157,8 @@ public class RateLimitingTests(WebApplicationFactory<Program> factory)
         client2.UseBearer(token2, "tenant-2");
 
         // Each user sends some requests - should both succeed if under individual limits
-        var tasks1 = Enumerable.Range(0, 5).Select(_ => client1.GetAsync("/api/music/albums/1")).ToList();
-        var tasks2 = Enumerable.Range(0, 5).Select(_ => client2.GetAsync("/api/music/albums/1")).ToList();
+        var tasks1 = Enumerable.Range(0, 5).Select(_ => client1.GetAsync("/api/catalog/albums/1")).ToList();
+        var tasks2 = Enumerable.Range(0, 5).Select(_ => client2.GetAsync("/api/catalog/albums/1")).ToList();
 
         var responses1 = await Task.WhenAll(tasks1);
         var responses2 = await Task.WhenAll(tasks2);

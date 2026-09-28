@@ -2,7 +2,7 @@ using FluentAssertions;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Music.Modules.Services;
+using Catalog.Modules.Services;
 using NSubstitute;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
@@ -10,7 +10,7 @@ using SharedKernel.Persistence.Entities;
 using SharedKernel.Persistence.Repositories;
 using Xunit;
 
-namespace ModularMonolith.Services.Tests.Music;
+namespace ModularMonolith.Services.Tests.Catalog;
 
 public class AlbumServiceTests
 {
@@ -28,7 +28,7 @@ public class AlbumServiceTests
             .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
 
         _service = new AlbumService(_repo, _cache, _keys, _validator, _logger);
-        
+
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
     }
@@ -39,11 +39,11 @@ public class AlbumServiceTests
         // Arrange
         var model = new AlbumApiModel { Title = "" };
         var ct = CancellationToken.None;
-        
+
         _validator.ValidateAsync(Arg.Any<AlbumApiModel>(), ct)
-            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult(new[] 
-            { 
-                new FluentValidation.Results.ValidationFailure("Title", "Title is required") 
+            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult(new[]
+            {
+                new FluentValidation.Results.ValidationFailure("Title", "Title is required")
             })));
 
         // Act & Assert
@@ -68,7 +68,7 @@ public class AlbumServiceTests
         result.Should().NotBeNull();
         result!.Title.Should().Be("Big Ones");
         await _repo.Received(1).Add(Arg.Is<Album>(a => a != null && a.Title == "Big Ones"));
-        await _cache.Received(1).RemoveByTagAsync("music:album", ct);
+        await _cache.Received(1).RemoveByTagAsync("catalog:album", ct);
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class AlbumServiceTests
         // Assert
         result.Should().BeTrue();
         await _repo.Received(1).Update(Arg.Is<Album>(a => a != null && a.Id == 1 && a.Title == "Big Ones"));
-        await _cache.Received(1).RemoveByTagAsync("music:album", ct);
+        await _cache.Received(1).RemoveByTagAsync("catalog:album", ct);
         await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
     }
 
@@ -113,9 +113,9 @@ public class AlbumServiceTests
         var artistId = 1;
         var ct = CancellationToken.None;
         var entities = new List<Album> { new() { Id = 1, Title = "Big Ones", ArtistId = artistId } };
-        
+
         _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<IEnumerable<object>>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(async callInfo => 
+            .Returns(async callInfo =>
             {
                 var factory = callInfo.ArgAt<Func<CancellationToken, Task<IEnumerable<object>>>>(1);
                 return await factory(ct);

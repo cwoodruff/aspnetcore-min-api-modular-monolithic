@@ -15,7 +15,7 @@
         <ProjectReference Include="..\Shared\SharedKernel.DataSQLite\SharedKernel.DataSQLite.csproj"/>
         <ProjectReference Include="..\Shared\SharedKernel\SharedKernel.csproj"/>
         <ProjectReference Include="..\Shared\SharedKernel.Persistence\SharedKernel.Persistence.csproj"/>
-        <ProjectReference Include="..\Modules\Music\Music.Module\Music.Module.csproj"/>
+        <ProjectReference Include="..\Modules\Catalog\Catalog.Module\Catalog.Module.csproj" />
         <ProjectReference Include="..\Modules\Orders\Orders.Module\Orders.Module.csproj"/>
         <ProjectReference Include="..\Modules\Administration\Admin.Module\Admin.Module.csproj"/>
         <ProjectReference Include="..\Modules\Reporting\Reporting.Module\Reporting.Module.csproj"/>

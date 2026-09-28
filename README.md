@@ -13,7 +13,7 @@ docs/Walkthrough.md.
 /src
   /ModularMonolith.Api                     (ASP.NET Core 10 Web API host, Minimal APIs)
   /Modules
-    /Music/Music.Module                    (Class Library)
+    /Catalog/Catalog.Module                    (Class Library)
       /Services                            (IArtistService, IAlbumService, ITrackService, IPlaylistService)
       /Endpoints                           (ArtistEndpoints, AlbumEndpoints, TrackEndpoints, etc.)
     /Orders/Orders.Module                  (Class Library)
@@ -41,7 +41,7 @@ docs/Walkthrough.md.
       /Repositories                        (AlbumRepository, ArtistRepository, BaseRepository<T>)
 /tests
   /ModularMonolith.Api.Tests               (xUnit integration tests using WebApplicationFactory)
-  /ModularMonolith.Services.Tests          (xUnit service-layer tests for Music, Orders, and Administration)
+  /ModularMonolith.Services.Tests          (xUnit service-layer tests for Catalog, Orders, and Administration)
   /ModularMonolith.Architecture.Tests      (Architecture tests, including module public-surface enforcement)
 ```
 
@@ -61,7 +61,7 @@ public interface IModule
 Each module exposes public composition entry points only: a public static
 <ModuleName>Module with a nested public sealed class Modules : IModule that
 registers services and maps endpoints (note the plural "Modules", e.g.,
-MusicModule.Modules). The Identity module also exposes
+CatalogModule.Modules). The Identity module also exposes
 `IdentityAuthExtensions` for host wiring. Implementation types stay internal by
 default, and `tests/ModularMonolith.Architecture.Tests/PublicSurfaceTests.cs`
 locks that boundary by asserting each module assembly exports only its intended
@@ -121,7 +121,7 @@ public sealed class CustomerService(
 | Module         | Services                                                         |
 |----------------|------------------------------------------------------------------|
 | Administration | CustomerService, EmployeeService, GenreService, MediaTypeService |
-| Music          | ArtistService, AlbumService, TrackService, PlaylistService       |
+| Catalog          | ArtistService, AlbumService, TrackService, PlaylistService       |
 | Orders         | InvoiceService, InvoiceLineService                               |
 | Identity       | TokenService, InMemoryUserStore, InMemoryRefreshTokenStore       |
 
@@ -164,8 +164,8 @@ documentation.
 The host discovers all modules and composes their endpoints under conventional
 groups:
 
-- GET /api/music/health
-- GET /api/music/data-health
+- GET /api/catalog/health
+- GET /api/catalog/data-health
 - GET /api/orders/health
 - GET /api/orders/data-health
 - GET /api/admin/health
@@ -216,7 +216,7 @@ Swagger/OpenAPI and the extra operational metadata are only exposed in
       `ModularMonolith.Architecture.Tests`.
     - Test coverage examples include root and per-module health/data-health
       gating, validation `ProblemDetails`, authenticated flows (e.g., obtaining
-      a JWT and calling protected Music endpoints), admin authorization, and
+      a JWT and calling protected Catalog endpoints), admin authorization, and
       module public-surface enforcement.
     - The host exposes a public partial Program class to support
       Microsoft.AspNetCore.Mvc.Testing’s WebApplicationFactory.
@@ -224,7 +224,7 @@ Swagger/OpenAPI and the extra operational metadata are only exposed in
 ### Example curl commands
 
 ```
-curl http://localhost:5043/api/music/health
+curl http://localhost:5043/api/catalog/health
 curl http://localhost:5043/api/orders/health
 curl http://localhost:5043/api/admin/health
 curl http://localhost:5043/api/reporting/health
@@ -303,7 +303,7 @@ app.MapGet("/api/reporting/exports", Handler)
       automatically.
     - In-memory login is only enabled in the `Development` or `Demo`
       environment when `Identity:InMemoryUsers` is configured.
-- Once authorized, protected endpoints (e.g., Music Albums) can be executed
+- Once authorized, protected endpoints (e.g., Catalog Albums) can be executed
   directly from Swagger UI.
 
 #### Development-only in-memory users
@@ -337,7 +337,7 @@ credentials.
 | `UserId` | Yes | Stable subject identifier. Issued into the JWT `sub` claim and used by refresh/logout flows (`POST /api/identity/refresh`, `POST /api/identity/logout`). |
 | `DisplayName` | No | If set, issued into the token as the name claim and returned by `GET /api/identity/userinfo` as `name`. If omitted, the store falls back to the trimmed `Username`. |
 | `Roles` | No | Each value becomes a role claim in the JWT. The built-in `role.admin` policy requires the `Admin` role. |
-| `Permissions` | No | Each value becomes a `permissions` claim in the JWT. Authorization policies registered in `PolicyRegistry` use these values directly as policy names (for example `music.read`, `music.write`, `orders.read`, `orders.write`, `admin.users.manage`, `administration.read`, `administration.write`, `report.view`). |
+| `Permissions` | No | Each value becomes a `permissions` claim in the JWT. Authorization policies registered in `PolicyRegistry` use these values directly as policy names (for example `catalog.read`, `catalog.write`, `orders.read`, `orders.write`, `admin.users.manage`, `administration.read`, `administration.write`, `report.view`). |
 | `Email` | No | If set, issued into the token as the email claim and returned by `GET /api/identity/userinfo` as `email`. |
 | `Tenant` | No | If set, issued into the token as the `tenant` claim. The `tenant.scoped` policy uses that claim to enforce tenant matching. |
 
@@ -394,7 +394,7 @@ credentials.
 
 ##### Full user-secrets example
 
-The following creates two development/demo accounts. The first can read Music
+The following creates two development/demo accounts. The first can read Catalog
 data in `tenant-1`; the second is an admin-oriented account in `tenant-admin`.
 
 ```bash
@@ -403,7 +403,7 @@ dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUser
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:UserId" "user-1"
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:DisplayName" "Demo User"
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Roles:0" "User"
-dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Permissions:0" "music.read"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Permissions:0" "catalog.read"
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Email" "demo@example.com"
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Tenant" "tenant-1"
 
@@ -465,14 +465,14 @@ A common cause is a shell paste accident, where the password and the next
 command end up on the same line and are stored as a single value:
 
 ```text
-Identity:InMemoryUsers:0:Password = hunter2curl -s localhost:5043/api/music/data-health
+Identity:InMemoryUsers:0:Password = hunter2curl -s localhost:5043/api/catalog/data-health
 ```
 
 The startup log makes this visible without printing the secret. In
 Development/Demo each loaded entry logs as:
 
 ```text
-Effective Identity:InMemoryUsers:0 => Username='demo', UserId='user-1', Roles='User', Permissions='music.read', Tenant='tenant-1', PasswordLength=8.
+Effective Identity:InMemoryUsers:0 => Username='demo', UserId='user-1', Roles='User', Permissions='catalog.read', Tenant='tenant-1', PasswordLength=8.
 ```
 
 If `PasswordLength` does not match the password you are typing, re-set the
@@ -538,48 +538,48 @@ export Jwt__KeyVaultKeyName=<your-rsa-signing-key-name>
 The configured RSA key is used for token signing and its public key is exposed
 through `GET /api/identity/.well-known/jwks.json`.
 
-#### JWT for Music endpoints
+#### JWT for Catalog endpoints
 
 - Where JWT is processed in code:
     - Global authentication/authorization is configured in
       `src/Modules/Identity/Identity.Module/Extensions/IdentityAuthExtensions.cs`.
-    - Music endpoints opt-in to authorization using `.RequireAuthorization(...)`
+    - Catalog endpoints opt-in to authorization using `.RequireAuthorization(...)`
       in each endpoint mapping.
-    - Example: `GET /api/music/albums/{id}` is protected by `music.read` and
+    - Example: `GET /api/catalog/albums/{id}` is protected by `catalog.read` and
       `tenant.scoped` policies in
-      `src/Modules/Music/Music.Module/Endpoints/AlbumEndpoints.cs`.
-- How to use JWT in Swagger for Music endpoints:
+      `src/Modules/Catalog/Catalog.Module/Endpoints/AlbumEndpoints.cs`.
+- How to use JWT in Swagger for Catalog endpoints:
     1) Call `POST /api/identity/login` to receive an `access_token`.
     2) In Swagger UI, click the Authorize button and enter: `<access_token>`.
     3) For tenant-scoped endpoints, set a tenant hint (current routes do not
        include a {tenant} segment by default):
         - Preferred: Header `X-Tenant-Id: <your-tenant>`.
         - Optional: A route value may be used if a module defines such a
-          template in the future (e.g., `/api/music/{tenant}/albums/{id}` —
+          template in the future (e.g., `/api/catalog/{tenant}/albums/{id}` —
           hypothetical, not defined by default).
-    4) Invoke Music endpoints. You will see:
-        - 200 OK when the token includes `permissions: ["music.read"]` and
+    4) Invoke Catalog endpoints. You will see:
+        - 200 OK when the token includes `permissions: ["catalog.read"]` and
           tenant scope matches.
         - 403 Forbidden if missing permission or tenant mismatch.
         - 401 Unauthorized if no/invalid token is provided.
 
-### New: Music Albums Endpoint (GET /api/music/albums/{id})
+### New: Catalog Albums Endpoint (GET /api/catalog/albums/{id})
 
-- Path: GET /api/music/albums/{id}
-- Module: Music
-- Authorization: Requires a valid JWT with the `music.read` permission and the
+- Path: GET /api/catalog/albums/{id}
+- Module: Catalog
+- Authorization: Requires a valid JWT with the `catalog.read` permission and the
   `tenant.scoped` policy (the token's `tenant` claim must match the request's
   tenant hint when one is supplied).
 - Caching: Uses the central cache facade (ICacheFacade) with a namespaced key
   composed by CacheKeyComposer.
-    - Key shape example: {env}:{app}:music:album:v1::::by-id:{id}
+    - Key shape example: {env}:{app}:catalog:album:v1::::by-id:{id}
     - Default TTL: 20 minutes (with jitter to avoid stampede). Adjust via
       Caching:* configuration if needed.
 - Data source: SQLite (chinook.db) via AppDbContext; includes Artist info.
 
 How it works
 
-- On request, the endpoint composes a cache key (module=music, entity=album,
+- On request, the endpoint composes a cache key (module=catalog, entity=album,
   version=v1, discriminator=by-id:{id}).
 - It calls cache.GetOrAddAsync(key, factory) where factory queries the database
   if the cache is missed.
@@ -605,7 +605,7 @@ Response contains access_token.
 
 ```
 TOKEN="<paste-access-token>"
-curl -H "Authorization: Bearer $TOKEN" http://localhost:5043/api/music/albums/1
+curl -H "Authorization: Bearer $TOKEN" http://localhost:5043/api/catalog/albums/1
 ```
 
 Notes
@@ -780,7 +780,7 @@ The solution includes three test projects:
 
 - `tests/ModularMonolith.Api.Tests/` - integration tests using
   `WebApplicationFactory`
-- `tests/ModularMonolith.Services.Tests/` - service-layer tests for Music,
+- `tests/ModularMonolith.Services.Tests/` - service-layer tests for Catalog,
   Orders, and Administration
 - `tests/ModularMonolith.Architecture.Tests/` - architecture tests such as
   `PublicSurfaceTests`

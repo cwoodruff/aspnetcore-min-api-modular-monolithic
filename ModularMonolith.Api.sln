@@ -13,9 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedKernel", "src\Shared\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{EC447DCF-ABFA-6E24-52A5-D7FD48A5C558}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Music", "Music", "{A927446D-5791-A111-CDFD-A0D3CDC4AF99}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Catalog", "Catalog", "{A927446D-5791-A111-CDFD-A0D3CDC4AF99}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Music.Module", "src\Modules\Music\Music.Module\Music.Module.csproj", "{53F34290-03E9-4A90-9DE0-CF1D462815B7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Catalog.Module", "src\Modules\Catalog\Catalog.Module\Catalog.Module.csproj", "{53F34290-03E9-4A90-9DE0-CF1D462815B7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Orders", "Orders", "{CFD98C11-0354-2BE4-4011-BD6AEF12219D}"
 EndProject

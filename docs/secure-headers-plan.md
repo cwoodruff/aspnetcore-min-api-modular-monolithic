@@ -186,7 +186,7 @@ allowlists and Enforce mode.
 ## 10) Validation and testing
 
 - Integration tests assert presence and values of key headers for representative
-  routes (root, `/api/music/...`, `/api/identity/...`, `/swagger/index.html`,
+  routes (root, `/api/catalog/...`, `/api/identity/...`, `/swagger/index.html`,
   `/.well-known/jwks.json`).
 - External scans: use securityheaders.com for staging/prod baselines.
 - DAST: OWASP ZAP baseline; catch missing/weak headers.

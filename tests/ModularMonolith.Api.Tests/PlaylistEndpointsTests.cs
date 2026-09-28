@@ -14,7 +14,7 @@ public class PlaylistEndpointsTests(WebApplicationFactory<Program> factory)
     public async Task GetPlaylistById_ShouldReturn401_WhenNoToken()
     {
         var client = _factory.CreateClient();
-        var response = await client.GetAsync("/api/music/playlists/1");
+        var response = await client.GetAsync("/api/catalog/playlists/1");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -26,7 +26,7 @@ public class PlaylistEndpointsTests(WebApplicationFactory<Program> factory)
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
 
-        var response = await client.GetAsync("/api/music/playlists/1");
+        var response = await client.GetAsync("/api/catalog/playlists/1");
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
         response.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
 
@@ -49,7 +49,7 @@ public class PlaylistEndpointsTests(WebApplicationFactory<Program> factory)
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
-        var response = await client.GetAsync("/api/music/playlists/");
+        var response = await client.GetAsync("/api/catalog/playlists/");
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
     }
 }

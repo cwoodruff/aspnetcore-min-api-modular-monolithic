@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Music.Modules.Services;
+using Catalog.Modules.Services;
 using SharedKernel.TrafficControl;
 
-namespace Music.Modules.Endpoints;
+namespace Catalog.Modules.Endpoints;
 
 internal static class AlbumEndpoints
 {
@@ -22,12 +22,12 @@ internal static class AlbumEndpoints
                 return album is not null ? TypedResults.Ok(album) : Results.NotFound();
             })
             .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
-            .WithName("MusicGetAlbumById")
+            .WithName("CatalogGetAlbumById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music")
+            .WithTags("Catalog")
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
@@ -46,7 +46,7 @@ internal static class AlbumEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music")
+            .WithTags("Catalog")
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
@@ -66,7 +66,7 @@ internal static class AlbumEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music")
+            .WithTags("Catalog")
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }

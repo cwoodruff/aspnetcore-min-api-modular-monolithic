@@ -14,7 +14,7 @@ public class AlbumEndpointsTests(WebApplicationFactory<Program> factory)
     public async Task GetAlbumByIdShouldReturn401WhenNoTokenProvided()
     {
         var client = _factory.CreateClient();
-        var response = await client.GetAsync("/api/music/albums/1");
+        var response = await client.GetAsync("/api/catalog/albums/1");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -27,7 +27,7 @@ public class AlbumEndpointsTests(WebApplicationFactory<Program> factory)
 
         client.UseBearer(token);
 
-        var response = await client.GetAsync("/api/music/albums/1");
+        var response = await client.GetAsync("/api/catalog/albums/1");
         // Authorized calls should not be 401/403
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
         response.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
@@ -53,7 +53,7 @@ public class AlbumEndpointsTests(WebApplicationFactory<Program> factory)
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
 
-        var response = await client.GetAsync("/api/music/albums/999999");
+        var response = await client.GetAsync("/api/catalog/albums/999999");
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
     }
 
@@ -66,7 +66,7 @@ public class AlbumEndpointsTests(WebApplicationFactory<Program> factory)
         // Mismatch tenant between user (tenant-user) and request (tenant-other) should yield 403
         client.UseBearer(token, "tenant-other");
 
-        var response = await client.GetAsync("/api/music/albums/1");
+        var response = await client.GetAsync("/api/catalog/albums/1");
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 }

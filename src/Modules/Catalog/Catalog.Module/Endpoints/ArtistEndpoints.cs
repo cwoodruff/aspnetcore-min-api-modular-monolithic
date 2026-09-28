@@ -2,51 +2,51 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Music.Modules.Services;
+using Catalog.Modules.Services;
 using SharedKernel.TrafficControl;
 
-namespace Music.Modules.Endpoints;
+namespace Catalog.Modules.Endpoints;
 
-internal static class PlaylistEndpoints
+internal static class ArtistEndpoints
 {
-    public static void MapPlaylistEndpoints(this IEndpointRouteBuilder group)
+    public static void MapArtistEndpoints(this IEndpointRouteBuilder group)
     {
-        // GET /api/music/playlists/{id}
-        group.MapGet("/playlists/{id:int}", [Authorize] async (
+        // GET /api/music/artists/{id}
+        group.MapGet("/artists/{id:int}", [Authorize] async (
                 int id,
-                IPlaylistService service,
+                IArtistService service,
                 CancellationToken ct) =>
             {
-                var playlist = await service.GetPlaylistByIdAsync(id, ct);
+                var artist = await service.GetArtistByIdAsync(id, ct);
 
-                return playlist is not null ? TypedResults.Ok(playlist) : Results.NotFound();
+                return artist is not null ? TypedResults.Ok(artist) : Results.NotFound();
             })
             .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
-            .WithName("MusicGetPlaylistById")
+            .WithName("CatalogGetArtistById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music")
+            .WithTags("Catalog")
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
-        // GET /api/music/playlists
-        group.MapGet("playlists/", [Authorize] async (
-                IPlaylistService service,
+        // GET /api/music/artists
+        group.MapGet("artists/", [Authorize] async (
+                IArtistService service,
                 CancellationToken ct) =>
             {
-                var playlists = await service.GetAllPlaylistsAsync(ct);
+                var artists = await service.GetAllArtistsAsync(ct);
 
-                return Results.Json(playlists);
+                return Results.Json(artists);
             })
             .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
-            .WithName("GetAllPlaylists")
+            .WithName("GetAllArtists")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Music")
+            .WithTags("Catalog")
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }

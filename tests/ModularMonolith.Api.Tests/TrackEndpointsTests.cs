@@ -14,7 +14,7 @@ public class TrackEndpointsTests(WebApplicationFactory<Program> factory)
     public async Task GetTrackById_ShouldReturn401_WhenNoToken()
     {
         var client = _factory.CreateClient();
-        var response = await client.GetAsync("/api/music/tracks/1");
+        var response = await client.GetAsync("/api/catalog/tracks/1");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -26,7 +26,7 @@ public class TrackEndpointsTests(WebApplicationFactory<Program> factory)
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
 
-        var response = await client.GetAsync("/api/music/tracks/1");
+        var response = await client.GetAsync("/api/catalog/tracks/1");
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
         response.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
 
@@ -43,13 +43,13 @@ public class TrackEndpointsTests(WebApplicationFactory<Program> factory)
     }
 
     [Theory]
-    [InlineData("/api/music/tracks/")]
-    [InlineData("/api/music/tracks/artist/1")]
-    [InlineData("/api/music/tracks/playlist/1")]
-    [InlineData("/api/music/tracks/album/1")]
-    [InlineData("/api/music/tracks/genre/1")]
-    [InlineData("/api/music/tracks/mediatype/1")]
-    [InlineData("/api/music/tracks/invoice/1")]
+    [InlineData("/api/catalog/tracks/")]
+    [InlineData("/api/catalog/tracks/artist/1")]
+    [InlineData("/api/catalog/tracks/playlist/1")]
+    [InlineData("/api/catalog/tracks/album/1")]
+    [InlineData("/api/catalog/tracks/genre/1")]
+    [InlineData("/api/catalog/tracks/mediatype/1")]
+    [InlineData("/api/catalog/tracks/invoice/1")]
     public async Task Track_Collections_ShouldReturn200_WhenAuthorized(string url)
     {
         var tenantFactory = _factory.WithTenantUser();
@@ -67,7 +67,7 @@ public class TrackEndpointsTests(WebApplicationFactory<Program> factory)
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token, "tenant-other");
-        var response = await client.GetAsync("/api/music/tracks/1");
+        var response = await client.GetAsync("/api/catalog/tracks/1");
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 }

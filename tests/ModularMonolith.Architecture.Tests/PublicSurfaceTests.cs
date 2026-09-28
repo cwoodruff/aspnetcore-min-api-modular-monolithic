@@ -1,7 +1,7 @@
 using Admin.Modules;
 using Identity.Modules;
 using Identity.Modules.Extensions;
-using Music.Modules;
+using Catalog.Modules;
 using Orders.Modules;
 using Reporting.Modules;
 
@@ -13,7 +13,7 @@ public class PublicSurfaceTests
     {
         return new TheoryData<Type, Type[]>
         {
-            { typeof(MusicModule), [typeof(MusicModule), typeof(MusicModule.Modules)] },
+            { typeof(CatalogModule), [typeof(CatalogModule), typeof(CatalogModule.Modules)] },
             { typeof(OrdersModule), [typeof(OrdersModule), typeof(OrdersModule.Modules)] },
             { typeof(AdministrationModule), [typeof(AdministrationModule), typeof(AdministrationModule.Modules)] },
             { typeof(ReportingModule), [typeof(ReportingModule), typeof(ReportingModule.Modules)] },

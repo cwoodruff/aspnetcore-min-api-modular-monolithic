@@ -2,17 +2,17 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Music.Modules.Endpoints;
-using Music.Modules.Services;
+using Catalog.Modules.Endpoints;
+using Catalog.Modules.Services;
 using SharedKernel;
 
-namespace Music.Modules;
+namespace Catalog.Modules;
 
-public static class MusicModule
+public static class CatalogModule
 {
     public sealed class Modules : IModule
     {
-        public string Name => "Music";
+        public string Name => "Catalog";
 
         public void RegisterServices(IServiceCollection services, IConfiguration config)
         {
@@ -28,8 +28,8 @@ public static class MusicModule
             var group = endpoints.MapGroup("/api/music");
 
             // Delegate to endpoint classes
-            group.MapMusicHealthEndpoints();
-            group.MapMusicDataHealthEndpoints();
+            group.MapCatalogHealthEndpoints();
+            group.MapCatalogDataHealthEndpoints();
             group.MapAlbumEndpoints();
             group.MapArtistEndpoints();
             group.MapTrackEndpoints();

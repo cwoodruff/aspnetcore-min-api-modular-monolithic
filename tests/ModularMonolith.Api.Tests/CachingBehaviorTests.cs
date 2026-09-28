@@ -24,11 +24,11 @@ public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
         client.UseBearer(token);
 
         // First request - should hit the database
-        var response1 = await client.GetAsync("/api/music/albums/1");
+        var response1 = await client.GetAsync("/api/catalog/albums/1");
         response1.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
 
         // Second request - should be served from cache (same response)
-        var response2 = await client.GetAsync("/api/music/albums/1");
+        var response2 = await client.GetAsync("/api/catalog/albums/1");
         response2.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
 
         // Both should return the same data
@@ -125,7 +125,7 @@ public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
         // Send many concurrent requests to the same endpoint
         // The cache should prevent database stampede
         var tasks = Enumerable.Range(0, 20)
-            .Select(_ => client.GetAsync("/api/music/albums/1"))
+            .Select(_ => client.GetAsync("/api/catalog/albums/1"))
             .ToList();
 
         var responses = await Task.WhenAll(tasks);
@@ -150,8 +150,8 @@ public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
         client.UseBearer(token);
 
         // Request different resources
-        var albumResponse = await client.GetAsync("/api/music/albums/1");
-        var artistResponse = await client.GetAsync("/api/music/artists/1");
+        var albumResponse = await client.GetAsync("/api/catalog/albums/1");
+        var artistResponse = await client.GetAsync("/api/catalog/artists/1");
         var genreResponse = await client.GetAsync("/api/admin/genres/1");
 
         // Each should return its own data (not mixed up due to cache key collision)

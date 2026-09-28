@@ -1,6 +1,6 @@
 using SharedKernel.Persistence.ApiModels;
 
-namespace Music.Modules.Services;
+namespace Catalog.Modules.Services;
 
 internal interface IPlaylistService
 {

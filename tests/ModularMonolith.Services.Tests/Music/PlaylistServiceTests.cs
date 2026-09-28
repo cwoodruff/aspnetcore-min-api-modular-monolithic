@@ -2,7 +2,7 @@ using FluentAssertions;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Music.Modules.Services;
+using Catalog.Modules.Services;
 using NSubstitute;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
@@ -10,7 +10,7 @@ using SharedKernel.Persistence.Entities;
 using SharedKernel.Persistence.Repositories;
 using Xunit;
 
-namespace ModularMonolith.Services.Tests.Music;
+namespace ModularMonolith.Services.Tests.Catalog;
 
 public class PlaylistServiceTests
 {
@@ -24,7 +24,7 @@ public class PlaylistServiceTests
     public PlaylistServiceTests()
     {
         _service = new PlaylistService(_repo, _cache, _keys, _validator, _logger);
-        
+
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
     }
@@ -35,7 +35,7 @@ public class PlaylistServiceTests
         // Arrange
         var id = 1;
         var ct = CancellationToken.None;
-        var expected = new PlaylistApiModel { Id = id, Name = "Music" };
+        var expected = new PlaylistApiModel { Id = id, Name = "Catalog" };
         _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<PlaylistApiModel?>>>(), Arg.Any<CacheEntryOptions>(), ct)
             .Returns(expected);
 
@@ -51,10 +51,10 @@ public class PlaylistServiceTests
     {
         // Arrange
         var ct = CancellationToken.None;
-        var entities = new List<Playlist> { new() { Id = 1, Name = "Music" } };
-        
+        var entities = new List<Playlist> { new() { Id = 1, Name = "Catalog" } };
+
         _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<IEnumerable<object>>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(async callInfo => 
+            .Returns(async callInfo =>
             {
                 var factory = callInfo.ArgAt<Func<CancellationToken, Task<IEnumerable<object>>>>(1);
                 return await factory(ct);
@@ -69,6 +69,6 @@ public class PlaylistServiceTests
         result.Should().HaveCount(1);
         var first = result.First() as PlaylistApiModel;
         first.Should().NotBeNull();
-        first!.Name.Should().Be("Music");
+        first!.Name.Should().Be("Catalog");
     }
 }

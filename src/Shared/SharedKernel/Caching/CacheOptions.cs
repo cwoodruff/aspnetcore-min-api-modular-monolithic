@@ -39,7 +39,7 @@ public sealed class PartitioningOptions
 
 public sealed class ModuleTtls
 {
-    public int? Music { get; set; }
+    public int? Catalog { get; set; }
     public int? Orders { get; set; }
     public int? Administration { get; set; }
     public int? Reporting { get; set; }

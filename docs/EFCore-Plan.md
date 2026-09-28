@@ -36,7 +36,7 @@ High‑level architecture
       /data/chinook.db).
     - Manages database lifecycle at startup (EnsureCreated/ApplyMigrations in
       Development/Test as needed).
-- Modules (e.g., Music.Module, Orders.Module, etc.)
+- Modules (e.g., Catalog.Module, Orders.Module, etc.)
     - Reference SharedKernel and, optionally, SharedKernel.Persistence only
       through abstractions.
     - Prefer depending on IAppDbContext or repositories defined in each module (
@@ -143,7 +143,7 @@ Service layer integration
 Entity type configuration organization (mapping)
 
 - Prefer per‑module folders under SharedKernel.Persistence:
-    - Entities/Music
+    - Entities/Catalog
     - Entities/Orders
     - Entities/Administration
     - Entities/Reporting
@@ -170,7 +170,7 @@ Migrations strategy
     4. At runtime in Dev/Test: call Database.Migrate() or EnsureCreated(). In
        Production: prefer migrations run in CI/CD before app starts.
 - Versioning and ownership:
-    - Prefix migration names with the module (e.g., Music_Initial,
+    - Prefix migration names with the module (e.g., Catalog_Initial,
       Orders_AddOrderItem) to signal ownership.
 
 Transactions and cross‑module operations

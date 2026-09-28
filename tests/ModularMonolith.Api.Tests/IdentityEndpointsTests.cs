@@ -347,7 +347,7 @@ public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
         client.UseBearer(token);
 
         // Use the token to access a protected endpoint
-        var response = await client.GetAsync("/api/music/albums/1");
+        var response = await client.GetAsync("/api/catalog/albums/1");
 
         // Should not be 401 (token is valid)
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
@@ -412,7 +412,7 @@ public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
             var client2 = factory2.CreateClient();
             client2.UseBearer(token, "tenant-1");
 
-            var response = await client2.GetAsync("/api/music/albums/1");
+            var response = await client2.GetAsync("/api/catalog/albums/1");
             response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
         }
         finally

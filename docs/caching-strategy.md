@@ -2,7 +2,7 @@
 
 **Status: Implemented (L1 cache with L2 optional)**
 
-This document describes the central caching layer that all modules (Music,
+This document describes the central caching layer that all modules (Catalog,
 Orders, Administration, Reporting, Identity) can use without cross-module
 coupling. The core facade and registration are implemented in
 `SharedKernel.Caching`.
@@ -59,10 +59,10 @@ Each service defines static cache tags for bulk invalidation:
 | Administration | EmployeeService    | `["administration:employee", "administration:employee:by-id"]`   |
 | Administration | GenreService       | `["administration:genre", "administration:genre:by-id"]`         |
 | Administration | MediaTypeService   | `["administration:mediatype", "administration:mediatype:by-id"]` |
-| Music          | ArtistService      | `["music:artist", "music:artist:by-id"]`                         |
-| Music          | AlbumService       | `["music:album", "music:album:by-id"]`                           |
-| Music          | TrackService       | `["music:track", "music:track:by-id"]`                           |
-| Music          | PlaylistService    | `["music:playlist", "music:playlist:by-id"]`                     |
+| Catalog          | ArtistService      | `["catalog:artist", "catalog:artist:by-id"]`                         |
+| Catalog          | AlbumService       | `["catalog:album", "catalog:album:by-id"]`                           |
+| Catalog          | TrackService       | `["catalog:track", "catalog:track:by-id"]`                           |
+| Catalog          | PlaylistService    | `["catalog:playlist", "catalog:playlist:by-id"]`                     |
 | Orders         | InvoiceService     | `["orders:invoice", "orders:invoice:by-id"]`                     |
 | Orders         | InvoiceLineService | `["orders:invoiceline", "orders:invoiceline:by-id"]`             |
 
@@ -221,7 +221,7 @@ Generated cache keys follow this pattern:
 Examples:
 
 - `prod:mmapi:administration:customer:v1::::::by-id:42`
-- `prod:mmapi:music:artist:v1::::::all`
+- `prod:mmapi:catalog:artist:v1::::::all`
 - `prod:mmapi:orders:invoice:v1::::::by-customer:15`
 
 ### Services with Caching
@@ -232,10 +232,10 @@ Examples:
 | Administration | EmployeeService    | GetById, GetAll, GetDirectReports, GetReportsTo                                                   |
 | Administration | GenreService       | GetById, GetAll                                                                                   |
 | Administration | MediaTypeService   | GetById, GetAll                                                                                   |
-| Music          | ArtistService      | GetById, GetAll                                                                                   |
-| Music          | AlbumService       | GetById, GetAll, GetByArtistId                                                                    |
-| Music          | TrackService       | GetById, GetAll, GetByArtist, GetByAlbum, GetByPlaylist, GetByGenre, GetByMediaType, GetByInvoice |
-| Music          | PlaylistService    | GetById, GetAll                                                                                   |
+| Catalog          | ArtistService      | GetById, GetAll                                                                                   |
+| Catalog          | AlbumService       | GetById, GetAll, GetByArtistId                                                                    |
+| Catalog          | TrackService       | GetById, GetAll, GetByArtist, GetByAlbum, GetByPlaylist, GetByGenre, GetByMediaType, GetByInvoice |
+| Catalog          | PlaylistService    | GetById, GetAll                                                                                   |
 | Orders         | InvoiceService     | GetById, GetAll, GetByCustomerId                                                                  |
 | Orders         | InvoiceLineService | GetById, GetAll, GetByInvoiceId, GetByTrackId                                                     |
 
@@ -327,7 +327,7 @@ Namespacing strategy (convention)
 - Key prefix: {env}:{app}:{module}:{entity}:{version}:{tenant?}:{locale?}:
   {feature?}:{id or hash}
 - Example keys:
-    - prod:mmapi:music:album:v3:tenantA:en-US::by-id:42
+    - prod:mmapi:catalog:album:v3:tenantA:en-US::by-id:42
     - prod:mmapi:orders:order:v1:tenantA:::by-id:ORD-2025-000123
     - prod:mmapi:reporting:top-sellers:v2:tenantA:en-US::period:2025-W40
     - prod:mmapi:administration:config:v5::::active-flags
@@ -335,7 +335,7 @@ Namespacing strategy (convention)
 
 Key schema guidance
 
-- module: one of music|orders|administration|reporting|identity
+- module: one of catalog|orders|administration|reporting|identity
 - entity: logical data shape (album, order, permissions, config, report)
 - version: monotonic integer to bust incompatible cached shapes without purging
   all keys
@@ -352,7 +352,7 @@ Supported patterns
 
 TTL/SLAs and size quotas (defaults; override per module)
 
-- Music: list pages 2–5 minutes; album by id 10–30 minutes; reference catalogs
+- Catalog: list pages 2–5 minutes; album by id 10–30 minutes; reference catalogs
   1–6 hours.
 - Orders: read models 15–60 seconds; order by id 30–120 seconds; avoid caching
   post/put results.
@@ -362,7 +362,7 @@ TTL/SLAs and size quotas (defaults; override per module)
   near-real-time.
 - Identity: permission materialization 1–5 minutes; user profile fragments max 5
   minutes; tokens never cached.
-- Quotas: set a per-module memory budget fraction (e.g., Music 25%, Orders 25%,
+- Quotas: set a per-module memory budget fraction (e.g., Catalog 25%, Orders 25%,
   Reporting 25%, Admin+Identity 25% combined) when using L1; L2 sizing per
   capacity planning.
 
@@ -462,7 +462,7 @@ Default recommendation & tiers
 
 Triggers per module (examples)
 
-- Music: album update, price change, artist rename → evict album/by-id and
+- Catalog: album update, price change, artist rename → evict album/by-id and
   related lists (by tags).
 - Orders: order status change, shipment update → evict order/by-id and customer
   order lists; keep TTL short.
@@ -528,7 +528,7 @@ Mechanisms
     - Caching:Tier = L1|L1L2
     - Caching:Provider = InMemory|Redis|SqlServer|NCache
     - Caching:DefaultTTLSeconds = 300
-    - Caching:PerModule:Music:DefaultTTLSeconds, etc.
+    - Caching:PerModule:Catalog:DefaultTTLSeconds, etc.
     - Caching:Redis:ConnectionString, Caching:Redis:InstanceName
     - Caching:Partitioning:TenantAware = true|false, RegionAware = true|false
     - Caching:SWR:Enabled, Caching:SWR:MaxStaleSeconds
@@ -558,7 +558,7 @@ Mechanisms
 
 - Phase 1: Introduce central facade library and register it. ✓ Complete (L1 only
   by default)
-- Phase 2: Opt-in Music module with read-only scenarios using cache-aside. ✓
+- Phase 2: Opt-in Catalog module with read-only scenarios using cache-aside. ✓
   Complete (Album endpoint cached)
 - Phase 3: Enable L2 Redis in staging/prod; monitor hit rates and latencies;
   tune TTLs. (Pending - set `Caching:Tier=L1L2` and configure Redis)
@@ -599,8 +599,8 @@ Mechanisms
 
 ## 14) Module Naming/TTL Conventions (Examples)
 
-- Music
-    - Key: prod:mmapi:music:album:v3::en-US::by-id:{albumId}
+- Catalog
+    - Key: prod:mmapi:catalog:album:v3::en-US::by-id:{albumId}
     - TTL: 20 minutes for album; 3 minutes for list pages
 - Orders
     - Key: prod:mmapi:orders:order:v1:{tenant}:::by-id:{orderNo}
@@ -622,14 +622,14 @@ Mechanisms
 
 A) Data & Workload
 
-- Hot vs cold: Reporting aggregates and Music catalog lists are hot; Orders
+- Hot vs cold: Reporting aggregates and Catalog catalog lists are hot; Orders
   by-id reads are moderate; Admin configs moderate; Identity permissions
   occasionally hot. QPS: 50–300 QPS per hot endpoint in prod (assumption).
 - Payload sizes: 0.5–50 KB typical; JSON serialization preferred; use
   gzip/brotli over the wire.
-- Acceptable staleness: Orders 0–60s; Music lists 2–5m; Reporting 5–30m; Admin
+- Acceptable staleness: Orders 0–60s; Catalog lists 2–5m; Reporting 5–30m; Admin
   config 1–10m; Identity permissions ≤5m.
-- Read/write ratio: Reporting read-mostly (100:1); Music lists read-heavy (50:
+- Read/write ratio: Reporting read-mostly (100:1); Catalog lists read-heavy (50:
   1); Orders mixed (5:1); Admin/Identity low volume.
 - Multi-tenant/region: Yes (assumption); include tenant and region in keys;
   enforce per-tenant quotas if needed.

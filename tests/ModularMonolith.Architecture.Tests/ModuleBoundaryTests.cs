@@ -42,7 +42,7 @@ public class ModuleBoundaryTests
     }
 
     [Theory]
-    [InlineData(ArchitectureConstants.MusicAssembly)]
+    [InlineData(ArchitectureConstants.CatalogAssembly)]
     [InlineData(ArchitectureConstants.OrdersAssembly)]
     [InlineData(ArchitectureConstants.AdminAssembly)]
     [InlineData(ArchitectureConstants.IdentityAssembly)]

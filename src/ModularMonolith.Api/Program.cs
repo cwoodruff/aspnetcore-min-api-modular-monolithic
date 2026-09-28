@@ -8,7 +8,7 @@ using Identity.Modules.Extensions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.OpenApi;
-using Music.Modules;
+using Catalog.Modules;
 using Orders.Modules;
 using Reporting.Modules;
 using SharedKernel;
@@ -35,7 +35,7 @@ builder.Services.AddSwaggerGen(c =>
         Title = "Modular Monolith API",
         Version = "v1",
         Description =
-            "ASP.NET Core Minimal API Modular Monolith with modules: Music, Orders, Administration, Reporting, Identity.",
+            "ASP.NET Core Minimal API Modular Monolith with modules: Catalog, Orders, Administration, Reporting, Identity.",
         Contact = new OpenApiContact { Name = "API Team" }
     });
 
@@ -242,7 +242,7 @@ static IReadOnlyList<IModule> GetModules()
     [
         new AdministrationModule.Modules(),
         new IdentityModule.Modules(),
-        new MusicModule.Modules(),
+        new CatalogModule.Modules(),
         new OrdersModule.Modules(),
         new ReportingModule.Modules()
     ];

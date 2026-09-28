@@ -52,7 +52,7 @@ Reusable named policies:
 
 Naming convention:
 
-- `{scope}:{tier}` where `scope` ∈ {global, music, orders, admin, reporting,
+- `{scope}:{tier}` where `scope` ∈ {global, catalog, orders, admin, reporting,
   identity} and `tier` describes the band (
   public-anon|user-standard|tenant-standard|admin-elevated|heavy|write-strict,
   etc.).
@@ -166,7 +166,7 @@ RateLimiting:
 ## 8) Developer Experience & Module Usage
 
 - Modules attach policies by name when mapping endpoints:
-    - Music: album reads → `.RequireRateLimiting("music:user-standard")`
+    - Catalog: album reads → `.RequireRateLimiting("catalog:user-standard")`
     - Orders: writes → `.RequireRateLimiting("orders:write-strict")`
     - Reporting: exports → `.RequireRateLimiting("reporting:heavy")`
 - Exemptions: health and JWKS can call `.DisableRateLimiting()`.

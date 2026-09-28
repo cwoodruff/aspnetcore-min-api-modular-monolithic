@@ -5,41 +5,41 @@ using SharedKernel.Persistence.ApiModels;
 using SharedKernel.Persistence.Extensions;
 using SharedKernel.Persistence.Repositories;
 
-namespace Music.Modules.Services;
+namespace Catalog.Modules.Services;
 
-internal class ArtistService(
-    IArtistRepository repository,
+internal class AlbumService(
+    IAlbumRepository repository,
     ICacheFacade cache,
     ICacheKeyComposer keys,
-    IValidator<ArtistApiModel> validator,
-    ILogger<ArtistService> logger) : IArtistService
+    IValidator<AlbumApiModel> validator,
+    ILogger<AlbumService> logger) : IAlbumService
 {
-    private static readonly string[] ArtistTags = ["music:artist", "music:artist:by-id"];
-    private readonly ILogger<ArtistService> _logger = logger;
-    private readonly IValidator<ArtistApiModel> _validator = validator;
+    private static readonly string[] AlbumTags = ["music:album", "music:album:by-id"];
+    private readonly ILogger<AlbumService> _logger = logger;
+    private readonly IValidator<AlbumApiModel> _validator = validator;
 
-    public async Task<ArtistApiModel?> GetArtistByIdAsync(int id, CancellationToken ct)
+    public async Task<AlbumApiModel?> GetAlbumByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
             "music",
-            "artist",
+            "album",
             "v1",
             $"by-id:{id}");
 
-        return await cache.GetOrAddAsync<ArtistApiModel?>(key, async _ =>
+        return await cache.GetOrAddAsync<AlbumApiModel?>(key, async _ =>
             await repository.GetById(id)
         , new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-            Tags = ArtistTags
+            Tags = AlbumTags
         }, ct);
     }
 
-    public async Task<IEnumerable<object>> GetAllArtistsAsync(CancellationToken ct)
+    public async Task<IEnumerable<object>> GetAllAlbumsAsync(CancellationToken ct)
     {
         var key = keys.Compose(
             "music",
-            "artist",
+            "album",
             "v1",
             "all");
 
@@ -50,11 +50,30 @@ internal class ArtistService(
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-            Tags = ArtistTags
+            Tags = AlbumTags
         }, ct) ?? [];
     }
 
-    public async Task<ArtistApiModel?> CreateArtistAsync(ArtistApiModel model, CancellationToken ct)
+    public async Task<IEnumerable<object>> GetAlbumsByArtistIdAsync(int id, CancellationToken ct)
+    {
+        var key = keys.Compose(
+            "music",
+            "album",
+            "v1",
+            $"by-artist:{id}");
+
+        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        {
+            var entities = await repository.GetByArtistId(id);
+            return entities.ConvertAll();
+        }, new CacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
+            Tags = AlbumTags
+        }, ct) ?? [];
+    }
+
+    public async Task<AlbumApiModel?> CreateAlbumAsync(AlbumApiModel model, CancellationToken ct)
     {
         var result = await _validator.ValidateAsync(model, ct);
         if (!result.IsValid)
@@ -66,12 +85,12 @@ internal class ArtistService(
         var created = await repository.Add(entity);
 
         // Invalidate cache
-        await cache.RemoveByTagAsync(ArtistTags[0], ct);
+        await cache.RemoveByTagAsync(AlbumTags[0], ct);
 
         return created?.Convert();
     }
 
-    public async Task<bool> UpdateArtistAsync(ArtistApiModel model, CancellationToken ct)
+    public async Task<bool> UpdateAlbumAsync(AlbumApiModel model, CancellationToken ct)
     {
         var result = await _validator.ValidateAsync(model, ct);
         if (!result.IsValid)
@@ -85,10 +104,10 @@ internal class ArtistService(
         if (updated)
         {
             // Invalidate cache
-            await cache.RemoveByTagAsync(ArtistTags[0], ct);
+            await cache.RemoveByTagAsync(AlbumTags[0], ct);
             var key = keys.Compose(
                 "music",
-                "artist",
+                "album",
                 "v1",
                 $"by-id:{model.Id}");
             await cache.RemoveAsync(key, ct);

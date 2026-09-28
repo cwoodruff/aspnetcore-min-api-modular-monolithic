@@ -11,8 +11,8 @@ internal static class PolicyRegistry
     {
         // Do not set a global fallback policy; endpoints remain anonymous unless marked with RequireAuthorization.
         // Permission-based policies (other modules can refer by string name)
-        AddPermissionPolicy(options, Permissions.MusicRead);
-        AddPermissionPolicy(options, Permissions.MusicWrite);
+        AddPermissionPolicy(options, Permissions.CatalogRead);
+        AddPermissionPolicy(options, Permissions.CatalogWrite);
         AddPermissionPolicy(options, Permissions.OrdersRead);
         AddPermissionPolicy(options, Permissions.OrdersWrite);
         AddPermissionPolicy(options, Permissions.AdminUsersManage);

@@ -2,7 +2,7 @@ using FluentAssertions;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Music.Modules.Services;
+using Catalog.Modules.Services;
 using NSubstitute;
 using SharedKernel.Caching;
 using SharedKernel.Persistence.ApiModels;
@@ -10,7 +10,7 @@ using SharedKernel.Persistence.Entities;
 using SharedKernel.Persistence.Repositories;
 using Xunit;
 
-namespace ModularMonolith.Services.Tests.Music;
+namespace ModularMonolith.Services.Tests.Catalog;
 
 public class ArtistServiceTests
 {
@@ -24,7 +24,7 @@ public class ArtistServiceTests
     public ArtistServiceTests()
     {
         _service = new ArtistService(_repo, _cache, _keys, _validator, _logger);
-        
+
         _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
     }
@@ -52,9 +52,9 @@ public class ArtistServiceTests
         // Arrange
         var ct = CancellationToken.None;
         var entities = new List<Artist> { new() { Id = 1, Name = "AC/DC" } };
-        
+
         _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<IEnumerable<object>>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(async callInfo => 
+            .Returns(async callInfo =>
             {
                 var factory = callInfo.ArgAt<Func<CancellationToken, Task<IEnumerable<object>>>>(1);
                 return await factory(ct);

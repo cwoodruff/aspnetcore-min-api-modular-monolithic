@@ -18,7 +18,7 @@ public class HealthEndpointsTests(WebApplicationFactory<Program> factory)
 
     [Theory]
     [InlineData("/", "root")]
-    [InlineData("/api/music/health", "Music")]
+    [InlineData("/api/catalog/health", "Catalog")]
     [InlineData("/api/orders/health", "Orders")]
     [InlineData("/api/admin/health", "Administration")]
     [InlineData("/api/reporting/health", "Reporting")]
@@ -37,7 +37,7 @@ public class HealthEndpointsTests(WebApplicationFactory<Program> factory)
 
     [Theory]
     [InlineData("/", "root")]
-    [InlineData("/api/music/health", "Music")]
+    [InlineData("/api/catalog/health", "Catalog")]
     [InlineData("/api/orders/health", "Orders")]
     [InlineData("/api/admin/health", "Administration")]
     [InlineData("/api/reporting/health", "Reporting")]
@@ -54,7 +54,7 @@ public class HealthEndpointsTests(WebApplicationFactory<Program> factory)
     }
 
     [Theory]
-    [InlineData("/api/music/data-health", "Music")]
+    [InlineData("/api/catalog/data-health", "Catalog")]
     [InlineData("/api/orders/data-health", "Orders")]
     [InlineData("/api/admin/data-health", "Administration")]
     [InlineData("/api/reporting/data-health", "Reporting")]
@@ -72,7 +72,7 @@ public class HealthEndpointsTests(WebApplicationFactory<Program> factory)
     }
 
     [Theory]
-    [InlineData("/api/music/data-health", "Music")]
+    [InlineData("/api/catalog/data-health", "Catalog")]
     [InlineData("/api/orders/data-health", "Orders")]
     [InlineData("/api/admin/data-health", "Administration")]
     [InlineData("/api/reporting/data-health", "Reporting")]

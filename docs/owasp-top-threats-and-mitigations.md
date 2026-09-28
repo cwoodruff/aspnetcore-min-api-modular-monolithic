@@ -5,7 +5,7 @@ Last updated: 2026-03
 #### Executive summary
 
 This document is a practical, API‑focused cheat sheet of the OWASP risks most
-relevant to your ASP.NET Core Minimal API Modular Monolith (modules: Music,
+relevant to your ASP.NET Core Minimal API Modular Monolith (modules: Catalog,
 Orders, Administration, Reporting, Identity). It centers on the OWASP API
 Security Top 10 (2023) with concise, actionable mitigations tailored to this
 solution, and highlights overlaps with the general OWASP Top 10 (2021).
@@ -69,7 +69,7 @@ solution, and highlights overlaps with the general OWASP Top 10 (2021).
 - What: Missing/weak authz for privileged operations (admin endpoints).
 - Mitigations:
     - Default‑deny: require authorization on all non‑public endpoints.
-    - Use named policies like `admin.*`, `orders.write`, `music.read` via
+    - Use named policies like `admin.*`, `orders.write`, `catalog.read` via
       `.RequireAuthorization("policy")`.
     - For critical ops, defense‑in‑depth: validate roles/permissions again in
       the handler.
@@ -129,7 +129,7 @@ solution, and highlights overlaps with the general OWASP Top 10 (2021).
 
 - What: Users act outside their intended permissions — viewing other tenants'
   data, escalating to admin, or bypassing authorization on endpoints.
-- Relevance: This solution uses policy-based authorization (`music.read`,
+- Relevance: This solution uses policy-based authorization (`catalog.read`,
   `orders.write`, `tenant.scoped`, `role.admin`) and tenant scoping via
   `X-Tenant-Id` header with `TenantAuthorizationHandler`.
 - Mitigations:
@@ -195,7 +195,7 @@ solution, and highlights overlaps with the general OWASP Top 10 (2021).
       re-verified in service/handler for critical operations.
     - Threat model critical flows: login, token refresh, order creation, admin
       operations — document expected abuse cases and rate-limit accordingly.
-    - Separation of read and write policies: `music.read` vs `music.write`,
+    - Separation of read and write policies: `catalog.read` vs `catalog.write`,
       `orders.read` vs `orders.write` — prevents read-only users from mutating.
     - Design for tenant isolation from day one: `TenantAuthorizationHandler`,
       tenant-scoped cache keys, and (planned) EF global query filters.

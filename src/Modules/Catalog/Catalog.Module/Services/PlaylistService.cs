@@ -5,7 +5,7 @@ using SharedKernel.Persistence.ApiModels;
 using SharedKernel.Persistence.Extensions;
 using SharedKernel.Persistence.Repositories;
 
-namespace Music.Modules.Services;
+namespace Catalog.Modules.Services;
 
 internal class PlaylistService(
     IPlaylistRepository repository,

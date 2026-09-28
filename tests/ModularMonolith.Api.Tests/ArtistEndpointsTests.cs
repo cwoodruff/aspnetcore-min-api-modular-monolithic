@@ -14,7 +14,7 @@ public class ArtistEndpointsTests(WebApplicationFactory<Program> factory)
     public async Task GetArtistById_ShouldReturn401_WhenNoToken()
     {
         var client = _factory.CreateClient();
-        var response = await client.GetAsync("/api/music/artists/1");
+        var response = await client.GetAsync("/api/catalog/artists/1");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -26,7 +26,7 @@ public class ArtistEndpointsTests(WebApplicationFactory<Program> factory)
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
 
-        var response = await client.GetAsync("/api/music/artists/1");
+        var response = await client.GetAsync("/api/catalog/artists/1");
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
         response.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
 
@@ -49,7 +49,7 @@ public class ArtistEndpointsTests(WebApplicationFactory<Program> factory)
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token);
-        var response = await client.GetAsync("/api/music/artists/999999");
+        var response = await client.GetAsync("/api/catalog/artists/999999");
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
     }
 
@@ -60,7 +60,7 @@ public class ArtistEndpointsTests(WebApplicationFactory<Program> factory)
         var client = tenantFactory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(client);
         client.UseBearer(token, "tenant-other");
-        var response = await client.GetAsync("/api/music/artists/1");
+        var response = await client.GetAsync("/api/catalog/artists/1");
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 }

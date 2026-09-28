@@ -343,7 +343,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", "expired.token.here");
 
-        var response = await client.GetAsync("/api/music/albums/1");
+        var response = await client.GetAsync("/api/catalog/albums/1");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -357,7 +357,7 @@ public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", "not-a-valid-jwt");
 
-        var response = await client.GetAsync("/api/music/albums/1");
+        var response = await client.GetAsync("/api/catalog/albums/1");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

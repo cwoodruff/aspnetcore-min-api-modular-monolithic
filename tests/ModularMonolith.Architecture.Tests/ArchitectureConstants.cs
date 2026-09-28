@@ -7,7 +7,7 @@ internal static class ArchitectureConstants
     public static readonly ArchUnitNET.Domain.Architecture MainArchitecture =
         new ArchLoader()
             .LoadAssemblies(
-                typeof(Music.Modules.MusicModule).Assembly,
+                typeof(Catalog.Modules.CatalogModule).Assembly,
                 typeof(Orders.Modules.OrdersModule).Assembly,
                 typeof(Admin.Modules.AdministrationModule).Assembly,
                 typeof(Identity.Modules.IdentityModule).Assembly,
@@ -18,7 +18,7 @@ internal static class ArchitectureConstants
             )
             .Build();
 
-    public const string MusicAssembly = "Music.Module";
+    public const string CatalogAssembly = "Catalog.Module";
     public const string OrdersAssembly = "Orders.Module";
     public const string AdminAssembly = "Admin.Module";
     public const string IdentityAssembly = "Identity.Module";
@@ -30,7 +30,7 @@ internal static class ArchitectureConstants
 
     public static readonly string[] AllModuleAssemblies =
     [
-        MusicAssembly,
+        CatalogAssembly,
         OrdersAssembly,
         AdminAssembly,
         IdentityAssembly,

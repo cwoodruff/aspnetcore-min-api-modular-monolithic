@@ -59,9 +59,9 @@ Located in: `src/Modules/Administration/Admin.Module/Services/`
 | **GenreService** | `IGenreService` | `GetGenreByIdAsync`, `GetAllGenresAsync`, `CreateGenreAsync`, `UpdateGenreAsync`, `DeleteGenreAsync` |
 | **MediaTypeService** | `IMediaTypeService` | `GetMediaTypeByIdAsync`, `GetAllMediaTypesAsync`, `CreateMediaTypeAsync`, `UpdateMediaTypeAsync`, `DeleteMediaTypeAsync` |
 
-### Music Module
+### Catalog Module
 
-Located in: `src/Modules/Music/Music.Module/Services/`
+Located in: `src/Modules/Catalog/Catalog.Module/Services/`
 
 | Service | Interface | Methods |
 |---------|-----------|---------|
@@ -231,7 +231,7 @@ public sealed class Modules : IModule
 }
 ```
 
-### Music Module Registration
+### Catalog Module Registration
 
 ```csharp
 public void RegisterServices(IServiceCollection services, IConfiguration config)
@@ -345,11 +345,11 @@ catch (ValidationException ex)
 
 Some services support cross-module data retrieval:
 
-### TrackService (Music Module)
+### TrackService (Catalog Module)
 - `GetTracksByInvoiceIdAsync` - Retrieves tracks associated with an invoice (Orders module relationship)
 
 ### InvoiceLineService (Orders Module)
-- `GetInvoiceLinesByTrackIdAsync` - Retrieves invoice lines for a specific track (Music module relationship)
+- `GetInvoiceLinesByTrackIdAsync` - Retrieves invoice lines for a specific track (Catalog module relationship)
 
 These cross-module queries use existing foreign key relationships in the Chinook database while maintaining module boundaries at the service interface level.
 
@@ -365,10 +365,10 @@ Each service defines cache tags for bulk invalidation:
 | Administration | Employee | `["administration:employee", "administration:employee:by-id"]` |
 | Administration | Genre | `["administration:genre", "administration:genre:by-id"]` |
 | Administration | MediaType | `["administration:mediatype", "administration:mediatype:by-id"]` |
-| Music | Artist | `["music:artist", "music:artist:by-id"]` |
-| Music | Album | `["music:album", "music:album:by-id"]` |
-| Music | Track | `["music:track", "music:track:by-id"]` |
-| Music | Playlist | `["music:playlist", "music:playlist:by-id"]` |
+| Catalog | Artist | `["catalog:artist", "catalog:artist:by-id"]` |
+| Catalog | Album | `["catalog:album", "catalog:album:by-id"]` |
+| Catalog | Track | `["catalog:track", "catalog:track:by-id"]` |
+| Catalog | Playlist | `["catalog:playlist", "catalog:playlist:by-id"]` |
 | Orders | Invoice | `["orders:invoice", "orders:invoice:by-id"]` |
 | Orders | InvoiceLine | `["orders:invoiceline", "orders:invoiceline:by-id"]` |
 

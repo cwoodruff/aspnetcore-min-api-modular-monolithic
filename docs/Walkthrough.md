@@ -26,7 +26,7 @@ Prerequisites
       src/Shared/SharedKernel.Persistence
     - dotnet new classlib -n SharedKernel.DataSQLite -o
       src/Shared/SharedKernel.DataSQLite
-    - dotnet new classlib -n Music.Module -o src/Modules/Music/Music.Module
+    - dotnet new classlib -n Catalog.Module -o src/Modules/Catalog/Catalog.Module
     - dotnet new classlib -n Orders.Module -o src/Modules/Orders/Orders.Module
     - dotnet new classlib -n Admin.Module -o
       src/Modules/Administration/Admin.Module
@@ -87,7 +87,7 @@ Prerequisites
     - UseIdentityAuth() to add the middleware (UseAuthentication +
       UseAuthorization)
 - Add an Authorization folder with:
-    - PolicyRegistry defining names (e.g., Policies.MusicRead)
+    - PolicyRegistry defining names (e.g., Policies.CatalogRead)
     - Custom handlers (e.g., TenantAuthorizationHandler) and services (e.g.,
       HttpContextTenantResolutionService)
 - Add Endpoints:
@@ -100,12 +100,12 @@ Prerequisites
 
 - Each module exposes a static <Feature>Module with nested public sealed class
   Modules : IModule
-    - Example Music.Modules.MusicModule.Modules implements Name => "Music"
+    - Example Catalog.Modules.CatalogModule.Modules implements Name => "Catalog"
     - RegisterServices: register internal services (e.g., IArtistService,
       IAlbumService)
     - MapEndpoints: map health endpoints and the feature endpoints under
       /api/<feature>
-- Music module sample endpoints:
+- Catalog module sample endpoints:
     - group.MapGet("/health", ...) returning module health JSON
     - group.MapGet("/data/health", ...) checking AppDbContext and returning DB
       status
@@ -117,7 +117,7 @@ Prerequisites
 6a. Service layer pattern
 
 - Create Services folder in each module (e.g.,
-  src/Modules/Music/Music.Module/Services/)
+  src/Modules/Catalog/Catalog.Module/Services/)
 - Define interface and implementation pairs:
     - IArtistService / ArtistService
     - IAlbumService / AlbumService
@@ -165,7 +165,7 @@ Prerequisites
     - UseSwagger & UseSwaggerUI
 - Root endpoint GET / returning service metadata (module: "root")
 - Compose modules:
-    - Instantiate all Modules : IModule (Administration, Identity, Music,
+    - Instantiate all Modules : IModule (Administration, Identity, Catalog,
       Orders, Reporting)
     - For each module: module.RegisterServices(services, config)
     - After building: module.MapEndpoints(app)
@@ -202,7 +202,7 @@ Prerequisites
   app)
 - Example curl calls:
     - curl http://localhost:5043/
-    - curl http://localhost:5043/api/music/health
+    - curl http://localhost:5043/api/catalog/health
     - curl http://localhost:5043/api/identity/health
 - Obtain a JWT (example):
     - curl -X POST http://localhost:5043/api/identity/login -H 'Content-Type:
@@ -230,7 +230,7 @@ Where to look in this repository for concrete references
 
 - Module contract: src/Shared/SharedKernel/IModule.cs
 - Host composition and middleware: src/ModularMonolith.Api/Program.cs
-- Music module example: src/Modules/Music/Music.Module/Module.cs and Endpoints
+- Catalog module example: src/Modules/Catalog/Catalog.Module/Module.cs and Endpoints
 - Identity auth setup:
   src/Modules/Identity/Identity.Module/Extensions/IdentityAuthExtensions.cs
 - Authorization examples: src/Modules/Identity/Identity.Module/Authorization/*

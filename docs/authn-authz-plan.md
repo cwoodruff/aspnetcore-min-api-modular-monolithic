@@ -5,7 +5,7 @@
 JWT bearer authentication is implemented for the Modular Monolith, with all
 authentication and authorization logic centralized in the Identity module. The
 Identity module issues and validates tokens, defines policies, manages refresh
-tokens, and exposes JWKS for key distribution. Other modules (Music, Orders,
+tokens, and exposes JWKS for key distribution. Other modules (Catalog, Orders,
 Administration, Reporting) remain identity-agnostic, marking endpoints with
 `RequireAuthorization()` or `RequireAuthorization("policy-name")` as needed.
 
@@ -62,7 +62,7 @@ authorization across modules.
   exp, jti.
 - Audience: single audience (modular-api) is sufficient; can evolve to
   per-module audiences if needed.
-- Permissions examples: music.read, music.write, orders.read, orders.write,
+- Permissions examples: catalog.read, catalog.write, orders.read, orders.write,
   admin.users.manage, report.view.
 - TTLs: access tokens 15 minutes; refresh tokens 7 days (sliding rotation
   optional).
@@ -90,7 +90,7 @@ authorization across modules.
     - `IUserStore`, `InMemoryUserStore` (demo users: demo, usermo, report,
       admin)
 - Authorization ✓
-    - `Permissions.cs` (string constants for music.read, music.write,
+    - `Permissions.cs` (string constants for catalog.read, catalog.write,
       orders.read, etc.)
     - `PolicyRegistry.cs` (policies per permission + tenant-scoped policy)
     - `TenantAuthorizationHandler` + `TenantRequirement` for multi-tenant
@@ -150,7 +150,7 @@ group.MapPost("/customers", [Authorize] async (
 ### Authorization Model
 
 - Policy-based authorization using claim-based permissions and roles.
-- Naming: music.read, music.write, orders.read, orders.write,
+- Naming: catalog.read, catalog.write, orders.read, orders.write,
   admin.users.manage, report.view.
 - Role-to-permissions expansion is an Identity concern; modules remain unaware.
 - Custom handlers can live in Identity module only; modules refer to policy
@@ -177,7 +177,7 @@ group.MapPost("/customers", [Authorize] async (
 - Quickstart:
     - curl -X POST http://localhost:5000/api/identity/login -H "Content-Type:
       application/json" -d '{"username":"demo","password":"<configured-demo-password>"}'
-    - curl http://localhost:5000/api/music/health -H "Authorization:
+    - curl http://localhost:5000/api/catalog/health -H "Authorization:
       Bearer <token>"
 - Optional: Postman collection with auth and protected endpoint examples.
 
@@ -201,9 +201,9 @@ group.MapPost("/customers", [Authorize] async (
 
 - Phase 1: Introduce scaffolding and host wiring. ✓ Complete
 - Phase 2: Protect select endpoints with RequireAuthorization(). ✓ Complete (
-  Music, Orders modules protected)
+  Catalog, Orders modules protected)
 - Phase 3: Add fine-grained permission policies and gradually adopt across
-  modules. ✓ Complete (music.read, music.write, orders.read, orders.write,
+  modules. ✓ Complete (catalog.read, catalog.write, orders.read, orders.write,
   admin.users.manage, report.view policies defined; tenant.scoped policy active)
 - Phase 4: Implement refresh rotation and revocation with persistence; add key
   rotation in prod via KMS. (In-memory stores implemented; persistent stores and

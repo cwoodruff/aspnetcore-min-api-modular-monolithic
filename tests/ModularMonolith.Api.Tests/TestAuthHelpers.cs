@@ -22,16 +22,16 @@ public static class TestAuthHelpers
         "user-1",
         "Demo User",
         ["User"],
-        [Permissions.MusicRead],
+        [Permissions.CatalogRead],
         "demo@example.com",
         "tenant-1");
 
     public static readonly SeededIdentityUser UserMoUser = SeededIdentityUser.Create(
         "usermo",
         "user-2",
-        "Music+Orders User",
+        "Catalog+Orders User",
         ["User"],
-        [Permissions.MusicRead, Permissions.OrdersRead],
+        [Permissions.CatalogRead, Permissions.OrdersRead],
         "usermo@example.com",
         "tenant-1");
 
@@ -50,8 +50,8 @@ public static class TestAuthHelpers
         "Administrator",
         ["Admin"],
         [
-            Permissions.MusicRead,
-            Permissions.MusicWrite,
+            Permissions.CatalogRead,
+            Permissions.CatalogWrite,
             Permissions.OrdersRead,
             Permissions.OrdersWrite,
             Permissions.AdminUsersManage,
@@ -121,7 +121,7 @@ public static class TestAuthHelpers
     public static WebApplicationFactory<Program> WithTenantUser(this WebApplicationFactory<Program> factory,
         string tenantId = "tenant-123", string[]? permissions = null, string[]? roles = null)
     {
-        permissions ??= new[] { "music.read", "orders.read" };
+        permissions ??= new[] { "catalog.read", "orders.read" };
         roles ??= new[] { "User" };
 
         return factory.WithWebHostBuilder(builder =>
@@ -148,7 +148,7 @@ public static class TestAuthHelpers
     {
         permissions ??=
         [
-            Permissions.MusicRead,
+            Permissions.CatalogRead,
             Permissions.OrdersRead,
             Permissions.AdminUsersManage,
             Permissions.AdministrationRead,

@@ -140,7 +140,7 @@ public class InMemoryUserStoreDiagnosticsTests
             UserId = userId,
             DisplayName = username,
             Roles = ["User"],
-            Permissions = ["music.read"],
+            Permissions = ["catalog.read"],
             Email = $"{username}@example.com",
             Tenant = "tenant-1"
         };

@@ -34,7 +34,7 @@ public class AuthorizationPipelineTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
-    public async Task NormalUserLogin_ShouldAllowMusicRead()
+    public async Task NormalUserLogin_ShouldAllowCatalogRead()
     {
         var client = _factory.CreateClient();
         var token = await TestAuthHelpers.GetAccessTokenAsync(
@@ -43,7 +43,7 @@ public class AuthorizationPipelineTests(WebApplicationFactory<Program> factory)
             TestAuthHelpers.DemoUser.Password);
 
         client.UseBearer(token, TestAuthHelpers.DemoUser.Tenant);
-        var response = await client.GetAsync("/api/music/albums/1");
+        var response = await client.GetAsync("/api/catalog/albums/1");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
