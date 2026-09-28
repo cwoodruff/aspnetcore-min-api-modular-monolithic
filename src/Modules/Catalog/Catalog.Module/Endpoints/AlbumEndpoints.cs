@@ -11,7 +11,7 @@ internal static class AlbumEndpoints
 {
     public static void MapAlbumEndpoints(this IEndpointRouteBuilder group)
     {
-        // GET /api/music/albums/{id}
+        // GET /api/catalog/albums/{id}
         group.MapGet("/albums/{id:int}", [Authorize] async (
                 int id,
                 IAlbumService service,
@@ -21,7 +21,7 @@ internal static class AlbumEndpoints
 
                 return album is not null ? TypedResults.Ok(album) : Results.NotFound();
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("CatalogGetAlbumById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -31,7 +31,7 @@ internal static class AlbumEndpoints
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
-        // GET /api/music/albums
+        // GET /api/catalog/albums
         group.MapGet("albums/", [Authorize] async (
                 IAlbumService service,
                 CancellationToken ct) =>
@@ -40,7 +40,7 @@ internal static class AlbumEndpoints
 
                 return Results.Json(albums);
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("GetAllAlbums")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -60,7 +60,7 @@ internal static class AlbumEndpoints
 
                 return Results.Json(albums);
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("GetAlbumsByArtistId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)

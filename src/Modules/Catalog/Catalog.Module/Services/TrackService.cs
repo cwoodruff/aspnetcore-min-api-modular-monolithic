@@ -14,14 +14,14 @@ internal class TrackService(
     IValidator<TrackApiModel> validator,
     ILogger<TrackService> logger) : ITrackService
 {
-    private static readonly string[] TrackTags = ["music:track", "music:track:by-id"];
+    private static readonly string[] TrackTags = ["catalog:track", "catalog:track:by-id"];
     private readonly ILogger<TrackService> _logger = logger;
     private readonly IValidator<TrackApiModel> _validator = validator;
 
     public async Task<object?> GetTrackByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "track",
             "v1",
             $"by-id:{id}");
@@ -38,7 +38,7 @@ internal class TrackService(
     public async Task<IEnumerable<object>> GetAllTracksAsync(CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "track",
             "v1",
             "all");
@@ -57,7 +57,7 @@ internal class TrackService(
     public async Task<IEnumerable<object>> GetTracksByArtistIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "track",
             "v1",
             $"by-artist:{id}");
@@ -76,7 +76,7 @@ internal class TrackService(
     public async Task<IEnumerable<object>> GetTracksByPlaylistIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "track",
             "v1",
             $"by-playlist:{id}");
@@ -95,7 +95,7 @@ internal class TrackService(
     public async Task<IEnumerable<object>> GetTracksByAlbumIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "track",
             "v1",
             $"by-album:{id}");
@@ -114,7 +114,7 @@ internal class TrackService(
     public async Task<IEnumerable<object>> GetTracksByGenreIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "track",
             "v1",
             $"by-genre:{id}");
@@ -133,7 +133,7 @@ internal class TrackService(
     public async Task<IEnumerable<object>> GetTracksByMediaTypeIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "track",
             "v1",
             $"by-mediatype:{id}");
@@ -152,7 +152,7 @@ internal class TrackService(
     public async Task<IEnumerable<object>> GetTracksByInvoiceIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "track",
             "v1",
             $"by-invoice:{id}");
@@ -201,7 +201,7 @@ internal class TrackService(
             // Invalidate cache
             await cache.RemoveByTagAsync(TrackTags[0], ct);
             var key = keys.Compose(
-                "music",
+                "catalog",
                 "track",
                 "v1",
                 $"by-id:{model.Id}");

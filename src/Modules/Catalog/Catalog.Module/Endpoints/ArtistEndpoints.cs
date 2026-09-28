@@ -11,7 +11,7 @@ internal static class ArtistEndpoints
 {
     public static void MapArtistEndpoints(this IEndpointRouteBuilder group)
     {
-        // GET /api/music/artists/{id}
+        // GET /api/catalog/artists/{id}
         group.MapGet("/artists/{id:int}", [Authorize] async (
                 int id,
                 IArtistService service,
@@ -21,7 +21,7 @@ internal static class ArtistEndpoints
 
                 return artist is not null ? TypedResults.Ok(artist) : Results.NotFound();
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("CatalogGetArtistById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -31,7 +31,7 @@ internal static class ArtistEndpoints
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
-        // GET /api/music/artists
+        // GET /api/catalog/artists
         group.MapGet("artists/", [Authorize] async (
                 IArtistService service,
                 CancellationToken ct) =>
@@ -40,7 +40,7 @@ internal static class ArtistEndpoints
 
                 return Results.Json(artists);
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("GetAllArtists")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)

@@ -14,14 +14,14 @@ internal class AlbumService(
     IValidator<AlbumApiModel> validator,
     ILogger<AlbumService> logger) : IAlbumService
 {
-    private static readonly string[] AlbumTags = ["music:album", "music:album:by-id"];
+    private static readonly string[] AlbumTags = ["catalog:album", "catalog:album:by-id"];
     private readonly ILogger<AlbumService> _logger = logger;
     private readonly IValidator<AlbumApiModel> _validator = validator;
 
     public async Task<AlbumApiModel?> GetAlbumByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "album",
             "v1",
             $"by-id:{id}");
@@ -38,7 +38,7 @@ internal class AlbumService(
     public async Task<IEnumerable<object>> GetAllAlbumsAsync(CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "album",
             "v1",
             "all");
@@ -57,7 +57,7 @@ internal class AlbumService(
     public async Task<IEnumerable<object>> GetAlbumsByArtistIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "album",
             "v1",
             $"by-artist:{id}");
@@ -106,7 +106,7 @@ internal class AlbumService(
             // Invalidate cache
             await cache.RemoveByTagAsync(AlbumTags[0], ct);
             var key = keys.Compose(
-                "music",
+                "catalog",
                 "album",
                 "v1",
                 $"by-id:{model.Id}");

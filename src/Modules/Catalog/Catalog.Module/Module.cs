@@ -25,7 +25,7 @@ public static class CatalogModule
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)
         {
-            var group = endpoints.MapGroup("/api/music");
+            var group = endpoints.MapGroup("/api/catalog");
 
             // Delegate to endpoint classes
             group.MapCatalogHealthEndpoints();

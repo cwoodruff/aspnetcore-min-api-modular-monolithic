@@ -11,7 +11,7 @@ internal static class TrackEndpoints
 {
     public static void MapTrackEndpoints(this IEndpointRouteBuilder group)
     {
-        // GET /api/music/tracks/{id}
+        // GET /api/catalog/tracks/{id}
         group.MapGet("/tracks/{id:int}", [Authorize] async (
                 int id,
                 ITrackService service,
@@ -21,7 +21,7 @@ internal static class TrackEndpoints
 
                 return track is not null ? Results.Json(track) : Results.NotFound();
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("CatalogGetTrackById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -31,7 +31,7 @@ internal static class TrackEndpoints
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
-        // GET /api/music/tracks
+        // GET /api/catalog/tracks
         group.MapGet("tracks/", [Authorize] async (
                 ITrackService service,
                 CancellationToken ct) =>
@@ -40,7 +40,7 @@ internal static class TrackEndpoints
 
                 return Results.Json(tracks);
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("GetAllTracks")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -50,7 +50,7 @@ internal static class TrackEndpoints
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
-        // GET /api/music/tracks/artist/{id}
+        // GET /api/catalog/tracks/artist/{id}
         group.MapGet("tracks/artist/{id:int}", [Authorize] async (
                 int id,
                 ITrackService service,
@@ -60,7 +60,7 @@ internal static class TrackEndpoints
 
                 return Results.Json(tracks);
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("GetTracksByArtistId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -70,7 +70,7 @@ internal static class TrackEndpoints
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
-        // GET /api/music/tracks/playlist/{id}
+        // GET /api/catalog/tracks/playlist/{id}
         group.MapGet("tracks/playlist/{id:int}", [Authorize] async (
                 int id,
                 ITrackService service,
@@ -80,7 +80,7 @@ internal static class TrackEndpoints
 
                 return Results.Json(tracks);
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("GetTracksByPlaylistId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -90,7 +90,7 @@ internal static class TrackEndpoints
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
-        // GET /api/music/tracks/album/{id}
+        // GET /api/catalog/tracks/album/{id}
         group.MapGet("tracks/album/{id:int}", [Authorize] async (
                 int id,
                 ITrackService service,
@@ -100,7 +100,7 @@ internal static class TrackEndpoints
 
                 return Results.Json(tracks);
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("GetTracksByAlbumId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -110,7 +110,7 @@ internal static class TrackEndpoints
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
-        // GET /api/music/tracks/genre/{id}
+        // GET /api/catalog/tracks/genre/{id}
         group.MapGet("tracks/genre/{id:int}", [Authorize] async (
                 int id,
                 ITrackService service,
@@ -120,7 +120,7 @@ internal static class TrackEndpoints
 
                 return Results.Json(tracks);
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("GetTracksByGenreId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -130,7 +130,7 @@ internal static class TrackEndpoints
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
-        // GET /api/music/tracks/mediatype/{id}
+        // GET /api/catalog/tracks/mediatype/{id}
         group.MapGet("tracks/mediatype/{id:int}", [Authorize] async (
                 int id,
                 ITrackService service,
@@ -140,7 +140,7 @@ internal static class TrackEndpoints
 
                 return Results.Json(tracks);
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("GetTracksByMediaTypeId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -150,7 +150,7 @@ internal static class TrackEndpoints
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
-        // GET /api/music/tracks/invoice/{id}
+        // GET /api/catalog/tracks/invoice/{id}
         group.MapGet("tracks/invoice/{id:int}", [Authorize] async (
                 int id,
                 ITrackService service,
@@ -160,7 +160,7 @@ internal static class TrackEndpoints
 
                 return Results.Json(tracks);
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("GetTracksByInvoiceId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)

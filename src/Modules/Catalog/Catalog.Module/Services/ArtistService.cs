@@ -14,14 +14,14 @@ internal class ArtistService(
     IValidator<ArtistApiModel> validator,
     ILogger<ArtistService> logger) : IArtistService
 {
-    private static readonly string[] ArtistTags = ["music:artist", "music:artist:by-id"];
+    private static readonly string[] ArtistTags = ["catalog:artist", "catalog:artist:by-id"];
     private readonly ILogger<ArtistService> _logger = logger;
     private readonly IValidator<ArtistApiModel> _validator = validator;
 
     public async Task<ArtistApiModel?> GetArtistByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "artist",
             "v1",
             $"by-id:{id}");
@@ -38,7 +38,7 @@ internal class ArtistService(
     public async Task<IEnumerable<object>> GetAllArtistsAsync(CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "artist",
             "v1",
             "all");
@@ -87,7 +87,7 @@ internal class ArtistService(
             // Invalidate cache
             await cache.RemoveByTagAsync(ArtistTags[0], ct);
             var key = keys.Compose(
-                "music",
+                "catalog",
                 "artist",
                 "v1",
                 $"by-id:{model.Id}");

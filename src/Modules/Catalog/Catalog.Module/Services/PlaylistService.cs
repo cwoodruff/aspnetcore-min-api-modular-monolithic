@@ -14,14 +14,14 @@ internal class PlaylistService(
     IValidator<PlaylistApiModel> validator,
     ILogger<PlaylistService> logger) : IPlaylistService
 {
-    private static readonly string[] PlaylistTags = ["music:playlist", "music:playlist:by-id"];
+    private static readonly string[] PlaylistTags = ["catalog:playlist", "catalog:playlist:by-id"];
     private readonly ILogger<PlaylistService> _logger = logger;
     private readonly IValidator<PlaylistApiModel> _validator = validator;
 
     public async Task<PlaylistApiModel?> GetPlaylistByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "playlist",
             "v1",
             $"by-id:{id}");
@@ -38,7 +38,7 @@ internal class PlaylistService(
     public async Task<IEnumerable<object>> GetAllPlaylistsAsync(CancellationToken ct)
     {
         var key = keys.Compose(
-            "music",
+            "catalog",
             "playlist",
             "v1",
             "all");
@@ -87,7 +87,7 @@ internal class PlaylistService(
             // Invalidate cache
             await cache.RemoveByTagAsync(PlaylistTags[0], ct);
             var key = keys.Compose(
-                "music",
+                "catalog",
                 "playlist",
                 "v1",
                 $"by-id:{model.Id}");

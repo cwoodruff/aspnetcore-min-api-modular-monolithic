@@ -11,7 +11,7 @@ internal static class PlaylistEndpoints
 {
     public static void MapPlaylistEndpoints(this IEndpointRouteBuilder group)
     {
-        // GET /api/music/playlists/{id}
+        // GET /api/catalog/playlists/{id}
         group.MapGet("/playlists/{id:int}", [Authorize] async (
                 int id,
                 IPlaylistService service,
@@ -21,7 +21,7 @@ internal static class PlaylistEndpoints
 
                 return playlist is not null ? TypedResults.Ok(playlist) : Results.NotFound();
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("CatalogGetPlaylistById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -31,7 +31,7 @@ internal static class PlaylistEndpoints
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
-        // GET /api/music/playlists
+        // GET /api/catalog/playlists
         group.MapGet("playlists/", [Authorize] async (
                 IPlaylistService service,
                 CancellationToken ct) =>
@@ -40,7 +40,7 @@ internal static class PlaylistEndpoints
 
                 return Results.Json(playlists);
             })
-            .RequireAuthorization("music.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
             .WithName("GetAllPlaylists")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
