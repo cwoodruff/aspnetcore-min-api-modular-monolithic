@@ -1,10 +1,10 @@
+using Catalog.Modules.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using SharedKernel;
-using SharedKernel.Persistence;
 using SharedKernel.TrafficControl;
 
 namespace Catalog.Modules.Endpoints;
@@ -14,7 +14,7 @@ internal static class CatalogDataHealthEndpoints
     public static void MapCatalogDataHealthEndpoints(this IEndpointRouteBuilder group)
     {
         group.MapGet("/data-health",
-                async (AppDbContext db, IHostEnvironment env, IConfiguration cfg, CancellationToken ct) =>
+                async (CatalogDbContext db, IHostEnvironment env, IConfiguration cfg, CancellationToken ct) =>
                 {
                     bool canConnect;
                     try

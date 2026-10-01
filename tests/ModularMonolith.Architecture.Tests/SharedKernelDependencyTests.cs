@@ -10,8 +10,6 @@ public class SharedKernelDependencyTests
 
     [Theory]
     [InlineData(ArchitectureConstants.SharedKernelAssembly)]
-    [InlineData(ArchitectureConstants.SharedKernelPersistenceAssembly)]
-    [InlineData(ArchitectureConstants.SharedKernelDataSQLiteAssembly)]
     public void SharedKernel_Should_Not_Depend_On_Any_Module(string sharedAssembly)
     {
         foreach (var moduleAssembly in ArchitectureConstants.AllModuleAssemblies)

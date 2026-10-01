@@ -1,4 +1,4 @@
-using SharedKernel.Persistence.ApiModels;
+using Orders.Modules.Models;
 
 namespace Orders.Modules.Services;
 

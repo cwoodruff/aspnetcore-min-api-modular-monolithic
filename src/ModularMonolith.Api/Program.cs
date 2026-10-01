@@ -5,7 +5,6 @@ using Identity.Modules.Extensions;
 using Microsoft.AspNetCore.Diagnostics;
 using ModularMonolith.Api;
 using SharedKernel;
-using SharedKernel.Persistence;
 using SharedKernel.TrafficControl;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,7 +18,7 @@ if ((app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Test"))
 {
     await using var scope = app.Services.CreateAsyncScope();
     await DbSeeder.MigrateAndSeedAsync(
-        scope.ServiceProvider.GetRequiredService<AppDbContext>(),
+        scope.ServiceProvider,
         Path.Combine(AppContext.BaseDirectory, DbSeeder.SeedScriptRelativePath));
 }
 

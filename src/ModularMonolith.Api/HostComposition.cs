@@ -9,9 +9,6 @@ using Orders.Modules;
 using Reporting.Modules;
 using SharedKernel;
 using SharedKernel.Caching;
-using SharedKernel.DataSQLite.Repositories;
-using SharedKernel.Persistence;
-using SharedKernel.Persistence.Repositories;
 using SharedKernel.TrafficControl;
 
 namespace ModularMonolith.Api;
@@ -70,20 +67,7 @@ public static class HostComposition
         });
         services.AddProblemDetails();
 
-        // Data Repositories
-        services.AddScoped<IAlbumRepository, AlbumRepository>()
-            .AddScoped<IArtistRepository, ArtistRepository>()
-            .AddScoped<ICustomerRepository, CustomerRepository>()
-            .AddScoped<IEmployeeRepository, EmployeeRepository>()
-            .AddScoped<IGenreRepository, GenreRepository>()
-            .AddScoped<IInvoiceRepository, InvoiceRepository>()
-            .AddScoped<IInvoiceLineRepository, InvoiceLineRepository>()
-            .AddScoped<IMediaTypeRepository, MediaTypeRepository>()
-            .AddScoped<IPlaylistRepository, PlaylistRepository>()
-            .AddScoped<ITrackRepository, TrackRepository>();
-
-        // EF Core persistence: PostgreSQL via ConnectionStrings:AppDatabase
-        services.AddKernelPersistence(configuration);
+        // Each module registers its own DbContext in RegisterServices (ADR-0003); the host registers none.
 
         services.AddCors(options =>
         {

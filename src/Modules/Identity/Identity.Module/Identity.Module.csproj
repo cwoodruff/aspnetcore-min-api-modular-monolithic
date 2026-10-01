@@ -6,7 +6,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Shared\SharedKernel.Persistence\SharedKernel.Persistence.csproj" />
         <ProjectReference Include="..\..\..\Shared\SharedKernel\SharedKernel.csproj" />
         <ProjectReference Include="..\Identity.Contracts\Identity.Contracts.csproj" />
     </ItemGroup>

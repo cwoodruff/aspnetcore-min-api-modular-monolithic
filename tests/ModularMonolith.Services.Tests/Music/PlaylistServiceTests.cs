@@ -1,74 +1,44 @@
-using FluentAssertions;
-using FluentValidation;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
+using Catalog.Modules.Data;
+using Catalog.Modules.Models;
 using Catalog.Modules.Services;
-using NSubstitute;
-using SharedKernel.Caching;
-using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
-using SharedKernel.Persistence.Repositories;
-using Xunit;
+using Catalog.Modules.Validation;
+using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ModularMonolith.Services.Tests.Catalog;
 
-public class PlaylistServiceTests
+[Collection(ModuleDatabaseDefinition.Name)]
+public sealed class PlaylistServiceTests(ModuleDatabaseFixture database) : IAsyncLifetime
 {
-    private readonly IPlaylistRepository _repo = Substitute.For<IPlaylistRepository>();
-    private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
-    private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
-    private readonly IValidator<PlaylistApiModel> _validator = Substitute.For<IValidator<PlaylistApiModel>>();
-    private readonly ILogger<PlaylistService> _logger = NullLogger<PlaylistService>.Instance;
-    private readonly PlaylistService _service;
+    private readonly RecordingCache _cache = new();
+    private CatalogDbContext _db = null!;
+    private PlaylistService _service = null!;
 
-    public PlaylistServiceTests()
+    public async Task InitializeAsync()
     {
-        _service = new PlaylistService(_repo, _cache, _keys, _validator, _logger);
-
-        _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
+        await database.ResetAndSeedAsync();
+        _db = database.CreateCatalogContext();
+        _service = new PlaylistService(_db, _cache, RecordingCache.Keys(), new PlaylistValidator(),
+            NullLogger<PlaylistService>.Instance);
     }
+
+    public async Task DisposeAsync() => await _db.DisposeAsync();
 
     [Fact]
     public async Task GetPlaylistByIdAsync_ShouldReturnFromCache()
     {
-        // Arrange
-        var id = 1;
-        var ct = CancellationToken.None;
-        var expected = new PlaylistApiModel { Id = id, Name = "Catalog" };
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<PlaylistApiModel?>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(expected);
+        var result = await _service.GetPlaylistByIdAsync(TestData.Playlist, CancellationToken.None);
 
-        // Act
-        var result = await _service.GetPlaylistByIdAsync(id, ct);
-
-        // Assert
-        result.Should().BeEquivalentTo(expected);
+        result.Should().NotBeNull();
+        result!.Name.Should().Be("My Playlist");
+        result.Tracks.Should().ContainSingle().Which.Id.Should().Be(TestData.Track1);
     }
 
     [Fact]
     public async Task GetAllPlaylistsAsync_ShouldReturnMappedList()
     {
-        // Arrange
-        var ct = CancellationToken.None;
-        var entities = new List<Playlist> { new() { Id = 1, Name = "Catalog" } };
+        var all = (await _service.GetAllPlaylistsAsync(CancellationToken.None)).Cast<PlaylistApiModel>().ToList();
 
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<IEnumerable<object>>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(async callInfo =>
-            {
-                var factory = callInfo.ArgAt<Func<CancellationToken, Task<IEnumerable<object>>>>(1);
-                return await factory(ct);
-            });
-
-        _repo.GetAll().Returns(entities);
-
-        // Act
-        var result = await _service.GetAllPlaylistsAsync(ct);
-
-        // Assert
-        result.Should().HaveCount(1);
-        var first = result.First() as PlaylistApiModel;
-        first.Should().NotBeNull();
-        first!.Name.Should().Be("Catalog");
+        all.Should().ContainSingle().Which.Name.Should().Be("My Playlist");
     }
 }

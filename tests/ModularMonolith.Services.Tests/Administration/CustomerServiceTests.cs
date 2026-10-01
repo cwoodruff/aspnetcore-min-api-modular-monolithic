@@ -1,171 +1,100 @@
+using Admin.Modules.Data;
+using Admin.Modules.Models;
 using Admin.Modules.Services;
+using Admin.Modules.Validation;
 using FluentAssertions;
 using FluentValidation;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
-using SharedKernel.Caching;
-using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
-using SharedKernel.Persistence.Repositories;
-using Xunit;
 
 namespace ModularMonolith.Services.Tests.Administration;
 
-public class CustomerServiceTests
+[Collection(ModuleDatabaseDefinition.Name)]
+public sealed class CustomerServiceTests(ModuleDatabaseFixture database) : IAsyncLifetime
 {
-    private readonly ICustomerRepository _repo = Substitute.For<ICustomerRepository>();
-    private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
-    private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
-    private readonly IValidator<CustomerApiModel> _validator = Substitute.For<IValidator<CustomerApiModel>>();
-    private readonly ILogger<CustomerService> _logger = NullLogger<CustomerService>.Instance;
-    private readonly CustomerService _service;
+    private readonly RecordingCache _cache = new();
+    private AdministrationDbContext _db = null!;
+    private CustomerService _service = null!;
 
-    public CustomerServiceTests()
+    public async Task InitializeAsync()
     {
-        // Default successful validation
-        _validator.ValidateAsync(Arg.Any<CustomerApiModel>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
-
-        _service = new CustomerService(_repo, _cache, _keys, _validator, _logger);
-        
-        // Setup default key composition
-        _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
+        await database.ResetAndSeedAsync();
+        _db = database.CreateAdministrationContext();
+        _service = new CustomerService(_db, _cache, RecordingCache.Keys(), new CustomerValidator(),
+            NullLogger<CustomerService>.Instance);
     }
+
+    public async Task DisposeAsync() => await _db.DisposeAsync();
 
     [Fact]
     public async Task CreateCustomerAsync_ShouldThrowValidationException_WhenValidationFails()
     {
-        // Arrange
-        var model = new CustomerApiModel { FirstName = "" };
-        var ct = CancellationToken.None;
-        
-        _validator.ValidateAsync(Arg.Any<CustomerApiModel>(), ct)
-            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult(new[] 
-            { 
-                new FluentValidation.Results.ValidationFailure("FirstName", "FirstName is required") 
-            })));
+        var model = new CustomerApiModel { FirstName = null, LastName = "Doe" };
 
-        // Act & Assert
-        await _service.Invoking(s => s.CreateCustomerAsync(model, ct))
+        await _service.Invoking(s => s.CreateCustomerAsync(model, CancellationToken.None))
             .Should().ThrowAsync<ValidationException>();
-        await _repo.DidNotReceive().Add(Arg.Any<Customer>());
+        await using var check = database.CreateAdministrationContext();
+        (await check.Customers.CountAsync()).Should().Be(1);
     }
 
     [Fact]
     public async Task CreateCustomerAsync_ShouldAddAndInvalidateCache()
     {
-        // Arrange
-        var model = new CustomerApiModel { FirstName = "John", LastName = "Doe" };
-        var ct = CancellationToken.None;
-        var created = new Customer { Id = 10, FirstName = "John", LastName = "Doe" };
-        _repo.Add(Arg.Any<Customer>()).Returns(created);
+        var model = new CustomerApiModel { FirstName = "John", LastName = "Doe", Email = "john@example.com" };
 
-        // Act
-        var result = await _service.CreateCustomerAsync(model, ct);
+        var result = await _service.CreateCustomerAsync(model, CancellationToken.None);
 
-        // Assert
         result.Should().NotBeNull();
         result!.FirstName.Should().Be("John");
-        await _repo.Received(1).Add(Arg.Is<Customer>(c => c != null && c.FirstName == "John"));
-        await _cache.Received(1).RemoveByTagAsync("administration:customer", ct);
+        await using var check = database.CreateAdministrationContext();
+        (await check.Customers.AnyAsync(c => c.Id == result.Id && c.Email == "john@example.com")).Should().BeTrue();
+        _cache.RemovedTags.Should().Equal("administration:customer");
     }
 
     [Fact]
     public async Task UpdateCustomerAsync_ShouldUpdateAndInvalidateCache()
     {
-        // Arrange
-        var model = new CustomerApiModel { Id = 1, FirstName = "John", LastName = "Doe" };
-        var ct = CancellationToken.None;
-        _repo.Update(Arg.Any<Customer>()).Returns(true);
+        var model = new CustomerApiModel { Id = TestData.Customer, FirstName = "Alicia", LastName = "Smith" };
 
-        // Act
-        var result = await _service.UpdateCustomerAsync(model, ct);
+        var result = await _service.UpdateCustomerAsync(model, CancellationToken.None);
 
-        // Assert
         result.Should().BeTrue();
-        await _repo.Received(1).Update(Arg.Is<Customer>(c => c != null && c.Id == 1 && c.FirstName == "John"));
-        await _cache.Received(1).RemoveByTagAsync("administration:customer", ct);
-        await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
+        await using var check = database.CreateAdministrationContext();
+        (await check.Customers.SingleAsync(c => c.Id == TestData.Customer)).FirstName.Should().Be("Alicia");
+        _cache.RemovedTags.Should().Equal("administration:customer");
+        _cache.RemovedKeys.Should().ContainSingle();
     }
 
     [Fact]
     public async Task GetCustomerByIdAsync_ShouldReturnFromCache_WhenExists()
     {
-        // Arrange
-        var customerId = 1;
-        var expectedCustomer = new CustomerApiModel { Id = customerId, FirstName = "John", LastName = "Doe" };
-        var ct = CancellationToken.None;
+        var result = await _service.GetCustomerByIdAsync(TestData.Customer, CancellationToken.None);
 
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<CustomerApiModel?>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(expectedCustomer);
-
-        // Act
-        var result = await _service.GetCustomerByIdAsync(customerId, ct);
-
-        // Assert
-        result.Should().BeEquivalentTo(expectedCustomer);
-        await _cache.Received(1).GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<CustomerApiModel?>>>(), Arg.Any<CacheEntryOptions>(), ct);
+        result.Should().NotBeNull();
+        result!.FirstName.Should().Be("Alice");
+        result.SupportRepId.Should().Be(TestData.Rep);
+        result.SupportRepName.Should().Be("John Doe");
     }
 
     [Fact]
     public async Task GetAllCustomersAsync_ShouldReturnMappedList()
     {
-        // Arrange
-        var ct = CancellationToken.None;
-        var entities = new List<Customer> 
-        { 
-            new() { Id = 1, FirstName = "John", LastName = "Doe" },
-            new() { Id = 2, FirstName = "Jane", LastName = "Smith" }
-        };
-        
-        // Mock cache to execute the factory
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<IEnumerable<CustomerApiModel>>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(async callInfo => 
-            {
-                var factory = callInfo.ArgAt<Func<CancellationToken, Task<IEnumerable<CustomerApiModel>>>>(1);
-                return await factory(ct);
-            });
+        var all = (await _service.GetAllCustomersAsync(CancellationToken.None)).ToList();
 
-        _repo.GetAll().Returns(entities);
-
-        // Act
-        var result = await _service.GetAllCustomersAsync(ct);
-
-        // Assert
-        result.Should().HaveCount(2);
-        result.Should().Contain(c => c.FirstName == "John");
-        result.Should().Contain(c => c.FirstName == "Jane");
-        await _repo.Received(1).GetAll();
+        all.Should().ContainSingle().Which.LastName.Should().Be("Smith");
     }
 
     [Fact]
     public async Task GetCustomersBySupportRepIdAsync_ShouldReturnFilteredList()
     {
-        // Arrange
-        var repId = 5;
-        var ct = CancellationToken.None;
-        var entities = new List<Customer> 
-        { 
-            new() { Id = 1, FirstName = "John", SupportRepId = repId }
-        };
-        
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<IEnumerable<CustomerApiModel>>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(async callInfo => 
-            {
-                var factory = callInfo.ArgAt<Func<CancellationToken, Task<IEnumerable<CustomerApiModel>>>>(1);
-                return await factory(ct);
-            });
+        var customers = (await _service.GetCustomersBySupportRepIdAsync(TestData.Rep, CancellationToken.None)).ToList();
 
-        _repo.GetBySupportRepId(repId).Returns(entities);
+        customers.Should().ContainSingle().Which.Id.Should().Be(TestData.Customer);
+    }
 
-        // Act
-        var result = await _service.GetCustomersBySupportRepIdAsync(repId, ct);
-
-        // Assert
-        result.Should().HaveCount(1);
-        result.First().Id.Should().Be(1);
-        await _repo.Received(1).GetBySupportRepId(repId);
+    [Fact]
+    public async Task GetCustomersBySupportRepIdAsync_ShouldReturnEmptyForUnknownRep()
+    {
+        (await _service.GetCustomersBySupportRepIdAsync(TestData.Unknown, CancellationToken.None)).Should().BeEmpty();
     }
 }

@@ -1,159 +1,96 @@
+using Admin.Modules.Data;
+using Admin.Modules.Models;
 using Admin.Modules.Services;
+using Admin.Modules.Validation;
 using FluentAssertions;
 using FluentValidation;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
-using SharedKernel.Caching;
-using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
-using SharedKernel.Persistence.Repositories;
-using Xunit;
 
 namespace ModularMonolith.Services.Tests.Administration;
 
-public class EmployeeServiceTests
+[Collection(ModuleDatabaseDefinition.Name)]
+public sealed class EmployeeServiceTests(ModuleDatabaseFixture database) : IAsyncLifetime
 {
-    private readonly IEmployeeRepository _repo = Substitute.For<IEmployeeRepository>();
-    private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
-    private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
-    private readonly IValidator<EmployeeApiModel> _validator = Substitute.For<IValidator<EmployeeApiModel>>();
-    private readonly ILogger<EmployeeService> _logger = NullLogger<EmployeeService>.Instance;
-    private readonly EmployeeService _service;
+    private readonly RecordingCache _cache = new();
+    private AdministrationDbContext _db = null!;
+    private EmployeeService _service = null!;
 
-    public EmployeeServiceTests()
+    public async Task InitializeAsync()
     {
-        // Default successful validation
-        _validator.ValidateAsync(Arg.Any<EmployeeApiModel>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
-
-        _service = new EmployeeService(_repo, _cache, _keys, _validator, _logger);
-        
-        _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
+        await database.ResetAndSeedAsync();
+        _db = database.CreateAdministrationContext();
+        _service = new EmployeeService(_db, _cache, RecordingCache.Keys(), new EmployeeValidator(),
+            NullLogger<EmployeeService>.Instance);
     }
+
+    public async Task DisposeAsync() => await _db.DisposeAsync();
 
     [Fact]
     public async Task CreateEmployeeAsync_ShouldThrowValidationException_WhenValidationFails()
     {
-        // Arrange
-        var model = new EmployeeApiModel { FirstName = "" };
-        var ct = CancellationToken.None;
-        
-        _validator.ValidateAsync(Arg.Any<EmployeeApiModel>(), ct)
-            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult(new[] 
-            { 
-                new FluentValidation.Results.ValidationFailure("FirstName", "FirstName is required") 
-            })));
+        var model = new EmployeeApiModel { FirstName = null, LastName = "Doe" };
 
-        // Act & Assert
-        await _service.Invoking(s => s.CreateEmployeeAsync(model, ct))
+        await _service.Invoking(s => s.CreateEmployeeAsync(model, CancellationToken.None))
             .Should().ThrowAsync<ValidationException>();
-        await _repo.DidNotReceive().Add(Arg.Any<Employee>());
+        await using var check = database.CreateAdministrationContext();
+        (await check.Employees.CountAsync()).Should().Be(2);
     }
 
     [Fact]
     public async Task CreateEmployeeAsync_ShouldAddAndInvalidateCache()
     {
-        // Arrange
-        var model = new EmployeeApiModel { FirstName = "Andrew", LastName = "Adams" };
-        var ct = CancellationToken.None;
-        var created = new Employee { Id = 10, FirstName = "Andrew", LastName = "Adams" };
-        _repo.Add(Arg.Any<Employee>()).Returns(created);
+        var model = new EmployeeApiModel { FirstName = "Ann", LastName = "Lee", ReportsTo = TestData.Manager };
 
-        // Act
-        var result = await _service.CreateEmployeeAsync(model, ct);
+        var result = await _service.CreateEmployeeAsync(model, CancellationToken.None);
 
-        // Assert
         result.Should().NotBeNull();
-        result!.FirstName.Should().Be("Andrew");
-        await _repo.Received(1).Add(Arg.Is<Employee>(e => e != null && e.FirstName == "Andrew"));
-        await _cache.Received(1).RemoveByTagAsync("administration:employee", ct);
+        await using var check = database.CreateAdministrationContext();
+        (await check.Employees.AnyAsync(e => e.Id == result!.Id && e.FirstName == "Ann")).Should().BeTrue();
+        _cache.RemovedTags.Should().Equal("administration:employee");
     }
 
     [Fact]
     public async Task UpdateEmployeeAsync_ShouldUpdateAndInvalidateCache()
     {
-        // Arrange
-        var model = new EmployeeApiModel { Id = 1, FirstName = "Andrew", LastName = "Adams" };
-        var ct = CancellationToken.None;
-        _repo.Update(Arg.Any<Employee>()).Returns(true);
+        var model = new EmployeeApiModel { Id = TestData.Rep, FirstName = "Johnny", LastName = "Doe", ReportsTo = TestData.Manager };
 
-        // Act
-        var result = await _service.UpdateEmployeeAsync(model, ct);
+        var result = await _service.UpdateEmployeeAsync(model, CancellationToken.None);
 
-        // Assert
         result.Should().BeTrue();
-        await _repo.Received(1).Update(Arg.Is<Employee>(e => e != null && e.Id == 1 && e.FirstName == "Andrew"));
-        await _cache.Received(1).RemoveByTagAsync("administration:employee", ct);
-        await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
+        await using var check = database.CreateAdministrationContext();
+        (await check.Employees.SingleAsync(e => e.Id == TestData.Rep)).FirstName.Should().Be("Johnny");
+        _cache.RemovedTags.Should().Equal("administration:employee");
+        _cache.RemovedKeys.Should().ContainSingle();
     }
 
     [Fact]
     public async Task GetEmployeeByIdAsync_ShouldReturnFromCache()
     {
-        // Arrange
-        var id = 1;
-        var ct = CancellationToken.None;
-        var expected = new EmployeeApiModel { Id = id, FirstName = "Andrew" };
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<EmployeeApiModel?>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(expected);
+        var result = await _service.GetEmployeeByIdAsync(TestData.Rep, CancellationToken.None);
 
-        // Act
-        var result = await _service.GetEmployeeByIdAsync(id, ct);
-
-        // Assert
-        result.Should().BeEquivalentTo(expected);
+        result.Should().NotBeNull();
+        result!.FirstName.Should().Be("John");
+        result.ReportsTo.Should().Be(TestData.Manager);
     }
 
     [Fact]
     public async Task GetDirectReportsAsync_ShouldReturnMappedList()
     {
-        // Arrange
-        var id = 1;
-        var ct = CancellationToken.None;
-        var entities = new List<Employee> { new() { Id = 2, FirstName = "Nancy" } };
-        
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<IEnumerable<EmployeeApiModel>>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(async callInfo => 
-            {
-                var factory = callInfo.ArgAt<Func<CancellationToken, Task<IEnumerable<EmployeeApiModel>>>>(1);
-                return await factory(ct);
-            });
+        var reports = (await _service.GetDirectReportsAsync(TestData.Manager, CancellationToken.None)).ToList();
 
-        _repo.GetDirectReports(id).Returns(entities);
-
-        // Act
-        var result = await _service.GetDirectReportsAsync(id, ct);
-
-        // Assert
-        result.Should().HaveCount(1);
-        result.First().FirstName.Should().Be("Nancy");
+        reports.Should().ContainSingle().Which.Id.Should().Be(TestData.Rep);
     }
 
     [Fact]
-    public async Task GetReportsToAsync_ShouldReturnManager()
+    public async Task GetReportsToAsync_ReturnsTheEmployeeWithTheGivenId()
     {
-        // Arrange
-        var id = 2;
-        var ct = CancellationToken.None;
-        var manager = new Employee { Id = 1, FirstName = "Andrew" };
-        
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<EmployeeApiModel?>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(async callInfo => 
-            {
-                var factory = callInfo.ArgAt<Func<CancellationToken, Task<EmployeeApiModel?>>>(1);
-                return await factory(ct);
-            });
+        // Current behaviour, unchanged by the phase 2 refactor: the lookup finds the employee whose id
+        // was passed, not that employee's manager. The mocked test this replaces asserted the manager,
+        // which the real query never returned.
+        var result = await _service.GetReportsToAsync(TestData.Rep, CancellationToken.None);
 
-        _repo.GetReportsTo(id).Returns(manager);
-
-        // Act
-        var result = await _service.GetReportsToAsync(id, ct);
-
-        // Assert
         result.Should().NotBeNull();
-        result!.Id.Should().Be(1);
-        result.FirstName.Should().Be("Andrew");
+        result!.Id.Should().Be(TestData.Rep);
     }
 }

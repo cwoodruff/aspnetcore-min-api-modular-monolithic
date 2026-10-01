@@ -1,14 +1,16 @@
+using Admin.Modules.Data;
+using Admin.Modules.Domain;
+using Admin.Modules.Mapping;
+using Admin.Modules.Models;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
-using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Extensions;
-using SharedKernel.Persistence.Repositories;
 
 namespace Admin.Modules.Services;
 
 internal sealed class MediaTypeService(
-    IMediaTypeRepository repo,
+    AdministrationDbContext db,
     ICacheFacade cache,
     ICacheKeyComposer keys,
     IValidator<MediaTypeApiModel> validator,
@@ -28,8 +30,8 @@ internal sealed class MediaTypeService(
 
         return await cache.GetOrAddAsync<MediaTypeApiModel?>(key, async _ =>
         {
-            var m = await repo.GetById(id);
-            return m?.Convert();
+            var m = await LoadByIdAsync(id, ct);
+            return m?.ToApiModel();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -47,8 +49,8 @@ internal sealed class MediaTypeService(
 
         return await cache.GetOrAddAsync<IEnumerable<MediaTypeApiModel>>(key, async _ =>
         {
-            var mediaTypeEntities = await repo.GetAll();
-            return mediaTypeEntities.ConvertAll();
+            var mediaTypeEntities = await db.MediaTypes.AsNoTracking().ToListAsync(ct);
+            return mediaTypeEntities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -64,13 +66,14 @@ internal sealed class MediaTypeService(
             throw new ValidationException(result.Errors);
         }
 
-        var entity = model.Convert();
-        var created = await repo.Add(entity);
+        var entity = model.ToEntity();
+        db.MediaTypes.Add(entity);
+        await db.SaveChangesAsync(ct);
 
         // Invalidate cache
         await cache.RemoveByTagAsync(MediaTypeTags[0], ct);
 
-        return created?.Convert();
+        return entity.ToApiModel();
     }
 
     public async Task<bool> UpdateMediaTypeAsync(MediaTypeApiModel model, CancellationToken ct)
@@ -81,11 +84,13 @@ internal sealed class MediaTypeService(
             throw new ValidationException(result.Errors);
         }
 
-        var entity = model.Convert();
-        var updated = await repo.Update(entity);
-
+        var entity = model.ToEntity();
+        var updated = await db.MediaTypes.AnyAsync(e => e.Id == entity.Id, ct);
         if (updated)
         {
+            db.MediaTypes.Update(entity);
+            await db.SaveChangesAsync(ct);
+
             // Invalidate cache
             await cache.RemoveByTagAsync(MediaTypeTags[0], ct);
             var key = keys.Compose(
@@ -98,4 +103,11 @@ internal sealed class MediaTypeService(
 
         return updated;
     }
+
+    private async Task<MediaType?> LoadByIdAsync(int id, CancellationToken ct)
+    {
+        return await db.MediaTypes
+            .AsNoTracking()
+            .SingleOrDefaultAsync(e => e.Id == id, ct);
+        }
 }

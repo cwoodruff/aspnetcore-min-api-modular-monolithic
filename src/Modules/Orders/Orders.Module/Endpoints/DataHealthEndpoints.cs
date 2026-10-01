@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Orders.Modules.Data;
 using SharedKernel;
-using SharedKernel.Persistence;
 using SharedKernel.TrafficControl;
 
 namespace Orders.Modules.Endpoints;
@@ -14,7 +14,7 @@ internal static class OrdersDataHealthEndpoints
     public static void MapOrdersDataHealthEndpoints(this IEndpointRouteBuilder group)
     {
         group.MapGet("/data-health",
-                async (AppDbContext db, IHostEnvironment env, IConfiguration cfg, CancellationToken ct) =>
+                async (OrdersDbContext db, IHostEnvironment env, IConfiguration cfg, CancellationToken ct) =>
                 {
                     bool canConnect;
                     try

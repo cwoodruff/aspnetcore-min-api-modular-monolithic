@@ -1,10 +1,14 @@
+using Admin.Modules.Data;
 using Admin.Modules.Endpoints;
 using Admin.Modules.Services;
+using Admin.Modules.Validation;
+using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SharedKernel;
+using SharedKernel.Persistence;
 
 namespace Admin.Modules;
 
@@ -16,7 +20,9 @@ public static class AdministrationModule
 
         public void RegisterServices(IServiceCollection services, IConfiguration config)
         {
-            // Register module-specific services
+            services.AddModuleDbContext<AdministrationDbContext>(AdministrationDbContext.Schema);
+            services.AddValidatorsFromAssemblyContaining<CustomerValidator>(includeInternalTypes: true);
+
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IGenreService, GenreService>();
             services.AddScoped<IEmployeeService, EmployeeService>();

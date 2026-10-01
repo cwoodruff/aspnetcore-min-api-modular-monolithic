@@ -1,4 +1,4 @@
-using SharedKernel.Persistence.ApiModels;
+using Catalog.Modules.Models;
 
 namespace Catalog.Modules.Services;
 

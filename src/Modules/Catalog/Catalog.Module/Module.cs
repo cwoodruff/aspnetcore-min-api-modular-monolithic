@@ -1,10 +1,14 @@
+using Catalog.Modules.Data;
+using Catalog.Modules.Endpoints;
+using Catalog.Modules.Services;
+using Catalog.Modules.Validation;
+using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Catalog.Modules.Endpoints;
-using Catalog.Modules.Services;
 using SharedKernel;
+using SharedKernel.Persistence;
 
 namespace Catalog.Modules;
 
@@ -16,7 +20,9 @@ public static class CatalogModule
 
         public void RegisterServices(IServiceCollection services, IConfiguration config)
         {
-            // Register module-specific services
+            services.AddModuleDbContext<CatalogDbContext>(CatalogDbContext.Schema);
+            services.AddValidatorsFromAssemblyContaining<AlbumValidator>(includeInternalTypes: true);
+
             services.AddScoped<IAlbumService, AlbumService>();
             services.AddScoped<IArtistService, ArtistService>();
             services.AddScoped<IPlaylistService, PlaylistService>();

@@ -1,74 +1,44 @@
-using FluentAssertions;
-using FluentValidation;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
+using Catalog.Modules.Data;
+using Catalog.Modules.Models;
 using Catalog.Modules.Services;
-using NSubstitute;
-using SharedKernel.Caching;
-using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
-using SharedKernel.Persistence.Repositories;
-using Xunit;
+using Catalog.Modules.Validation;
+using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ModularMonolith.Services.Tests.Catalog;
 
-public class ArtistServiceTests
+[Collection(ModuleDatabaseDefinition.Name)]
+public sealed class ArtistServiceTests(ModuleDatabaseFixture database) : IAsyncLifetime
 {
-    private readonly IArtistRepository _repo = Substitute.For<IArtistRepository>();
-    private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
-    private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
-    private readonly IValidator<ArtistApiModel> _validator = Substitute.For<IValidator<ArtistApiModel>>();
-    private readonly ILogger<ArtistService> _logger = NullLogger<ArtistService>.Instance;
-    private readonly ArtistService _service;
+    private readonly RecordingCache _cache = new();
+    private CatalogDbContext _db = null!;
+    private ArtistService _service = null!;
 
-    public ArtistServiceTests()
+    public async Task InitializeAsync()
     {
-        _service = new ArtistService(_repo, _cache, _keys, _validator, _logger);
-
-        _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
+        await database.ResetAndSeedAsync();
+        _db = database.CreateCatalogContext();
+        _service = new ArtistService(_db, _cache, RecordingCache.Keys(), new ArtistValidator(),
+            NullLogger<ArtistService>.Instance);
     }
+
+    public async Task DisposeAsync() => await _db.DisposeAsync();
 
     [Fact]
     public async Task GetArtistByIdAsync_ShouldReturnFromCache()
     {
-        // Arrange
-        var id = 1;
-        var ct = CancellationToken.None;
-        var expected = new ArtistApiModel { Id = id, Name = "AC/DC" };
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<ArtistApiModel?>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(expected);
+        var result = await _service.GetArtistByIdAsync(TestData.Artist, CancellationToken.None);
 
-        // Act
-        var result = await _service.GetArtistByIdAsync(id, ct);
-
-        // Assert
-        result.Should().BeEquivalentTo(expected);
+        result.Should().NotBeNull();
+        result!.Name.Should().Be("Artist A");
+        result.Albums.Should().ContainSingle().Which.Tracks.Should().HaveCount(2);
     }
 
     [Fact]
     public async Task GetAllArtistsAsync_ShouldReturnMappedList()
     {
-        // Arrange
-        var ct = CancellationToken.None;
-        var entities = new List<Artist> { new() { Id = 1, Name = "AC/DC" } };
+        var all = (await _service.GetAllArtistsAsync(CancellationToken.None)).Cast<ArtistApiModel>().ToList();
 
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<IEnumerable<object>>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(async callInfo =>
-            {
-                var factory = callInfo.ArgAt<Func<CancellationToken, Task<IEnumerable<object>>>>(1);
-                return await factory(ct);
-            });
-
-        _repo.GetAll().Returns(entities);
-
-        // Act
-        var result = await _service.GetAllArtistsAsync(ct);
-
-        // Assert
-        result.Should().HaveCount(1);
-        var first = result.First() as ArtistApiModel;
-        first.Should().NotBeNull();
-        first!.Name.Should().Be("AC/DC");
+        all.Should().ContainSingle().Which.Name.Should().Be("Artist A");
     }
 }

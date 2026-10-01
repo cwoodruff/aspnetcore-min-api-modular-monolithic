@@ -8,9 +8,17 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Shared\SharedKernel.Persistence\SharedKernel.Persistence.csproj" />
         <ProjectReference Include="..\..\..\Shared\SharedKernel\SharedKernel.csproj" />
         <ProjectReference Include="..\Catalog.Contracts\Catalog.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+        <!-- dotnet-ef runs against this project for the module's own migrations. -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
 </Project>
