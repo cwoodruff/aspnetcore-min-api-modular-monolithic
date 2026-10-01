@@ -15,6 +15,7 @@ using SharedKernel.Diagnostics;
 using SharedKernel.Events;
 using SharedKernel.Persistence;
 using SharedKernel.TrafficControl;
+using SharedKernel.Validation;
 
 namespace Admin.Modules;
 
@@ -31,8 +32,9 @@ public static class AdministrationModule
         {
             services.AddModuleDbContext<AdministrationDbContext>(ModuleName, AdministrationDbContext.Schema);
             services.AddModuleCache(ModuleName, config.GetValue($"Caching:Modules:{ModuleName}:SizeLimit", 500));
-            services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Names.Administration);
+            services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Administration);
             services.AddValidatorsFromAssemblyContaining<CustomerValidator>(includeInternalTypes: true);
+            services.AddScoped(typeof(IRequestValidator<>), typeof(FluentRequestValidator<>));
 
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IGenreService, GenreService>();
@@ -45,7 +47,7 @@ public static class AdministrationModule
         public void MapEndpoints(IEndpointRouteBuilder endpoints)
         {
             var group = endpoints.MapGroup("/api/admin")
-                .RequireRateLimiting(RateLimitPolicyRegistry.Names.Administration)
+                .RequireRateLimiting(RateLimitPolicyRegistry.Administration)
                 .AddModuleMetrics(ModuleName);
 
             // Delegate to endpoint classes

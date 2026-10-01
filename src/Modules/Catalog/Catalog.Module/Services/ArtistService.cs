@@ -38,7 +38,7 @@ internal class ArtistService(
         }, ct);
     }
 
-    public async Task<IEnumerable<object>> GetAllArtistsAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<ArtistApiModel>> GetAllArtistsAsync(CancellationToken ct)
     {
         var key = keys.Compose(
             "catalog",
@@ -46,7 +46,7 @@ internal class ArtistService(
             "v1",
             "all");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<ArtistApiModel>>(key, async _ =>
         {
             var entities = await db.Artists.AsNoTracking().ToListAsync(ct);
             return entities.ToApiModels();

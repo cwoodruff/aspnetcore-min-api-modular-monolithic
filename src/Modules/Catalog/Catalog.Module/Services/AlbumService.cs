@@ -38,7 +38,7 @@ internal class AlbumService(
         }, ct);
     }
 
-    public async Task<IEnumerable<object>> GetAllAlbumsAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<AlbumApiModel>> GetAllAlbumsAsync(CancellationToken ct)
     {
         var key = keys.Compose(
             "catalog",
@@ -46,7 +46,7 @@ internal class AlbumService(
             "v1",
             "all");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<AlbumApiModel>>(key, async _ =>
         {
             var entities = await db.Albums.AsNoTracking().ToListAsync(ct);
             return entities.ToApiModels();
@@ -57,7 +57,7 @@ internal class AlbumService(
         }, ct) ?? [];
     }
 
-    public async Task<IEnumerable<object>> GetAlbumsByArtistIdAsync(int id, CancellationToken ct)
+    public async Task<IReadOnlyList<AlbumApiModel>> GetAlbumsByArtistIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
             "catalog",
@@ -65,7 +65,7 @@ internal class AlbumService(
             "v1",
             $"by-artist:{id}");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<AlbumApiModel>>(key, async _ =>
         {
             var entities = await LoadByArtistIdAsync(id, ct);
             return entities.ToApiModels();

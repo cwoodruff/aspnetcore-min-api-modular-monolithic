@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;
@@ -29,7 +30,9 @@ public static class ModuleDbContextOptions
     /// for a module whose runtime login may not change the schema, such as Reporting's read-only role
     /// (ADR-0014).
     /// </param>
-    public static IServiceCollection AddModuleDbContext<TContext>(this IServiceCollection services,
+    public static IServiceCollection AddModuleDbContext<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TContext>(
+        this IServiceCollection services,
         string moduleName, string schema, string connectionName = ConnectionName, string? migrationConnectionName = null)
         where TContext : DbContext
     {

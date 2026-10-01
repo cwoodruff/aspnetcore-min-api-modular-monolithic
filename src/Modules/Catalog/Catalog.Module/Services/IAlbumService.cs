@@ -5,8 +5,8 @@ namespace Catalog.Modules.Services;
 internal interface IAlbumService
 {
     Task<AlbumApiModel?> GetAlbumByIdAsync(int id, CancellationToken ct);
-    Task<IEnumerable<object>> GetAllAlbumsAsync(CancellationToken ct);
-    Task<IEnumerable<object>> GetAlbumsByArtistIdAsync(int id, CancellationToken ct);
+    Task<IReadOnlyList<AlbumApiModel>> GetAllAlbumsAsync(CancellationToken ct);
+    Task<IReadOnlyList<AlbumApiModel>> GetAlbumsByArtistIdAsync(int id, CancellationToken ct);
     Task<AlbumApiModel?> CreateAlbumAsync(AlbumApiModel model, CancellationToken ct);
     Task<bool> UpdateAlbumAsync(AlbumApiModel model, CancellationToken ct);
 }

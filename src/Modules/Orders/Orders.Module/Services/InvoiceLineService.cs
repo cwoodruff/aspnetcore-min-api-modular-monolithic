@@ -21,7 +21,7 @@ internal class InvoiceLineService(
     private readonly ILogger<InvoiceLineService> _logger = logger;
     private readonly IValidator<InvoiceLineApiModel> _validator = validator;
 
-    public async Task<object?> GetInvoiceLineByIdAsync(int id, CancellationToken ct)
+    public async Task<InvoiceLineApiModel?> GetInvoiceLineByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
             "orders",
@@ -29,8 +29,8 @@ internal class InvoiceLineService(
             "v1",
             $"by-id:{id}");
 
-        return await cache.GetOrAddAsync<object?>(key, async _ =>
-            await LoadByIdAsync(id, ct)
+        return await cache.GetOrAddAsync<InvoiceLineApiModel?>(key, async _ =>
+            (await LoadByIdAsync(id, ct))?.ToApiModel()
         , new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -38,7 +38,7 @@ internal class InvoiceLineService(
         }, ct);
     }
 
-    public async Task<IEnumerable<object>> GetAllInvoiceLinesAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<InvoiceLineApiModel>> GetAllInvoiceLinesAsync(CancellationToken ct)
     {
         var key = keys.Compose(
             "orders",
@@ -46,7 +46,7 @@ internal class InvoiceLineService(
             "v1",
             "all");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<InvoiceLineApiModel>>(key, async _ =>
         {
             var entities = await db.InvoiceLines.AsNoTracking().ToListAsync(ct);
             return entities.ToApiModels();
@@ -57,7 +57,7 @@ internal class InvoiceLineService(
         }, ct) ?? [];
     }
 
-    public async Task<IEnumerable<object>> GetInvoiceLinesByInvoiceIdAsync(int id, CancellationToken ct)
+    public async Task<IReadOnlyList<InvoiceLineApiModel>> GetInvoiceLinesByInvoiceIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
             "orders",
@@ -65,7 +65,7 @@ internal class InvoiceLineService(
             "v1",
             $"by-invoice:{id}");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<InvoiceLineApiModel>>(key, async _ =>
         {
             var entities = await LoadByInvoiceIdAsync(id, ct);
             return entities.ToApiModels();
@@ -76,7 +76,7 @@ internal class InvoiceLineService(
         }, ct) ?? [];
     }
 
-    public async Task<IEnumerable<object>> GetInvoiceLinesByTrackIdAsync(int id, CancellationToken ct)
+    public async Task<IReadOnlyList<InvoiceLineApiModel>> GetInvoiceLinesByTrackIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
             "orders",
@@ -84,7 +84,7 @@ internal class InvoiceLineService(
             "v1",
             $"by-track:{id}");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<InvoiceLineApiModel>>(key, async _ =>
         {
             var entities = await LoadByTrackIdAsync(id, ct);
             return entities.ToApiModels();

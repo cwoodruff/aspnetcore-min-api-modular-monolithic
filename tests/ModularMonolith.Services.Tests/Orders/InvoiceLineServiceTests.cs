@@ -3,7 +3,6 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Orders.Modules.Data;
-using Orders.Modules.Domain;
 using Orders.Modules.Models;
 using Orders.Modules.Services;
 using Orders.Modules.Validation;
@@ -73,8 +72,7 @@ public sealed class InvoiceLineServiceTests(ModuleDatabaseFixture database) : IA
     [Fact]
     public async Task GetInvoiceLineByIdAsync_ShouldReturnFromCache()
     {
-        // The service returns the entity for this lookup, as the repository it replaced did.
-        var result = (InvoiceLine?)await _service.GetInvoiceLineByIdAsync(1, CancellationToken.None);
+        var result = await _service.GetInvoiceLineByIdAsync(1, CancellationToken.None);
 
         result.Should().NotBeNull();
         result!.TrackId.Should().Be(TestData.Track1);

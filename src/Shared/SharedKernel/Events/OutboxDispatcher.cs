@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -101,6 +102,7 @@ public abstract class OutboxDispatcher(
 public abstract class OutboxDispatcher<TContext>(
     IServiceScopeFactory scopes,
     IEnumerable<IntegrationEventSubscription> subscriptions,
+    JsonSerializerOptions json,
     IConfiguration configuration,
     TimeProvider time,
     ModuleWorkQueue workQueue,
@@ -109,6 +111,7 @@ public abstract class OutboxDispatcher<TContext>(
     where TContext : DbContext
 {
     private readonly IntegrationEventSubscription[] _subscriptions = [.. subscriptions];
+    private readonly JsonSerializerOptions _json = json;
     private Dictionary<string, Type>? _eventTypes;
 
     /// <summary>The event types this module publishes.</summary>
@@ -173,7 +176,7 @@ public abstract class OutboxDispatcher<TContext>(
         IIntegrationEvent integrationEvent;
         try
         {
-            integrationEvent = (IIntegrationEvent)(IntegrationEventSerializer.Deserialize(message.Payload, eventType)
+            integrationEvent = (IIntegrationEvent)(JsonSerializer.Deserialize(message.Payload, _json.GetTypeInfo(eventType))
                                                    ?? throw new InvalidOperationException("Payload deserialized to null."));
         }
 #pragma warning disable CA1031 // A payload that cannot be read is a delivery failure, recorded on the row.
@@ -183,42 +186,30 @@ public abstract class OutboxDispatcher<TContext>(
             return $"Cannot read payload: {ex.Message}";
         }
 
-        var handlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
         var failures = new List<string>();
-        foreach (var moduleKey in _subscriptions.Where(s => s.EventType == eventType).Select(s => s.ModuleKey).Distinct())
+        foreach (var subscription in _subscriptions.Where(s => s.EventType == eventType))
         {
-            int handlerCount;
-            await using (var probe = scopes.CreateAsyncScope())
+            // A scope per handler: each gets its own module context and transaction.
+            await using var handlerScope = scopes.CreateAsyncScope();
+            var handlerName = subscription.HandlerType.FullName ?? subscription.HandlerType.Name;
+            try
             {
-                handlerCount = probe.ServiceProvider.GetKeyedServices(handlerType, moduleKey).Count();
+                // The inbox lives in the handler's own module: the context registered under the same key.
+                var handlerContext = handlerScope.ServiceProvider.GetRequiredKeyedService<DbContext>(subscription.ModuleKey);
+                await InboxGuard.RunAsync(handlerContext, message.Id, handlerName, Time.GetUtcNow(),
+                    token => subscription.Handle(handlerScope.ServiceProvider, integrationEvent, token),
+                    ct);
             }
-
-            for (var i = 0; i < handlerCount; i++)
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
-                // A scope per handler: each gets its own module context and transaction.
-                await using var handlerScope = scopes.CreateAsyncScope();
-                var handler = handlerScope.ServiceProvider.GetKeyedServices(handlerType, moduleKey).ElementAt(i)!;
-                var handlerName = handler.GetType().FullName ?? handler.GetType().Name;
-                try
-                {
-                    // The inbox lives in the handler's own module: the context registered under the same key.
-                    var handlerContext = handlerScope.ServiceProvider.GetRequiredKeyedService<DbContext>(moduleKey);
-                    await InboxGuard.RunAsync(handlerContext, message.Id, handlerName, Time.GetUtcNow(),
-                        token => (Task)handlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEvent>.HandleAsync))!
-                            .Invoke(handler, [integrationEvent, token])!,
-                        ct);
-                }
-                catch (OperationCanceledException) when (ct.IsCancellationRequested)
-                {
-                    throw;
-                }
+                throw;
+            }
 #pragma warning disable CA1031 // One handler failing must not stop the others; the failure goes on the row.
-                catch (Exception ex)
+            catch (Exception ex)
 #pragma warning restore CA1031
-                {
-                    OutboxLog.HandlerFailed(Logger, handlerName, message.Id, ex);
-                    failures.Add($"{handlerName}: {ex.GetBaseException().Message}");
-                }
+            {
+                OutboxLog.HandlerFailed(Logger, handlerName, message.Id, ex);
+                failures.Add($"{handlerName}: {ex.GetBaseException().Message}");
             }
         }
 

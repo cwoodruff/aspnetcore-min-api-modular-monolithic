@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SharedKernel;
 using SharedKernel.Caching;
 
 namespace ModularMonolith.Services.Tests.Bulkheads;
@@ -17,6 +18,7 @@ public sealed class ModuleCacheTests : IDisposable
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
         services.AddLogging();
+        services.AddReflectionJsonSerialization();
         services.AddModuleCache("Catalog", Limit);
         services.AddModuleCache("Administration", Limit);
         _services = services.BuildServiceProvider();

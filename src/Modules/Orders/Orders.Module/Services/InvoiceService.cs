@@ -25,7 +25,7 @@ internal class InvoiceService(
     private readonly ILogger<InvoiceService> _logger = logger;
     private readonly IValidator<InvoiceApiModel> _validator = validator;
 
-    public async Task<object?> GetInvoiceByIdAsync(int id, CancellationToken ct)
+    public async Task<InvoiceApiModel?> GetInvoiceByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
             "orders",
@@ -33,7 +33,7 @@ internal class InvoiceService(
             "v1",
             $"by-id:{id}");
 
-        return await cache.GetOrAddAsync<object?>(key, async _ =>
+        return await cache.GetOrAddAsync<InvoiceApiModel?>(key, async _ =>
             await LoadByIdAsync(id, ct)
         , new CacheEntryOptions
         {
@@ -42,7 +42,7 @@ internal class InvoiceService(
         }, ct);
     }
 
-    public async Task<IEnumerable<object>> GetAllInvoicesAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<InvoiceApiModel>> GetAllInvoicesAsync(CancellationToken ct)
     {
         var key = keys.Compose(
             "orders",
@@ -50,7 +50,7 @@ internal class InvoiceService(
             "v1",
             "all");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<InvoiceApiModel>>(key, async _ =>
         {
             var entities = await db.Invoices.AsNoTracking().ToListAsync(ct);
             return entities.ToApiModels();
@@ -61,7 +61,7 @@ internal class InvoiceService(
         }, ct) ?? [];
     }
 
-    public async Task<IEnumerable<object>> GetInvoicesByCustomerIdAsync(int id, CancellationToken ct)
+    public async Task<IReadOnlyList<InvoiceApiModel>> GetInvoicesByCustomerIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
             "orders",
@@ -69,7 +69,7 @@ internal class InvoiceService(
             "v1",
             $"by-customer:{id}");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<InvoiceApiModel>>(key, async _ =>
         {
             var entities = await LoadByCustomerIdAsync(id, ct);
             return entities.ToApiModels();

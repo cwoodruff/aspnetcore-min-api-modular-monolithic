@@ -4,10 +4,10 @@ namespace Orders.Modules.Services;
 
 internal interface IInvoiceLineService
 {
-    Task<object?> GetInvoiceLineByIdAsync(int id, CancellationToken ct);
-    Task<IEnumerable<object>> GetAllInvoiceLinesAsync(CancellationToken ct);
-    Task<IEnumerable<object>> GetInvoiceLinesByInvoiceIdAsync(int id, CancellationToken ct);
-    Task<IEnumerable<object>> GetInvoiceLinesByTrackIdAsync(int id, CancellationToken ct);
+    Task<InvoiceLineApiModel?> GetInvoiceLineByIdAsync(int id, CancellationToken ct);
+    Task<IReadOnlyList<InvoiceLineApiModel>> GetAllInvoiceLinesAsync(CancellationToken ct);
+    Task<IReadOnlyList<InvoiceLineApiModel>> GetInvoiceLinesByInvoiceIdAsync(int id, CancellationToken ct);
+    Task<IReadOnlyList<InvoiceLineApiModel>> GetInvoiceLinesByTrackIdAsync(int id, CancellationToken ct);
     Task<InvoiceLineApiModel?> CreateInvoiceLineAsync(InvoiceLineApiModel model, CancellationToken ct);
     Task<bool> UpdateInvoiceLineAsync(InvoiceLineApiModel model, CancellationToken ct);
 }

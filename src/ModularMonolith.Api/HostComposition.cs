@@ -3,6 +3,7 @@ using Catalog.Modules;
 using Identity.Modules;
 using Identity.Modules.Extensions;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.OpenApi;
 using Orders.Modules;
 using Reporting.Modules;
@@ -45,6 +46,22 @@ public static class HostComposition
                 Contact = new OpenApiContact { Name = "API Team" }
             });
 
+            // One document per module, holding the endpoints tagged with that module's name.
+            foreach (var (document, tag) in ModuleOpenApiDocuments)
+            {
+                c.SwaggerDoc(document, new OpenApiInfo
+                {
+                    Title = $"Modular Monolith API: {tag}",
+                    Version = "v1",
+                    Description = $"The {tag} module's endpoints only."
+                });
+            }
+
+            c.DocInclusionPredicate((document, api) =>
+                document == "v1"
+                || (ModuleOpenApiDocuments.TryGetValue(document, out var tag)
+                    && api.ActionDescriptor.EndpointMetadata.OfType<ITagsMetadata>().Any(tags => tags.Tags.Contains(tag))));
+
             var jwtSecurityScheme = new OpenApiSecurityScheme
             {
                 Name = "Authorization",
@@ -81,7 +98,11 @@ public static class HostComposition
 
         // Rate limiting: the root endpoint's policy here; each module adds and applies its own (ADR-0013).
         // Each module also registers its own cache, meter and health check in RegisterServices.
-        services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+        services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.GlobalPublicAnon);
+
+        // JSON for the outbox and the shared L2 cache. The reflection resolver is fine for this host, which
+        // is not trimmed; a Native AOT host would register source-generated type information here instead.
+        services.AddReflectionJsonSerialization();
         services.AddHealthChecks();
 
         var modules = GetModules();
@@ -92,6 +113,16 @@ public static class HostComposition
 
         return modules;
     }
+
+    /// <summary>OpenAPI document name per module, mapped to the tag its endpoints carry.</summary>
+    public static readonly IReadOnlyDictionary<string, string> ModuleOpenApiDocuments = new Dictionary<string, string>
+    {
+        ["catalog"] = "Catalog",
+        ["orders"] = "Orders",
+        ["admin"] = "Administration",
+        ["identity"] = "Identity",
+        ["reporting"] = "Reporting"
+    };
 
     public static IReadOnlyList<IModule> GetModules()
     {

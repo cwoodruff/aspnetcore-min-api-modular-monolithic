@@ -1,9 +1,8 @@
-using System.ComponentModel.DataAnnotations;
 using Admin.Modules.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using SharedKernel.Validation;
 
 namespace Admin.Modules.Endpoints;
 
@@ -12,55 +11,28 @@ internal static class GenreEndpoints
     public static void MapGenreEndpoints(this IEndpointRouteBuilder group)
     {
         // GET /api/admin/genres/{id}
-        group.MapGet("/genres/{id:int}", [Authorize] async (
-                int id,
-                IGenreService service,
-                CancellationToken ct) =>
-            {
-                var genre = await service.GetGenreByIdAsync(id, ct);
-
-                return genre is not null ? Results.Json(genre) : Results.NotFound();
-            })
+        group.MapGet("/genres/{id:int}", GenreHandlers.GetGenreById)
             .RequireAdministrationReadAccess()
             .WithName("AdministrationGetGenreById")
-            .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
-            .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429); // Rate limited by the module group's policy
 
         // GET /api/admin/genres
-        group.MapGet("genres/", [Authorize] async (
-                IGenreService service,
-                CancellationToken ct) =>
-            {
-                var genres = await service.GetAllGenresAsync(ct);
-
-                return Results.Json(genres);
-            })
+        group.MapGet("genres/", GenreHandlers.GetAllGenres)
             .RequireAdministrationReadAccess()
             .WithName("GetAllGenres")
-            .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
-            .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429); // Rate limited by the module group's policy
 
         // POST /api/admin/genres
-        group.MapPost("/genres", [Authorize] async (
-                CreateGenreRequest request,
-                IGenreService service,
-                CancellationToken ct) =>
-            {
-                var created = await service.CreateGenreAsync(request.Name, ct);
-
-                return Results.Created($"/api/admin/genres/{created!.Id}", created);
-            })
+        group.MapPost("/genres", GenreHandlers.CreateGenre)
+            .AddEndpointFilter<ValidationFilter<CreateGenreRequest>>()
             .RequireAdministrationWriteAccess()
             .WithName("CreateGenre")
-            .Produces(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
@@ -68,54 +40,28 @@ internal static class GenreEndpoints
             .Produces(429);
 
         // PUT /api/admin/genres/{id}
-        group.MapPut("/genres/{id:int}", [Authorize] async (
-                int id,
-                UpdateGenreRequest request,
-                IGenreService service,
-                CancellationToken ct) =>
-            {
-                var updated = await service.UpdateGenreAsync(id, request.Name, ct);
-
-                return updated ? Results.Ok(new { id, name = request.Name }) : Results.NotFound();
-            })
+        group.MapPut("/genres/{id:int}", GenreHandlers.UpdateGenre)
+            .AddEndpointFilter<ValidationFilter<UpdateGenreRequest>>()
             .RequireAdministrationWriteAccess()
             .WithName("UpdateGenre")
-            .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
-            .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429);
 
         // DELETE /api/admin/genres/{id}
-        group.MapDelete("/genres/{id:int}", [Authorize] async (
-                int id,
-                IGenreService service,
-                CancellationToken ct) =>
-            {
-                var deleted = await service.DeleteGenreAsync(id, ct);
-
-                return deleted ? Results.NoContent() : Results.NotFound();
-            })
+        group.MapDelete("/genres/{id:int}", GenreHandlers.DeleteGenre)
             .RequireAdministrationWriteAccess()
             .WithName("DeleteGenre")
-            .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
-            .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429);
     }
 
-    // Request DTOs with validation
-    public record CreateGenreRequest(
-        [Required]
-        [StringLength(120, MinimumLength = 1)]
-        string Name);
+    // Request bodies; validated by ValidationFilter with the validators in Validation/GenreRequestValidators.cs.
+    public record CreateGenreRequest(string Name);
 
-    public record UpdateGenreRequest(
-        [Required]
-        [StringLength(120, MinimumLength = 1)]
-        string Name);
+    public record UpdateGenreRequest(string Name);
 }

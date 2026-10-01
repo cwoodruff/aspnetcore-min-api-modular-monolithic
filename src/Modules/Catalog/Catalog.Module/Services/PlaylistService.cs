@@ -38,7 +38,7 @@ internal class PlaylistService(
         }, ct);
     }
 
-    public async Task<IEnumerable<object>> GetAllPlaylistsAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<PlaylistApiModel>> GetAllPlaylistsAsync(CancellationToken ct)
     {
         var key = keys.Compose(
             "catalog",
@@ -46,7 +46,7 @@ internal class PlaylistService(
             "v1",
             "all");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<PlaylistApiModel>>(key, async _ =>
         {
             var entities = await db.Playlists.AsNoTracking().ToListAsync(ct);
             return entities.ToApiModels();

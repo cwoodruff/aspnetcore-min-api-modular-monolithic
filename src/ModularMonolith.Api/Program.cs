@@ -66,7 +66,14 @@ app.UseIdentityAuth();
 if (BuildInfoProvider.ShouldExposeOperationalMetadata(app.Environment))
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "All modules");
+        foreach (var (document, tag) in HostComposition.ModuleOpenApiDocuments)
+        {
+            options.SwaggerEndpoint($"/swagger/{document}/swagger.json", tag);
+        }
+    });
 }
 
 
@@ -103,7 +110,7 @@ app.MapGet("/", (IConfiguration cfg, IWebHostEnvironment env) =>
     .Produces(200)
     .WithTags("Root")
     .Produces(429) // Rate limiting
-    .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+    .RequireRateLimiting(RateLimitPolicyRegistry.GlobalPublicAnon);
 
 // Per-module health (each module's DbContext check, tagged with the module name)
 app.MapHealthChecks("/healthz", new HealthCheckOptions { ResponseWriter = WriteHealthAsync })

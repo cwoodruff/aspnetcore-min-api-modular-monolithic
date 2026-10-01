@@ -180,11 +180,11 @@ public class GuardrailTests(HostWithoutDatabaseFactory factory) : IClassFixture<
         // up here as a second policy or a different one.
         var expected = new Dictionary<string, string>
         {
-            ["api/catalog"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.Catalog,
-            ["api/orders"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.Orders,
-            ["api/admin"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.Administration,
-            ["api/identity"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.Identity,
-            ["api/reporting"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.Reporting
+            ["api/catalog"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Catalog,
+            ["api/orders"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Orders,
+            ["api/admin"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Administration,
+            ["api/identity"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Identity,
+            ["api/reporting"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Reporting
         };
 
         var moduleEndpoints = factory.Services.GetRequiredService<EndpointDataSource>().Endpoints

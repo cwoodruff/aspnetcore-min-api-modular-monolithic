@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SharedKernel.Diagnostics;
@@ -16,7 +18,9 @@ public static class EventServiceCollectionExtensions
         services.TryAddSingleton(TimeProvider.System);
         services.AddModuleMeter(moduleName);
         services.AddKeyedSingleton<IEventPublisher>(moduleName, (sp, _) => new OutboxEventPublisher(
-            sp.GetRequiredService<TimeProvider>(), sp.GetRequiredKeyedService<ModuleMeter>(moduleName)));
+            sp.GetRequiredService<TimeProvider>(),
+            sp.GetRequiredKeyedService<ModuleMeter>(moduleName),
+            sp.GetRequiredKeyedService<JsonSerializerOptions>(ModuleJson.OptionsKey)));
         return services;
     }
 
@@ -26,14 +30,20 @@ public static class EventServiceCollectionExtensions
     /// module's handlers and that module's inbox context by the key, so one module's scope can never
     /// hand out another module's handler.
     /// </summary>
-    public static IServiceCollection AddIntegrationEventHandler<TEvent, THandler>(this IServiceCollection services,
-        string moduleKey)
+    public static IServiceCollection AddIntegrationEventHandler<TEvent,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] THandler>(
+        this IServiceCollection services, string moduleKey)
         where TEvent : IIntegrationEvent
         where THandler : class, IIntegrationEventHandler<TEvent>
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(moduleKey);
-        services.AddKeyedScoped<IIntegrationEventHandler<TEvent>, THandler>(moduleKey);
-        services.AddSingleton(new IntegrationEventSubscription(typeof(TEvent), moduleKey));
+        services.AddKeyedScoped<THandler>(moduleKey);
+        services.AddKeyedScoped<IIntegrationEventHandler<TEvent>>(moduleKey,
+            (sp, key) => sp.GetRequiredKeyedService<THandler>(key));
+
+        // The delegate is built here, where both types are known, so the dispatcher needs no reflection.
+        services.AddSingleton(new IntegrationEventSubscription(typeof(TEvent), moduleKey, typeof(THandler),
+            (sp, integrationEvent, ct) => sp.GetRequiredKeyedService<THandler>(moduleKey).HandleAsync((TEvent)integrationEvent, ct)));
         return services;
     }
 
@@ -41,8 +51,9 @@ public static class EventServiceCollectionExtensions
     /// Registers a module's outbox dispatcher as a singleton and as a hosted service, with the module's
     /// work queue it runs its batches through.
     /// </summary>
-    public static IServiceCollection AddOutboxDispatcher<TDispatcher>(this IServiceCollection services,
-        string moduleName)
+    public static IServiceCollection AddOutboxDispatcher<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TDispatcher>(
+        this IServiceCollection services, string moduleName)
         where TDispatcher : OutboxDispatcher
     {
         services.TryAddSingleton(TimeProvider.System);
@@ -53,5 +64,12 @@ public static class EventServiceCollectionExtensions
     }
 }
 
-/// <summary>Records that the module with <paramref name="ModuleKey" /> handles <paramref name="EventType" />.</summary>
-public sealed record IntegrationEventSubscription(Type EventType, string ModuleKey);
+/// <summary>
+/// Records that the module with <paramref name="ModuleKey" /> handles <paramref name="EventType" /> with
+/// <paramref name="HandlerType" />; <paramref name="Handle" /> resolves the handler from a scope and calls it.
+/// </summary>
+public sealed record IntegrationEventSubscription(
+    Type EventType,
+    string ModuleKey,
+    Type HandlerType,
+    Func<IServiceProvider, IIntegrationEvent, CancellationToken, Task> Handle);

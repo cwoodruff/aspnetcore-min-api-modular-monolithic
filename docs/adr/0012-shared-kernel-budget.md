@@ -59,3 +59,17 @@ Not a boundary decision.
 Delete the budget and dependency tests. To remove the Npgsql exception
 instead, move `ModuleDbContextOptions` into a separate provider project
 referenced by the modules and the host.
+
+## Amendments
+
+- **Phase 5:** the five never-read caching option classes were deleted to
+  make room for the bulkhead types (ADR-0013); the count stayed at 28.
+- **Phase 7:** `RateLimitPolicyRegistry.Names` was flattened into
+  `RateLimitPolicyRegistry` to make room for `ModuleJson` (the JSON options
+  key that keeps SharedKernel free of reflection-based serialization), and
+  `ValidationFilter<TRequest>` and `IRequestValidator<TRequest>` were added.
+  SharedKernel is at the budget of 30. `IRequestValidator<T>` is how the
+  validation filter stays FluentValidation-free: modules adapt their own
+  validators to it. SharedKernel and the Contracts projects are also
+  `IsAotCompatible` from phase 7.
+

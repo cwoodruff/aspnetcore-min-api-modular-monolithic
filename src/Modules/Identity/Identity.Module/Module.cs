@@ -21,13 +21,13 @@ public static class IdentityModule
         public void RegisterServices(IServiceCollection services, IConfiguration config)
         {
             services.AddModuleMeter(ModuleName);
-            services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Names.Identity);
+            services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Identity);
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)
         {
             var group = endpoints.MapGroup("/api/identity")
-                .RequireRateLimiting(RateLimitPolicyRegistry.Names.Identity)
+                .RequireRateLimiting(RateLimitPolicyRegistry.Identity)
                 .AddModuleMetrics(ModuleName);
 
             // Delegate to endpoint classes

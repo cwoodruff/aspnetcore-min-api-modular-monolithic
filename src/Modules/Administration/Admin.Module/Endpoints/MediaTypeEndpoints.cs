@@ -1,5 +1,4 @@
 using Admin.Modules.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -11,39 +10,20 @@ internal static class MediaTypeEndpoints
     public static void MapMediaTypeEndpoints(this IEndpointRouteBuilder group)
     {
         // GET /api/admin/media-types/{id}
-        group.MapGet("/media-types/{id:int}", [Authorize] async (
-                int id,
-                IMediaTypeService service,
-                CancellationToken ct) =>
-            {
-                var mediaType = await service.GetMediaTypeByIdAsync(id, ct);
-
-                return mediaType is not null ? Results.Json(mediaType) : Results.NotFound();
-            })
+        group.MapGet("/media-types/{id:int}", MediaTypeHandlers.GetMediaTypeById)
             .RequireAdministrationReadAccess()
             .WithName("AdministrationGetMediaTypeById")
-            .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
-            .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429); // Rate limited by the module group's policy
 
         // GET /api/admin/media-types
-        group.MapGet("media-types/", [Authorize] async (
-                IMediaTypeService service,
-                CancellationToken ct) =>
-            {
-                var mediaTypes = await service.GetAllMediaTypesAsync(ct);
-
-                return Results.Json(mediaTypes);
-            })
+        group.MapGet("media-types/", MediaTypeHandlers.GetAllMediaTypes)
             .RequireAdministrationReadAccess()
             .WithName("GetAllMediaTypes")
-            .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
-            .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
             .Produces(429); // Rate limited by the module group's policy
     }
