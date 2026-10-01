@@ -15,6 +15,7 @@ using SharedKernel.Diagnostics;
 using SharedKernel.Events;
 using SharedKernel.Persistence;
 using SharedKernel.TrafficControl;
+using SharedKernel.Validation;
 
 namespace Admin.Modules;
 
@@ -33,6 +34,7 @@ public static class AdministrationModule
             services.AddModuleCache(ModuleName, config.GetValue($"Caching:Modules:{ModuleName}:SizeLimit", 500));
             services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Administration);
             services.AddValidatorsFromAssemblyContaining<CustomerValidator>(includeInternalTypes: true);
+            services.AddScoped(typeof(IRequestValidator<>), typeof(FluentRequestValidator<>));
 
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IGenreService, GenreService>();

@@ -1,8 +1,8 @@
-using System.ComponentModel.DataAnnotations;
 using Admin.Modules.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using SharedKernel.Validation;
 
 namespace Admin.Modules.Endpoints;
 
@@ -30,6 +30,7 @@ internal static class GenreEndpoints
 
         // POST /api/admin/genres
         group.MapPost("/genres", GenreHandlers.CreateGenre)
+            .AddEndpointFilter<ValidationFilter<CreateGenreRequest>>()
             .RequireAdministrationWriteAccess()
             .WithName("CreateGenre")
             .Produces(StatusCodes.Status400BadRequest)
@@ -40,6 +41,7 @@ internal static class GenreEndpoints
 
         // PUT /api/admin/genres/{id}
         group.MapPut("/genres/{id:int}", GenreHandlers.UpdateGenre)
+            .AddEndpointFilter<ValidationFilter<UpdateGenreRequest>>()
             .RequireAdministrationWriteAccess()
             .WithName("UpdateGenre")
             .Produces(StatusCodes.Status400BadRequest)
@@ -58,14 +60,8 @@ internal static class GenreEndpoints
             .Produces(429);
     }
 
-    // Request DTOs with validation
-    public record CreateGenreRequest(
-        [Required]
-        [StringLength(120, MinimumLength = 1)]
-        string Name);
+    // Request bodies; validated by ValidationFilter with the validators in Validation/GenreRequestValidators.cs.
+    public record CreateGenreRequest(string Name);
 
-    public record UpdateGenreRequest(
-        [Required]
-        [StringLength(120, MinimumLength = 1)]
-        string Name);
+    public record UpdateGenreRequest(string Name);
 }
