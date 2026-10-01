@@ -14,9 +14,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     {
         builder.ConfigureAppConfiguration((_, config) =>
         {
+            var database = PostgresFixture.CreateSeededDatabase();
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:AppDatabase"] = PostgresFixture.CreateSeededDatabase()
+                ["ConnectionStrings:AppDatabase"] = database,
+                ["ConnectionStrings:Reporting"] = PostgresFixture.AsReportingReader(database)
             });
         });
     }
