@@ -144,7 +144,8 @@ Prerequisites
   }
   ```
 
-7. API host composition (src/ModularMonolith.Api/Program.cs)
+7. API host composition (src/ModularMonolith.Api/Program.cs, with service
+   registration in HostComposition.cs)
 
 - Minimal API setup:
     - Configure JsonOptions (e.g., keep exact property naming if desired)
@@ -229,13 +230,15 @@ Prerequisites
 Where to look in this repository for concrete references
 
 - Module contract: src/Shared/SharedKernel/IModule.cs
-- Host composition and middleware: src/ModularMonolith.Api/Program.cs
+- Host composition and middleware: src/ModularMonolith.Api/Program.cs,
+  HostComposition.cs (services, module list) and ModuleComposition.cs (startup
+  endpoint checks)
 - Catalog module example: src/Modules/Catalog/Catalog.Module/Module.cs and Endpoints
 - Identity auth setup:
   src/Modules/Identity/Identity.Module/Extensions/IdentityAuthExtensions.cs
 - Authorization examples: src/Modules/Identity/Identity.Module/Authorization/*
 - Health endpoints patterns: all modules' Endpoints folders
-- Persistence bootstrap: src/Shared/SharedKernel.Persistence/* and Program.cs
+- Persistence bootstrap: src/Shared/SharedKernel.Persistence/* and HostComposition.cs
   connection string resolution
 
 FAQ
