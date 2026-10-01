@@ -78,6 +78,23 @@ Track, InvoiceLine to Invoice, Customer to Employee, Employee to Employee).
 `ModuleBoundaryTests.Each_Module_DbContext_Maps_Only_Its_Own_Entities` fails
 if a context's model contains an entity type from another assembly.
 
+## Outbox and inbox tables (phase 3)
+
+Each module maps the shared outbox/inbox types from `SharedKernel/Events` into
+its own schema ([ADR-0008](adr/0008-integration-events-and-outbox.md)):
+
+| Table | Module | Purpose |
+|---|---|---|
+| `orders.OutboxMessage` | Orders (`modelBuilder.AddOutbox()`) | Events written with the business change; polled by `OrdersOutboxDispatcher` |
+| `catalog.InboxMessage` | Catalog (`modelBuilder.AddInbox()`) | One row per (event, handler) already applied |
+| `administration.InboxMessage` | Administration (`modelBuilder.AddInbox()`) | Same |
+| `catalog.TrackSales` | Catalog | Read model fed by `InvoiceFinalized` (ADR-0009) |
+| `administration.CustomerPurchaseSummary` | Administration | Read model fed by `InvoiceFinalized` (ADR-0010) |
+
+`OutboxMessage` and `InboxMessage` are the only entity types a module context
+may map from outside its own assembly; `ModuleBoundaryTests` allows them and
+nothing else.
+
 ## Migrations
 
 Each module's migrations live in its `Data/Migrations` folder and record

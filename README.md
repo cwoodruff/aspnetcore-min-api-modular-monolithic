@@ -228,6 +228,24 @@ For `data-health`, the `status` value is `Data-Healthy` or `Degraded`.
 Swagger/OpenAPI and the extra operational metadata are only exposed in
 `Development` or `Demo`.
 
+### Invoice finalization and event-fed read models
+
+- `POST /api/orders/invoices/{id}/finalize` (`orders.write`, `tenant.scoped`):
+  finalizes a draft invoice and publishes `InvoiceFinalized` through the
+  orders outbox. Returns `202 Accepted` with `Location: /api/orders/invoices/{id}`
+  and `salesCountersUpdate: "eventual"`; `409` if already finalized.
+- `GET /api/catalog/tracks/{id}/sales` (`catalog.read`, `tenant.scoped`): units
+  sold, counted by Catalog from those events.
+- `GET /api/admin/customers/{id}/purchases` (`role.admin`, `administration.read`,
+  `tenant.scoped`): total spent and invoice count, summed by Administration.
+- `GET /api/orders/outbox/dead-letters` and
+  `POST /api/orders/outbox/dead-letters/{id}/retry` (`role.admin`): outbox
+  messages whose delivery failed six times, and a way to send one again.
+
+The two read models are eventually consistent and count only invoices
+finalized through the endpoint; the seeded invoices start as `Draft`. See
+[How modules talk to each other](#how-modules-talk-to-each-other).
+
 ## Run it
 
 The app needs PostgreSQL 17. Start the local database, then run the API:
@@ -751,10 +769,43 @@ A module reads and writes only its own tables, through its own `DbContext`,
 from its services. There is no repository layer: EF Core is the repository,
 reads use `AsNoTracking`, and query projections live as private `Load*Async`
 methods next to the service code that uses them. To use another module's data,
-a module goes through that module's `*.Contracts` project (phase 3 adds the
-first read contracts), never a join. The architecture tests enforce both: no
+a module goes through that module's `*.Contracts` project, never a join. The architecture tests enforce both: no
 module depends on another module's assembly, and each context's model contains
 only its own module's entity types.
+
+## How modules talk to each other
+
+Modules never call into each other or share a transaction. When one module's
+change matters to another, it publishes an integration event through its own
+outbox, and the others react in their own transactions. See
+[ADR-0008](docs/adr/0008-integration-events-and-outbox.md) for the full
+semantics; in short:
+
+- **Publish with the write.** `IEventPublisher.PublishAsync(event, db, ct)` adds
+  a row to the publisher's outbox table on the same context, so the event
+  commits with the business change or not at all. Event types live in the
+  publisher's `*.Contracts` project (`Orders.Contracts/Events/InvoiceFinalized`);
+  consumers reference only that.
+- **Deliver at least once.** Each publishing module runs an `OutboxDispatcher`
+  hosted service that polls its outbox (`FOR UPDATE SKIP LOCKED`, 50 at a time)
+  and hands each event to every `IIntegrationEventHandler<T>` registered by
+  other modules.
+- **Apply once.** Each handler runs inside `InboxGuard` on its own module's
+  context: the `(EventId, HandlerName)` row in that module's inbox is written
+  with the handler's changes, so a redelivered event is skipped.
+- **Retry, then ask a person.** Failed deliveries are retried after 1 s, 5 s,
+  30 s, 2 min and 10 min; the sixth failure dead-letters the message, which
+  then waits for `POST /api/orders/outbox/dead-letters/{id}/retry`.
+- **Order only within one outbox**, in write order, and only until a message
+  fails. Nothing is ordered across modules.
+
+Today Orders publishes `InvoiceFinalized`; Catalog keeps `TrackSales`
+([ADR-0009](docs/adr/0009-orders-to-catalog-track-sales.md)) and
+Administration keeps `CustomerPurchaseSummary`
+([ADR-0010](docs/adr/0010-orders-to-administration-purchase-summary.md)).
+
+Configuration: `Outbox:Enabled` (default `true`) and
+`Outbox:PollIntervalSeconds` (default `1`).
 
 ## Documentation
 
@@ -763,7 +814,8 @@ Detailed documentation is available in the `/docs` folder:
 ### Architecture & Implementation
 
 - [Decision records](docs/adr/README.md) - ADRs, starting with the module map
-  and entity ownership
+  and entity ownership; [ADR-0008](docs/adr/0008-integration-events-and-outbox.md)
+  covers integration events and the outbox
 - [Upgrade plan](docs/upgrade-plan.md) - Phased plan for the modular monolith
   fixes; each phase is one branch and one PR
 - [Services Architecture](docs/services-architecture.md) - Service layer
