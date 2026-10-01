@@ -144,11 +144,12 @@ which only opens a connection.
 
 ## Tests
 
-- `ModularMonolith.Services.Tests` runs each service against its module's real
-  context on PostgreSQL (Testcontainers). `ModuleDatabaseFixture` migrates all
-  three contexts once; before each test Respawn empties the module schemas
-  (keeping the history tables) and `TestData` writes a small graph through
-  each module's own context.
+- `ModularMonolith.Module.Tests` runs each module on a host of its own
+  (ADR-0016). Each host's database is cloned from a template that holds only
+  that module's migrated schema (Reporting's has all four, for its views),
+  optionally with its share of the Chinook seed (`ChinookSeed.For(schemas)`).
+  Service tests reset the schema with Respawn (keeping the history table) and
+  `TestData` writes a small graph through the module's own context.
 - `ModularMonolith.Api.Tests` builds one seeded template database through
   `HostComposition` and `DbSeeder`, and gives every test host its own
   `CREATE DATABASE ... TEMPLATE` clone.

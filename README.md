@@ -41,8 +41,8 @@ docs/Walkthrough.md.
       /TrafficControl                      (RateLimitPolicyRegistry, PartitionKeys)
       /Persistence                         (ModuleDbContextOptions: UseNpgsql with schema + history table)
 /tests
-  /ModularMonolith.Api.Tests               (xUnit integration tests using WebApplicationFactory)
-  /ModularMonolith.Services.Tests          (xUnit service-layer tests for Catalog, Orders, and Administration)
+  /ModularMonolith.Api.Tests               (whole-host tests: cross-module flows, pipeline, Identity)
+  /ModularMonolith.Module.Tests            (each module on a host of its own: services, handlers, endpoints)
   /ModularMonolith.Architecture.Tests      (Architecture tests: public surface, module boundaries, guardrails)
 /docs/adr                                  (Architecture decision records)
 ```
@@ -78,7 +78,9 @@ following checks keep the code consistent with those records:
 
 - `GuardrailTests` (in `ModularMonolith.Architecture.Tests`):
     - each module grants `InternalsVisibleTo` to at most one assembly, and only
-      the test project listed for it in `ArchitectureConstants`;
+      the test project listed for it in `ArchitectureConstants` (Module.Tests
+      for Catalog, Orders, Administration and Reporting; Api.Tests for
+      Identity, whose tests replace its services inside the full host);
     - no constructor dependency of a module's internal services resolves to a
       type in another module or the host (the container is built with the same
       `HostComposition.ConfigureServices` the app uses);
@@ -328,8 +330,10 @@ the next start seeds it again.
   tests start their own PostgreSQL container with Testcontainers, so the compose
   database does not have to be running)
     - Solution-level runs include `ModularMonolith.Api.Tests`,
-      `ModularMonolith.Services.Tests`, and
+      `ModularMonolith.Module.Tests`, and
       `ModularMonolith.Architecture.Tests`.
+    - `tests/timing.sh` (or `tests/timing.ps1`) times each project; see
+      [Test cost](#test-cost).
     - Test coverage examples include root and per-module health/data-health
       gating, validation `ProblemDetails`, authenticated flows (e.g., obtaining
       a JWT and calling protected Catalog endpoints), admin authorization, and
@@ -976,17 +980,27 @@ Detailed documentation is available in the `/docs` folder:
 
 The solution includes three test projects:
 
-- `tests/ModularMonolith.Api.Tests/` - integration tests using
-  `WebApplicationFactory`, against PostgreSQL in a Testcontainers container.
-  Each test host gets its own clone of a seeded template database, so test
-  classes run in parallel (`PostgresFixture`, `ApiFactory`). The template is
-  built through `HostComposition` and `DbSeeder`, exactly as the app does
-- `tests/ModularMonolith.Services.Tests/` - service-layer tests for Catalog,
-  Orders, and Administration against each module's real `DbContext` on
-  PostgreSQL (Testcontainers), reset with Respawn between tests
-  (`ModuleDatabaseFixture`)
+- `tests/ModularMonolith.Module.Tests/` - each module on a host of its own
+  ([ADR-0016](docs/adr/0016-a-test-host-per-module.md)).
+  `ModuleTestHost<TModule>` registers SharedKernel's services and the one
+  module, against a database cloned from a template holding only that
+  module's schema (Reporting also gets the three schemas its views read).
+  A header-based test scheme stands in for Identity, published events are
+  recorded, and `DeliverAsync` feeds the module's event handlers through its
+  inbox. Services, handlers and endpoints are tested per module; the outbox
+  dispatcher is tested once, in `Kernel/`, with test contexts
+- `tests/ModularMonolith.Api.Tests/` - the whole host through
+  `WebApplicationFactory`, for what needs more than one module: an invoice
+  finalized in Orders reaching Catalog and Administration, the
+  authorization pipeline, rate limits across modules, health, security
+  headers, error handling, OpenAPI, seed integrity, and Identity. Each host
+  gets its own clone of a seeded template built through `HostComposition`
+  and `DbSeeder` (`PostgresFixture`, `ApiFactory`)
 - `tests/ModularMonolith.Architecture.Tests/` - architecture tests such as
   `PublicSurfaceTests` and `GuardrailTests`
+
+Both database projects start one PostgreSQL container per run with
+Testcontainers; test classes run in parallel on their own database clones.
 
 Representative coverage areas include:
 
@@ -1006,3 +1020,25 @@ Run tests with coverage:
 dotnet test ModularMonolith.Api.sln --collect:"XPlat Code Coverage"
 ```
 Use the coverage report from that command as the current source of truth.
+
+### Test cost
+
+Median wall clock of three runs per project (`tests/timing.sh`, Release build,
+container start included), on an Apple M5 Pro (18 cores, 24 GB), macOS 27.2,
+Docker 29.8, .NET SDK 10.0.401:
+
+| Project            | Tests | Median (s) | Per test (ms) |
+|--------------------|------:|-----------:|--------------:|
+| Architecture.Tests |    76 |       1.61 |            21 |
+| Module.Tests       |   166 |       5.72 |            34 |
+| Api.Tests          |   116 |      15.78 |           136 |
+
+A test on a module's own host costs about a quarter of one on the full host.
+Before phase 8 the same machine measured Services.Tests at 83 tests in
+5.81 s (70 ms per test, all three schemas migrated into one database) and
+Api.Tests at 201 tests in 27.82 s (138 ms per test): moving the single-module
+endpoint tests cut the two database projects from 33.6 s to 21.5 s, for 282
+tests against 284 (several old ones are now one theory each, with exact
+statuses where they accepted any of several). Phase 1's
+switch from SQLite to PostgreSQL was not timed at the time; these are the
+first recorded numbers.
