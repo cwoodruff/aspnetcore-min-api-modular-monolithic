@@ -25,9 +25,6 @@ public class AlbumRepository(AppDbContext context) : BaseRepository<Album>(conte
             .Where(a => a.Id == id)
             .Include(a => a.Artist)
             .Include(a => a.Tracks)
-            .ThenInclude(t => t.Genre) // optional if you need GenreName
-            .Include(a => a.Tracks)
-            .ThenInclude(t => t.MediaType) // optional if you need MediaTypeName
             .AsNoTracking()
             .AsSplitQuery() // important on SQLite to avoid cartesian explosion
             .SingleOrDefaultAsync();
@@ -60,14 +57,9 @@ public class AlbumRepository(AppDbContext context) : BaseRepository<Album>(conte
                 Bytes = t.Bytes,
                 UnitPrice = t.UnitPrice,
                 AlbumName = albumEntity.Title,
-                GenreName = t.Genre?.Name,
-                MediaTypeName = t.MediaType?.Name,
                 // keep nested objects null to avoid cycles
                 Album = null,
-                Genre = null,
-                MediaType = null,
-                Playlists = new List<PlaylistApiModel>(),
-                InvoiceLines = new List<InvoiceLineApiModel>()
+                Playlists = new List<PlaylistApiModel>()
             }).ToList()
         };
         return albumDto;

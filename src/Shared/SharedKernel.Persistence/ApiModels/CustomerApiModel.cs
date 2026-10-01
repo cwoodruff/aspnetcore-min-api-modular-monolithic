@@ -19,8 +19,6 @@ public sealed class CustomerApiModel : BaseApiModel, IConvertModel<Customer>
     public int? SupportRepId { get; set; }
     public string? SupportRepName { get; set; }
 
-    public ICollection<InvoiceApiModel> Invoices { get; set; } = new List<InvoiceApiModel>();
-
     public EmployeeApiModel? SupportRep { get; set; }
 
     public Customer Convert()

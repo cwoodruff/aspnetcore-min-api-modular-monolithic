@@ -7,8 +7,6 @@ public sealed class MediaTypeApiModel : BaseApiModel, IConvertModel<MediaType>
 {
     public string? Name { get; set; }
 
-    public ICollection<TrackApiModel> Tracks { get; set; } = new List<TrackApiModel>();
-
     public MediaType Convert()
     {
         return new MediaType

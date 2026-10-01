@@ -29,8 +29,6 @@ public class Customer : BaseEntity, IConvertModel<CustomerApiModel>
 
     public int? SupportRepId { get; set; }
 
-    public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
-
     public virtual Employee? SupportRep { get; set; }
 
     public CustomerApiModel Convert()

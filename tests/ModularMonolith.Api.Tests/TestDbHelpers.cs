@@ -30,13 +30,11 @@ public static class TestDbHelpers
         var media = new MediaType { Id = 1, Name = "MP3" };
         var track1 = new Track
         {
-            Id = 1, Name = "Song 1", AlbumId = 1, Album = album, GenreId = 1, Genre = genre, MediaTypeId = 1,
-            MediaType = media, UnitPrice = 0.99m
+            Id = 1, Name = "Song 1", AlbumId = 1, Album = album, GenreId = 1, MediaTypeId = 1, UnitPrice = 0.99m
         };
         var track2 = new Track
         {
-            Id = 2, Name = "Song 2", AlbumId = 1, Album = album, GenreId = 1, Genre = genre, MediaTypeId = 1,
-            MediaType = media, UnitPrice = 1.29m
+            Id = 2, Name = "Song 2", AlbumId = 1, Album = album, GenreId = 1, MediaTypeId = 1, UnitPrice = 1.29m
         };
         album.Tracks.Add(track1);
         album.Tracks.Add(track2);
@@ -55,11 +53,11 @@ public static class TestDbHelpers
 
         // Invoice and lines
         var invoice = new Invoice
-            { Id = 1, CustomerId = 1, Customer = cust, InvoiceDate = DateTime.UtcNow, Total = 2.28m };
+            { Id = 1, CustomerId = 1, InvoiceDate = DateTime.UtcNow, Total = 2.28m };
         var il1 = new InvoiceLine
-            { Id = 1, InvoiceId = 1, Invoice = invoice, TrackId = 1, Track = track1, UnitPrice = 0.99m, Quantity = 1 };
+            { Id = 1, InvoiceId = 1, Invoice = invoice, TrackId = 1, UnitPrice = 0.99m, Quantity = 1 };
         var il2 = new InvoiceLine
-            { Id = 2, InvoiceId = 1, Invoice = invoice, TrackId = 2, Track = track2, UnitPrice = 1.29m, Quantity = 1 };
+            { Id = 2, InvoiceId = 1, Invoice = invoice, TrackId = 2, UnitPrice = 1.29m, Quantity = 1 };
         invoice.InvoiceLines.Add(il1);
         invoice.InvoiceLines.Add(il2);
         db.Invoices.Add(invoice);

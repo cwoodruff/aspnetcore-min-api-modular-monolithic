@@ -37,20 +37,7 @@ public class CustomerRepository(AppDbContext context) : BaseRepository<Customer>
                         LastName = c.SupportRep.LastName,
                         Title = c.SupportRep.Title
                         // No Customers collection here
-                    },
-                Invoices = c.Invoices.Select(i => new InvoiceApiModel
-                {
-                    Id = i.Id,
-                    CustomerId = i.CustomerId,
-                    InvoiceDate = i.InvoiceDate,
-                    BillingAddress = i.BillingAddress,
-                    BillingCity = i.BillingCity,
-                    BillingState = i.BillingState,
-                    BillingCountry = i.BillingCountry,
-                    BillingPostalCode = i.BillingPostalCode,
-                    Total = i.Total,
-                    Customer = null // important: no back-reference
-                }).ToList()
+                    }
             })
             .AsNoTracking()
             .SingleOrDefaultAsync();

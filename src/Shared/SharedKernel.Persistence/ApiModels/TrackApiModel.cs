@@ -23,16 +23,8 @@ public sealed class TrackApiModel : BaseApiModel, IConvertModel<Track>
 
     public AlbumApiModel? Album { get; set; }
 
-    public GenreApiModel? Genre { get; set; }
-
-    public ICollection<InvoiceLineApiModel> InvoiceLines { get; set; } = new List<InvoiceLineApiModel>();
-
-    public MediaTypeApiModel? MediaType { get; set; } = null!;
-
     public ICollection<PlaylistApiModel> Playlists { get; set; } = new List<PlaylistApiModel>();
     public string? AlbumName { get; set; }
-    public string? MediaTypeName { get; set; }
-    public string? GenreName { get; set; }
 
     public Track Convert()
     {

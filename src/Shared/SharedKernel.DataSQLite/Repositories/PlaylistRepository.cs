@@ -41,13 +41,8 @@ public class PlaylistRepository(AppDbContext context) : BaseRepository<Playlist>
                 Bytes = pt.Track.Bytes,
                 UnitPrice = pt.Track.UnitPrice,
                 AlbumName = pt.Track.Album != null ? pt.Track.Album.Title : null,
-                GenreName = pt.Track.Genre != null ? pt.Track.Genre.Name : null,
-                MediaTypeName = pt.Track.MediaType != null ? pt.Track.MediaType.Name : null,
                 Album = null,
-                Genre = null,
-                MediaType = null,
-                Playlists = new List<PlaylistApiModel>(),
-                InvoiceLines = new List<InvoiceLineApiModel>()
+                Playlists = new List<PlaylistApiModel>()
             })
             .OrderBy(t => t.Id)
             .ToListAsync();

@@ -128,7 +128,9 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.Property(e => e.InvoiceDate).HasColumnType("timestamp with time zone");
             entity.Property(e => e.Total).HasColumnType("numeric(10,2)");
 
-            entity.HasOne(d => d.Customer).WithMany(p => p.Invoices).HasForeignKey(d => d.CustomerId);
+            // Cross-module reference (Administration): an id only, indexed for lookups, no FK.
+            entity.HasIndex(e => e.CustomerId);
+
         });
 
         modelBuilder.Entity<InvoiceLine>(entity =>
@@ -139,7 +141,8 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
 
             entity.HasOne(d => d.Invoice).WithMany(p => p.InvoiceLines).HasForeignKey(d => d.InvoiceId);
 
-            entity.HasOne(d => d.Track).WithMany(p => p.InvoiceLines).HasForeignKey(d => d.TrackId);
+            // Cross-module reference (Catalog): an id only, indexed for lookups, no FK.
+            entity.HasIndex(e => e.TrackId);
         });
 
         modelBuilder.Entity<MediaType>(entity =>
@@ -203,9 +206,9 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options)
 
             entity.HasOne(d => d.Album).WithMany(p => p.Tracks).HasForeignKey(d => d.AlbumId);
 
-            entity.HasOne(d => d.Genre).WithMany(p => p.Tracks).HasForeignKey(d => d.GenreId);
-
-            entity.HasOne(d => d.MediaType).WithMany(p => p.Tracks).HasForeignKey(d => d.MediaTypeId);
+            // Cross-module references (Administration): ids only, indexed for lookups, no FKs.
+            entity.HasIndex(e => e.GenreId);
+            entity.HasIndex(e => e.MediaTypeId);
         });
 
         OnModelCreatingPartial(modelBuilder);

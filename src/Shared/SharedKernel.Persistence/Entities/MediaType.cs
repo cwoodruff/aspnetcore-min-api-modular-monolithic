@@ -7,8 +7,6 @@ public class MediaType : BaseEntity, IConvertModel<MediaTypeApiModel>
 {
     public string? Name { get; set; }
 
-    public virtual ICollection<Track> Tracks { get; set; } = new List<Track>();
-
     public MediaTypeApiModel Convert()
     {
         return new MediaTypeApiModel

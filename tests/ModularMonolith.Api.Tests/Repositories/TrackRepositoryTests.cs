@@ -65,17 +65,6 @@ public class TrackRepositoryTests(RepositoryDatabaseFixture database)
     }
 
     [Fact]
-    public async Task GetByInvoiceId_ShouldReturnTracksOnInvoice()
-    {
-        await using var ctx = await database.CreateCleanContextAsync();
-        TestDbHelpers.SeedMinimalGraph(ctx);
-        var repo = new TrackRepository(ctx);
-
-        var tracks = await repo.GetByInvoiceId(1);
-        tracks.Should().HaveCount(2);
-    }
-
-    [Fact]
     public async Task UnknownIds_ShouldReturnEmpty()
     {
         await using var ctx = await database.CreateCleanContextAsync();
@@ -87,6 +76,5 @@ public class TrackRepositoryTests(RepositoryDatabaseFixture database)
         (await repo.GetByMediaTypeId(999)).Should().BeEmpty();
         (await repo.GetByPlaylistId(999)).Should().BeEmpty();
         (await repo.GetByArtistId(999)).Should().BeEmpty();
-        (await repo.GetByInvoiceId(999)).Should().BeEmpty();
     }
 }

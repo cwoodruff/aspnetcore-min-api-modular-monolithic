@@ -23,12 +23,6 @@ public class Track : BaseEntity, IConvertModel<TrackApiModel>
 
     public virtual Album? Album { get; set; }
 
-    public virtual Genre? Genre { get; set; }
-
-    public virtual ICollection<InvoiceLine> InvoiceLines { get; set; } = new List<InvoiceLine>();
-
-    public virtual MediaType? MediaType { get; set; }
-
     public virtual ICollection<Playlist> Playlists { get; set; } = new List<Playlist>();
 
     public virtual ICollection<PlaylistTrack> PlaylistTracks { get; set; } = new List<PlaylistTrack>();

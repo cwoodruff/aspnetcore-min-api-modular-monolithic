@@ -149,25 +149,6 @@ internal class TrackService(
         }, ct) ?? [];
     }
 
-    public async Task<IEnumerable<object>> GetTracksByInvoiceIdAsync(int id, CancellationToken ct)
-    {
-        var key = keys.Compose(
-            "catalog",
-            "track",
-            "v1",
-            $"by-invoice:{id}");
-
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
-        {
-            var entities = await repository.GetByInvoiceId(id);
-            return entities.ConvertAll();
-        }, new CacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-            Tags = TrackTags
-        }, ct) ?? [];
-    }
-
     public async Task<TrackApiModel?> CreateTrackAsync(TrackApiModel model, CancellationToken ct)
     {
         var result = await _validator.ValidateAsync(model, ct);

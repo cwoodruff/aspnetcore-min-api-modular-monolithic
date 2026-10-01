@@ -21,8 +21,6 @@ public class Invoice : BaseEntity, IConvertModel<InvoiceApiModel>
 
     public decimal Total { get; set; }
 
-    public virtual Customer? Customer { get; set; }
-
     public virtual ICollection<InvoiceLine> InvoiceLines { get; set; } = new List<InvoiceLine>();
 
     public InvoiceApiModel Convert()

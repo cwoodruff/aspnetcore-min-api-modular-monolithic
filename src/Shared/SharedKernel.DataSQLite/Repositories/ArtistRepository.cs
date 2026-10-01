@@ -14,8 +14,7 @@ public class ArtistRepository(AppDbContext context) : BaseRepository<Artist>(con
         var artistEntity = await _context.Artists
             .Where(ar => ar.Id == id)
             .Include(ar => ar.Albums)
-            .ThenInclude(al => al.Tracks).ThenInclude(track => track.Genre).Include(artist => artist.Albums)
-            .ThenInclude(album => album.Tracks).ThenInclude(track => track.MediaType)
+            .ThenInclude(al => al.Tracks)
             .AsNoTracking()
             .AsSplitQuery() // important on SQLite for large graphs
             .SingleOrDefaultAsync();
@@ -47,15 +46,8 @@ public class ArtistRepository(AppDbContext context) : BaseRepository<Artist>(con
                     Bytes = t.Bytes,
                     UnitPrice = t.UnitPrice,
                     AlbumName = al.Title,
-                    // If you need names and Genre/MediaType aren’t included above, remove these two lines
-                    // or add Include(al => al.Tracks).ThenInclude(t => t.Genre/MediaType)
-                    GenreName = t.Genre?.Name,
-                    MediaTypeName = t.MediaType?.Name,
                     Album = null,
-                    Genre = null,
-                    MediaType = null,
-                    Playlists = new List<PlaylistApiModel>(),
-                    InvoiceLines = new List<InvoiceLineApiModel>()
+                    Playlists = new List<PlaylistApiModel>()
                 }).ToList()
             }).ToList()
         };

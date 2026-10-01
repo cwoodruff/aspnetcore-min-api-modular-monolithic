@@ -15,8 +15,6 @@ public class InvoiceLine : BaseEntity, IConvertModel<InvoiceLineApiModel>
 
     public virtual Invoice? Invoice { get; set; }
 
-    public virtual Track? Track { get; set; }
-
     public InvoiceLineApiModel Convert()
     {
         return new InvoiceLineApiModel

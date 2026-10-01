@@ -38,12 +38,6 @@ public class TrackRepository(AppDbContext context) : BaseRepository<Track>(conte
             .AsNoTracking().ToListAsync();
     }
 
-    public async Task<List<Track>> GetByInvoiceId(int id)
-    {
-        return await _context.Tracks.Where(c => c.InvoiceLines!.Any(o => o.InvoiceId == id))
-            .AsNoTracking().ToListAsync();
-    }
-
     public async Task<TrackApiModel?> GetById(int id)
     {
         return await _context.Tracks
@@ -60,13 +54,8 @@ public class TrackRepository(AppDbContext context) : BaseRepository<Track>(conte
                 Bytes = t.Bytes,
                 UnitPrice = t.UnitPrice,
                 AlbumName = t.Album != null ? t.Album.Title : null,
-                GenreName = t.Genre != null ? t.Genre.Name : null,
-                MediaTypeName = t.MediaType != null ? t.MediaType.Name : null,
                 Album = null,
-                Genre = null,
-                MediaType = null,
-                Playlists = new List<PlaylistApiModel>(),
-                InvoiceLines = new List<InvoiceLineApiModel>()
+                Playlists = new List<PlaylistApiModel>()
             })
             .AsNoTracking()
             .SingleOrDefaultAsync();
