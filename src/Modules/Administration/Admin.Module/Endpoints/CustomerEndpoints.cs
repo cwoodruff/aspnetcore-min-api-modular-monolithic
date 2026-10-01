@@ -31,6 +31,29 @@ internal static class CustomerEndpoints
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
+        // GET /api/admin/customers/{id}/purchases
+        group.MapGet("/customers/{id:int}/purchases", [Authorize] async (
+                int id,
+                ICustomerService service,
+                CancellationToken ct) =>
+            {
+                var purchases = await service.GetCustomerPurchasesAsync(id, ct);
+
+                return purchases is not null ? Results.Json(purchases) : Results.NotFound();
+            })
+            .RequireAdministrationReadAccess()
+            .WithName("AdministrationGetCustomerPurchases")
+            .WithDescription(
+                "Total spent and invoice count, summed from InvoiceFinalized events. Eventually consistent: an " +
+                "invoice finalized moments ago may not be counted yet.")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Administration")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+
         // GET /api/admin/customers
         group.MapGet("customers/", [Authorize] async (
                 ICustomerService service,

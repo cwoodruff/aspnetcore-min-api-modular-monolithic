@@ -52,6 +52,12 @@ namespace Orders.Module.Data.Migrations
                     b.Property<DateTime>("InvoiceDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("Draft");
+
                     b.Property<decimal>("Total")
                         .HasColumnType("numeric(10,2)");
 
@@ -89,6 +95,48 @@ namespace Orders.Module.Data.Migrations
                     b.HasIndex("TrackId");
 
                     b.ToTable("InvoiceLine", "orders");
+                });
+
+            modelBuilder.Entity("SharedKernel.Events.OutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("DeadLetteredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("LastError")
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<DateTimeOffset>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeadLetteredAt")
+                        .HasFilter("\"DeadLetteredAt\" IS NOT NULL");
+
+                    b.HasIndex("NextAttemptAt", "OccurredAt")
+                        .HasFilter("\"ProcessedAt\" IS NULL AND \"DeadLetteredAt\" IS NULL");
+
+                    b.ToTable("OutboxMessage", "orders");
                 });
 
             modelBuilder.Entity("Orders.Modules.Domain.InvoiceLine", b =>

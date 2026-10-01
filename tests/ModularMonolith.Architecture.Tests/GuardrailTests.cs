@@ -170,7 +170,7 @@ public class GuardrailTests(HostWithoutDatabaseFactory factory) : IClassFixture<
 }
 
 /// <summary>
-/// The real host with startup migration and seeding switched off. These tests read the composed
+/// The real host with startup migration, seeding and the outbox dispatcher switched off. These tests read the composed
 /// endpoints and services only, so they need no database.
 /// </summary>
 public sealed class HostWithoutDatabaseFactory : WebApplicationFactory<Program>
@@ -180,7 +180,8 @@ public sealed class HostWithoutDatabaseFactory : WebApplicationFactory<Program>
         builder.ConfigureAppConfiguration((_, config) =>
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Database:MigrateAndSeedOnStartup"] = "false"
+                ["Database:MigrateAndSeedOnStartup"] = "false",
+                ["Outbox:Enabled"] = "false"
             }));
     }
 }

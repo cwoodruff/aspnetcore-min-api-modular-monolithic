@@ -117,13 +117,46 @@ public class ModuleBoundaryTests
         var contexts = scope.ServiceProvider.GetServices<DbContext>().ToArray();
         Assert.Equal(3, contexts.Length);
 
+        // The one exception is the outbox/inbox plumbing SharedKernel defines for every module to map
+        // into its own schema (ADR-0008); nothing domain-shaped lives in SharedKernel.
+        var sharedKernel = typeof(SharedKernel.IModule).Assembly;
         var violations = contexts
             .SelectMany(context => context.Model.GetEntityTypes()
-                .Where(entity => entity.ClrType.Assembly != context.GetType().Assembly)
+                .Where(entity => entity.ClrType.Assembly != context.GetType().Assembly
+                                 && entity.ClrType.Assembly != sharedKernel)
                 .Select(entity =>
                     $"{context.GetType().Name} maps {entity.ClrType.FullName} from {entity.ClrType.Assembly.GetName().Name}"))
             .ToArray();
 
         Assert.Empty(violations);
+    }
+
+    [Fact]
+    public void InvoiceFinalized_Handlers_Live_In_Catalog_And_Administration_And_Use_Only_Orders_Contracts()
+    {
+        var handlerInterface = typeof(SharedKernel.Events.IIntegrationEventHandler<Orders.Contracts.Events.InvoiceFinalized>);
+        var handlers = ArchitectureConstants.AllModuleAssemblies
+            .Select(System.Reflection.Assembly.Load)
+            .SelectMany(assembly => assembly.GetTypes())
+            .Where(type => type is { IsClass: true, IsAbstract: false } && handlerInterface.IsAssignableFrom(type))
+            .ToArray();
+
+        Assert.Equal(
+            [ArchitectureConstants.AdminAssembly, ArchitectureConstants.CatalogAssembly],
+            handlers.Select(type => type.Assembly.GetName().Name!).Order(StringComparer.Ordinal));
+
+        // They see the event through Orders.Contracts; Module_Should_Not_Depend_On_Other_Module covers the
+        // whole assembly, this states it for the handlers themselves.
+        foreach (var handler in handlers)
+        {
+            var rule = Types()
+                .That()
+                .HaveFullName(handler.FullName!)
+                .Should()
+                .NotDependOnAnyTypesThat()
+                .ResideInAssembly(ArchitectureConstants.OrdersAssembly)
+                .Because($"{handler.FullName} may know Orders only through Orders.Contracts");
+            rule.Check(Architecture);
+        }
     }
 }

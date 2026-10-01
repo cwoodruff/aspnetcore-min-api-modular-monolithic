@@ -1,5 +1,6 @@
 using Admin.Modules.Domain;
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.Events;
 using SharedKernel.Persistence;
 
 namespace Admin.Modules.Data;
@@ -20,6 +21,8 @@ internal sealed class AdministrationDbContext(DbContextOptions<AdministrationDbC
 
     public DbSet<MediaType> MediaTypes { get; set; }
 
+    public DbSet<CustomerPurchaseSummary> CustomerPurchaseSummaries { get; set; }
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         ModuleDbContextOptions.UseUtcDateTimes(configurationBuilder);
@@ -28,6 +31,7 @@ internal sealed class AdministrationDbContext(DbContextOptions<AdministrationDbC
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
+        modelBuilder.AddInbox();
 
         modelBuilder.Entity<Customer>(entity =>
         {
@@ -82,6 +86,16 @@ internal sealed class AdministrationDbContext(DbContextOptions<AdministrationDbC
             entity.ToTable("MediaType");
 
             entity.Property(e => e.Name).HasColumnType("varchar(120)");
+        });
+
+        // Built from Orders' InvoiceFinalized events (ADR-0010).
+        modelBuilder.Entity<CustomerPurchaseSummary>(entity =>
+        {
+            entity.ToTable("CustomerPurchaseSummary");
+            entity.HasKey(e => e.CustomerId);
+            entity.Property(e => e.CustomerId).ValueGeneratedNever();
+            entity.Property(e => e.TotalSpent).HasColumnType("numeric(12,2)");
+            entity.Property(e => e.LastPurchaseAt).HasColumnType("timestamp with time zone");
         });
     }
 }

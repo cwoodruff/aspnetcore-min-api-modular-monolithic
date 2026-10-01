@@ -74,6 +74,25 @@ namespace Admin.Module.Data.Migrations
                     b.ToTable("Customer", "administration");
                 });
 
+            modelBuilder.Entity("Admin.Modules.Domain.CustomerPurchaseSummary", b =>
+                {
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("InvoiceCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastPurchaseAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("TotalSpent")
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("CustomerId");
+
+                    b.ToTable("CustomerPurchaseSummary", "administration");
+                });
+
             modelBuilder.Entity("Admin.Modules.Domain.Employee", b =>
                 {
                     b.Property<int>("Id")
@@ -161,6 +180,22 @@ namespace Admin.Module.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("MediaType", "administration");
+                });
+
+            modelBuilder.Entity("SharedKernel.Events.InboxMessage", b =>
+                {
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("HandlerName")
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("EventId", "HandlerName");
+
+                    b.ToTable("InboxMessage", "administration");
                 });
 
             modelBuilder.Entity("Admin.Modules.Domain.Customer", b =>

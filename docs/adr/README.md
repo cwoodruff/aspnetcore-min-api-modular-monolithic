@@ -26,3 +26,6 @@ record that supersedes the old one and update the old one's Status line.
 | [0005](0005-orders-to-catalog-track.md) | Orders refers to Track by id only | Accepted |
 | [0006](0006-catalog-to-administration-genre.md) | Catalog refers to Genre by id only | Accepted |
 | [0007](0007-catalog-to-administration-mediatype.md) | Catalog refers to MediaType by id only | Accepted |
+| [0008](0008-integration-events-and-outbox.md) | Hand-rolled integration events through a per-module outbox | Accepted |
+| [0009](0009-orders-to-catalog-track-sales.md) | Catalog counts track sales from InvoiceFinalized | Accepted |
+| [0010](0010-orders-to-administration-purchase-summary.md) | Administration summarizes purchases from InvoiceFinalized | Accepted |

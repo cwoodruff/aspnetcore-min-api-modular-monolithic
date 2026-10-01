@@ -5,9 +5,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orders.Modules.Data;
 using Orders.Modules.Endpoints;
+using Orders.Modules.Events;
 using Orders.Modules.Services;
 using Orders.Modules.Validation;
 using SharedKernel;
+using SharedKernel.Events;
 using SharedKernel.Persistence;
 
 namespace Orders.Modules;
@@ -25,6 +27,10 @@ public static class OrdersModule
 
             services.AddScoped<IInvoiceService, InvoiceService>();
             services.AddScoped<IInvoiceLineService, InvoiceLineService>();
+            services.AddScoped<DeadLetterService>();
+
+            services.AddEventPublisher();
+            services.AddOutboxDispatcher<OrdersOutboxDispatcher>();
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -36,6 +42,7 @@ public static class OrdersModule
             group.MapOrdersDataHealthEndpoints();
             group.MapInvoiceEndpoints();
             group.MapInvoiceLineEndpoints();
+            group.MapOutboxEndpoints();
         }
     }
 }

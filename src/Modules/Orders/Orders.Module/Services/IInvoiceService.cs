@@ -9,4 +9,12 @@ internal interface IInvoiceService
     Task<IEnumerable<object>> GetInvoicesByCustomerIdAsync(int id, CancellationToken ct);
     Task<InvoiceApiModel?> CreateInvoiceAsync(InvoiceApiModel model, CancellationToken ct);
     Task<bool> UpdateInvoiceAsync(InvoiceApiModel model, CancellationToken ct);
+    Task<FinalizeInvoiceResult> FinalizeInvoiceAsync(int id, CancellationToken ct);
+}
+
+internal enum FinalizeInvoiceResult
+{
+    Finalized,
+    NotFound,
+    AlreadyFinalized
 }

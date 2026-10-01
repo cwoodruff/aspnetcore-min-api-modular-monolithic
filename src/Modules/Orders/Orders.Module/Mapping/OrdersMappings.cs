@@ -16,7 +16,8 @@ internal static class OrdersMappings
         BillingState = entity.BillingState,
         BillingCountry = entity.BillingCountry,
         BillingPostalCode = entity.BillingPostalCode,
-        Total = entity.Total
+        Total = entity.Total,
+        Status = entity.Status.ToString()
     };
 
     public static Invoice ToEntity(this InvoiceApiModel model) => new()

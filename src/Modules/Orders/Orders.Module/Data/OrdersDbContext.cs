@@ -1,5 +1,6 @@
 using Orders.Modules.Domain;
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.Events;
 using SharedKernel.Persistence;
 
 namespace Orders.Modules.Data;
@@ -24,6 +25,7 @@ internal sealed class OrdersDbContext(DbContextOptions<OrdersDbContext> options)
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
+        modelBuilder.AddOutbox();
 
         modelBuilder.Entity<Invoice>(entity =>
         {
@@ -36,6 +38,8 @@ internal sealed class OrdersDbContext(DbContextOptions<OrdersDbContext> options)
             entity.Property(e => e.BillingState).HasColumnType("varchar(40)");
             entity.Property(e => e.InvoiceDate).HasColumnType("timestamp with time zone");
             entity.Property(e => e.Total).HasColumnType("numeric(10,2)");
+            entity.Property(e => e.Status).HasConversion<string>().HasColumnType("varchar(20)")
+                .HasDefaultValue(InvoiceStatus.Draft).HasSentinel(InvoiceStatus.Draft);
 
             // Cross-module reference (Administration): an id only, indexed for lookups, no FK.
             entity.HasIndex(e => e.CustomerId);

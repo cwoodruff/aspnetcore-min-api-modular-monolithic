@@ -1,5 +1,6 @@
 using Catalog.Modules.Domain;
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.Events;
 using SharedKernel.Persistence;
 
 namespace Catalog.Modules.Data;
@@ -22,6 +23,8 @@ internal sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> option
 
     public DbSet<Track> Tracks { get; set; }
 
+    public DbSet<TrackSales> TrackSales { get; set; }
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         ModuleDbContextOptions.UseUtcDateTimes(configurationBuilder);
@@ -30,6 +33,7 @@ internal sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> option
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
+        modelBuilder.AddInbox();
 
         modelBuilder.Entity<Album>(entity =>
         {
@@ -102,6 +106,15 @@ internal sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> option
             // Cross-module references (Administration): ids only, indexed for lookups, no FKs.
             entity.HasIndex(e => e.GenreId);
             entity.HasIndex(e => e.MediaTypeId);
+        });
+
+        // Built from Orders' InvoiceFinalized events (ADR-0009); TrackId is an id only, like Orders' own reference.
+        modelBuilder.Entity<TrackSales>(entity =>
+        {
+            entity.ToTable("TrackSales");
+            entity.HasKey(e => e.TrackId);
+            entity.Property(e => e.TrackId).ValueGeneratedNever();
+            entity.Property(e => e.LastSoldAt).HasColumnType("timestamp with time zone");
         });
     }
 }

@@ -9,4 +9,5 @@ internal interface ICustomerService
     Task<IEnumerable<CustomerApiModel>> GetCustomersBySupportRepIdAsync(int id, CancellationToken ct);
     Task<CustomerApiModel?> CreateCustomerAsync(CustomerApiModel model, CancellationToken ct);
     Task<bool> UpdateCustomerAsync(CustomerApiModel model, CancellationToken ct);
+    Task<CustomerPurchasesApiModel?> GetCustomerPurchasesAsync(int id, CancellationToken ct);
 }
