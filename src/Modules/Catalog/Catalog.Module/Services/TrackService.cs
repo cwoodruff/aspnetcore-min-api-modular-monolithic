@@ -21,7 +21,7 @@ internal class TrackService(
     private readonly ILogger<TrackService> _logger = logger;
     private readonly IValidator<TrackApiModel> _validator = validator;
 
-    public async Task<object?> GetTrackByIdAsync(int id, CancellationToken ct)
+    public async Task<TrackApiModel?> GetTrackByIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
             "catalog",
@@ -29,7 +29,7 @@ internal class TrackService(
             "v1",
             $"by-id:{id}");
 
-        return await cache.GetOrAddAsync<object?>(key, async _ =>
+        return await cache.GetOrAddAsync<TrackApiModel?>(key, async _ =>
             await LoadByIdAsync(id, ct)
         , new CacheEntryOptions
         {
@@ -38,7 +38,7 @@ internal class TrackService(
         }, ct);
     }
 
-    public async Task<IEnumerable<object>> GetAllTracksAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<TrackApiModel>> GetAllTracksAsync(CancellationToken ct)
     {
         var key = keys.Compose(
             "catalog",
@@ -46,7 +46,7 @@ internal class TrackService(
             "v1",
             "all");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<TrackApiModel>>(key, async _ =>
         {
             var entities = await db.Tracks.AsNoTracking().ToListAsync(ct);
             return entities.ToApiModels();
@@ -57,7 +57,7 @@ internal class TrackService(
         }, ct) ?? [];
     }
 
-    public async Task<IEnumerable<object>> GetTracksByArtistIdAsync(int id, CancellationToken ct)
+    public async Task<IReadOnlyList<TrackApiModel>> GetTracksByArtistIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
             "catalog",
@@ -65,7 +65,7 @@ internal class TrackService(
             "v1",
             $"by-artist:{id}");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<TrackApiModel>>(key, async _ =>
         {
             var entities = await LoadByArtistIdAsync(id, ct);
             return entities.ToApiModels();
@@ -76,7 +76,7 @@ internal class TrackService(
         }, ct) ?? [];
     }
 
-    public async Task<IEnumerable<object>> GetTracksByPlaylistIdAsync(int id, CancellationToken ct)
+    public async Task<IReadOnlyList<TrackApiModel>> GetTracksByPlaylistIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
             "catalog",
@@ -84,7 +84,7 @@ internal class TrackService(
             "v1",
             $"by-playlist:{id}");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<TrackApiModel>>(key, async _ =>
         {
             var entities = await LoadByPlaylistIdAsync(id, ct);
             return entities.ToApiModels();
@@ -95,7 +95,7 @@ internal class TrackService(
         }, ct) ?? [];
     }
 
-    public async Task<IEnumerable<object>> GetTracksByAlbumIdAsync(int id, CancellationToken ct)
+    public async Task<IReadOnlyList<TrackApiModel>> GetTracksByAlbumIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
             "catalog",
@@ -103,7 +103,7 @@ internal class TrackService(
             "v1",
             $"by-album:{id}");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<TrackApiModel>>(key, async _ =>
         {
             var entities = await LoadByAlbumIdAsync(id, ct);
             return entities.ToApiModels();
@@ -114,7 +114,7 @@ internal class TrackService(
         }, ct) ?? [];
     }
 
-    public async Task<IEnumerable<object>> GetTracksByGenreIdAsync(int id, CancellationToken ct)
+    public async Task<IReadOnlyList<TrackApiModel>> GetTracksByGenreIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
             "catalog",
@@ -122,7 +122,7 @@ internal class TrackService(
             "v1",
             $"by-genre:{id}");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<TrackApiModel>>(key, async _ =>
         {
             var entities = await LoadByGenreIdAsync(id, ct);
             return entities.ToApiModels();
@@ -133,7 +133,7 @@ internal class TrackService(
         }, ct) ?? [];
     }
 
-    public async Task<IEnumerable<object>> GetTracksByMediaTypeIdAsync(int id, CancellationToken ct)
+    public async Task<IReadOnlyList<TrackApiModel>> GetTracksByMediaTypeIdAsync(int id, CancellationToken ct)
     {
         var key = keys.Compose(
             "catalog",
@@ -141,7 +141,7 @@ internal class TrackService(
             "v1",
             $"by-mediatype:{id}");
 
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
+        return await cache.GetOrAddAsync<IReadOnlyList<TrackApiModel>>(key, async _ =>
         {
             var entities = await LoadByMediaTypeIdAsync(id, ct);
             return entities.ToApiModels();

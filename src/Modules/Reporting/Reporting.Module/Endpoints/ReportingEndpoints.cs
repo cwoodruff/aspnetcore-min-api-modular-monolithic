@@ -1,5 +1,4 @@
 using Identity.Contracts;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -13,52 +12,40 @@ internal static class ReportingEndpoints
     public static void MapReportingEndpoints(this IEndpointRouteBuilder group)
     {
         // GET /api/reporting/sales-by-genre
-        group.MapGet("/sales-by-genre", [Authorize] async (ReportingService service, CancellationToken ct) =>
-                Results.Json(await service.SalesByGenreAsync(ct)))
+        group.MapGet("/sales-by-genre", ReportingHandlers.SalesByGenre)
             .RequireAuthorization(Permissions.ReportView).RequireAuthorization(Policies.TenantScoped)
             .WithName("ReportingSalesByGenre")
             .WithDescription("Units sold per genre, from Catalog's TrackSales (eventually consistent, ADR-0009).")
-            .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .WithTags("Reporting")
             .Produces(429); // Rate limited by the module group's policy
 
         // GET /api/reporting/invoices/{id}/lines
-        group.MapGet("/invoices/{id:int}/lines", [Authorize] async (int id, ReportingService service, CancellationToken ct) =>
-            {
-                var lines = await service.InvoiceLinesAsync(id, ct);
-                return lines.Count > 0 ? Results.Json(lines) : Results.NotFound();
-            })
+        group.MapGet("/invoices/{id:int}/lines", ReportingHandlers.InvoiceLines)
             .RequireAuthorization(Permissions.ReportView).RequireAuthorization(Policies.TenantScoped)
             .WithName("ReportingInvoiceLines")
             .WithDescription("An invoice's lines with track and customer names, read across modules through a view.")
-            .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
-            .Produces(StatusCodes.Status404NotFound)
             .WithTags("Reporting")
             .Produces(429); // Rate limited by the module group's policy
 
         // POST /api/reporting/integrity/run
-        group.MapPost("/integrity/run", [Authorize] async (IntegrityCheckJob job, CancellationToken ct) =>
-                Results.Json(await job.RunNowAsync(ct)))
+        group.MapPost("/integrity/run", ReportingHandlers.RunIntegrityCheck)
             .RequireAuthorization(Policies.Admin)
             .WithName("ReportingRunIntegrityCheck")
             .WithDescription("Runs the orphan checks now and returns how many findings were added, resolved and left open.")
-            .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .WithTags("Reporting")
             .Produces(429); // Rate limited by the module group's policy
 
         // GET /api/reporting/integrity/findings
-        group.MapGet("/integrity/findings", [Authorize] async (ReportingService service, CancellationToken ct) =>
-                Results.Json(await service.OpenFindingsAsync(ct)))
+        group.MapGet("/integrity/findings", ReportingHandlers.IntegrityFindings)
             .RequireAuthorization(Policies.Admin)
             .WithName("ReportingIntegrityFindings")
             .WithDescription("Open findings: rows whose cross-module reference points at nothing. Nothing is repaired.")
-            .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .WithTags("Reporting")
