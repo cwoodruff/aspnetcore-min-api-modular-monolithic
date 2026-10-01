@@ -24,6 +24,20 @@ internal static class ArchitectureConstants
     public const string IdentityAssembly = "Identity.Module";
     public const string ReportingAssembly = "Reporting.Module";
 
+    public const string CatalogContractsAssembly = "Catalog.Contracts";
+    public const string OrdersContractsAssembly = "Orders.Contracts";
+    public const string AdministrationContractsAssembly = "Administration.Contracts";
+    public const string IdentityContractsAssembly = "Identity.Contracts";
+
+    // Contracts assemblies are public by design; PublicSurfaceTests restricts only the Module assemblies.
+    public static readonly string[] AllContractsAssemblies =
+    [
+        CatalogContractsAssembly,
+        OrdersContractsAssembly,
+        AdministrationContractsAssembly,
+        IdentityContractsAssembly
+    ];
+
     public const string SharedKernelAssembly = "SharedKernel";
     public const string SharedKernelPersistenceAssembly = "SharedKernel.Persistence";
     public const string SharedKernelDataSQLiteAssembly = "SharedKernel.DataSQLite";

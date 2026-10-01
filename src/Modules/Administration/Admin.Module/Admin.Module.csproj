@@ -6,8 +6,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Shared\SharedKernel\SharedKernel.csproj"/>
-        <ProjectReference Include="..\..\..\Shared\SharedKernel.Persistence\SharedKernel.Persistence.csproj"/>
+        <ProjectReference Include="..\..\..\Shared\SharedKernel\SharedKernel.csproj" />
+        <ProjectReference Include="..\..\..\Shared\SharedKernel.Persistence\SharedKernel.Persistence.csproj" />
+        <ProjectReference Include="..\Administration.Contracts\Administration.Contracts.csproj" />
     </ItemGroup>
 
 </Project>
