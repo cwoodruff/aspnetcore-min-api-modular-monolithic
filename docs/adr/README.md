@@ -35,3 +35,4 @@ record that supersedes the old one and update the old one's Status line.
 | [0014](0014-reporting-read-model-as-views.md) | Reporting reads across modules through views, as a read-only role | Accepted |
 | [0015](0015-orphan-detection.md) | Detect orphaned cross-module references; do not repair them | Accepted |
 | [0016](0016-a-test-host-per-module.md) | Test each module on a host of its own | Accepted |
+| [0017](0017-catalog-host-reads-orders-outbox-by-cursor.md) | Catalog.Host reads Orders' outbox as a log, by cursor | Accepted |
