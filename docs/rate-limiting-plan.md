@@ -1,5 +1,12 @@
 # Centralized Rate Limiting & Throttling Plan (ASP.NET Core 10 Minimal API – Modular Monolith)
 
+> **Status (phase 5):** implemented as one fixed-window policy per module
+> (`catalog:api`, `orders:api`, `admin:api`, `identity:api`, `reporting:api`)
+> applied on each module's route group, plus `global:public-anon` for `GET /`;
+> see [ADR-0013](adr/0013-per-module-bulkheads.md) and the README. The other
+> policy names below (`global:user-standard`, `reporting:heavy`, ...) are design
+> notes, not registered policies.
+
 **Status: Partially implemented (Option A minimal wiring active)**
 
 This document describes a centralized, policy‑driven rate limiting and

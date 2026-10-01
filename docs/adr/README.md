@@ -31,3 +31,4 @@ record that supersedes the old one and update the old one's Status line.
 | [0010](0010-orders-to-administration-purchase-summary.md) | Administration summarizes purchases from InvoiceFinalized | Accepted |
 | [0011](0011-authorization-names-are-compiled-contracts.md) | Authorization names are compiled constants | Accepted |
 | [0012](0012-shared-kernel-budget.md) | Shared kernel budget and dependency fences | Accepted |
+| [0013](0013-per-module-bulkheads.md) | Per-module bulkheads inside one process | Accepted |
