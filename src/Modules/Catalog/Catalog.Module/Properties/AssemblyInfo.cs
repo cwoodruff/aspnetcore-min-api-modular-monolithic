@@ -1,3 +1,3 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("ModularMonolith.Services.Tests")]
+[assembly: InternalsVisibleTo("ModularMonolith.Module.Tests")]

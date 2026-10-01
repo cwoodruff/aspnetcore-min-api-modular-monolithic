@@ -396,7 +396,7 @@ public class CustomerServiceTests
     public async Task GetCustomerByIdAsync_ReturnsCustomer_WhenExists()
     {
         // Arrange
-        // Services.Tests use the module's real DbContext on PostgreSQL (ModuleDatabaseFixture)
+        // Module.Tests use the module's real DbContext on PostgreSQL (ModuleFixture)
         // rather than a mocked data layer; this sketch shows only the cache and validator doubles.
         var mockCache = new Mock<ICacheFacade>();
         var mockKeys = new Mock<ICacheKeyComposer>();

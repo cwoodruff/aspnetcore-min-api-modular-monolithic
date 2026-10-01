@@ -4,13 +4,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Diagnostics.Metrics.Testing;
-using SharedKernel.Diagnostics;
-using System.Diagnostics.Metrics;
 
 namespace ModularMonolith.Api.Tests;
 
-/// <summary>Per-module rate limits and metrics through the real host (ADR-0013).</summary>
+/// <summary>Bulkheads between modules through the real host (ADR-0013); one module's metrics are in Module.Tests.</summary>
 public class BulkheadTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
     [Fact]
@@ -35,24 +32,6 @@ public class BulkheadTests(ApiFactory factory) : IClassFixture<ApiFactory>
             HttpStatusCode.TooManyRequests, HttpStatusCode.TooManyRequests);
         (await client.GetAsync("/api/orders/health")).StatusCode.Should().Be(HttpStatusCode.OK,
             "Orders has its own budget; Catalog's burst does not spend it");
-    }
-
-    [Fact]
-    public async Task ACatalogRequest_IncrementsTheRequestCounterTaggedWithCatalog()
-    {
-        var host = factory.WithWebHostBuilder(_ => { });
-        var client = host.CreateClient();
-        using var requests = new MetricCollector<long>(
-            host.Services.GetRequiredService<IMeterFactory>(), ModuleMeter.MeterNamePrefix + "Catalog", ModuleMeter.Requests);
-
-        (await client.GetAsync("/api/catalog/health")).StatusCode.Should().Be(HttpStatusCode.OK);
-
-        // The counter is recorded when the response completes, just after the client has it.
-        await requests.WaitForMeasurementsAsync(1, TimeSpan.FromSeconds(5));
-        var measurement = requests.GetMeasurementSnapshot().Should().ContainSingle().Subject;
-        measurement.Value.Should().Be(1);
-        measurement.Tags["module"].Should().Be("Catalog");
-        measurement.Tags["status_code"].Should().Be(200);
     }
 
     [Fact]

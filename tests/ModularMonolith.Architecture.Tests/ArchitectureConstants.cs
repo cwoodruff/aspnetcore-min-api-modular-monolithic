@@ -58,16 +58,16 @@ internal static class ArchitectureConstants
     ];
 
     // The only test assembly each module may grant InternalsVisibleTo. Null means none.
-    // Catalog, Orders, Administration and (from phase 6) Reporting share the services test project until
-    // per-module test hosts arrive (upgrade plan phase 8); tighten this map then, never loosen it.
+    // The data modules grant it to the per-module test host project (phase 8). Identity grants it to the
+    // full-host tests: they replace its key material and user store to run the host outside Development.
     public static readonly IReadOnlyDictionary<string, string?> AllowedInternalsVisibleTo =
         new Dictionary<string, string?>
         {
-            [CatalogAssembly] = "ModularMonolith.Services.Tests",
-            [OrdersAssembly] = "ModularMonolith.Services.Tests",
-            [AdminAssembly] = "ModularMonolith.Services.Tests",
+            [CatalogAssembly] = "ModularMonolith.Module.Tests",
+            [OrdersAssembly] = "ModularMonolith.Module.Tests",
+            [AdminAssembly] = "ModularMonolith.Module.Tests",
             [IdentityAssembly] = "ModularMonolith.Api.Tests",
-            [ReportingAssembly] = "ModularMonolith.Services.Tests"
+            [ReportingAssembly] = "ModularMonolith.Module.Tests"
         };
 
     /// <summary>

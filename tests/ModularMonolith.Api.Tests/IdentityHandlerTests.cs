@@ -43,7 +43,7 @@ public class IdentityHandlerTests
         info.Permissions.Should().Equal("catalog.read");
     }
 
-    // Hand-written fakes: the interfaces are internal (see Services.Tests' HandlerTests).
+    // Hand-written fakes: the interfaces are internal (see Module.Tests' HandlerTests).
     private sealed class RejectingUserStore : IUserStore
     {
         public Task<(bool success, string userId, string? displayName, string[] roles, string[] permissions, string? email,
