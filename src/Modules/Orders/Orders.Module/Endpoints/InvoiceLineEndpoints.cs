@@ -1,3 +1,4 @@
+using Identity.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -21,7 +22,7 @@ internal static class InvoiceLineEndpoints
 
                 return line is not null ? Results.Json(line) : Results.NotFound();
             })
-            .RequireAuthorization("orders.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.OrdersRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("OrdersGetInvoiceLineById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -40,7 +41,7 @@ internal static class InvoiceLineEndpoints
 
                 return Results.Json(lines);
             })
-            .RequireAuthorization("orders.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.OrdersRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetAllInvoiceLines")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -60,7 +61,7 @@ internal static class InvoiceLineEndpoints
 
                 return Results.Json(lines);
             })
-            .RequireAuthorization("orders.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.OrdersRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetInvoiceLinesByInvoiceId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -80,7 +81,7 @@ internal static class InvoiceLineEndpoints
 
                 return Results.Json(lines);
             })
-            .RequireAuthorization("orders.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.OrdersRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetInvoiceLinesByTrackId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)

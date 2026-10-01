@@ -1,3 +1,4 @@
+using Identity.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -21,7 +22,7 @@ internal static class InvoiceEndpoints
 
                 return invoice is not null ? Results.Json(invoice) : Results.NotFound();
             })
-            .RequireAuthorization("orders.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.OrdersRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("OrdersGetInvoiceById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -40,7 +41,7 @@ internal static class InvoiceEndpoints
 
                 return Results.Json(invoices);
             })
-            .RequireAuthorization("orders.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.OrdersRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetAllInvoices")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -60,7 +61,7 @@ internal static class InvoiceEndpoints
 
                 return Results.Json(invoices);
             })
-            .RequireAuthorization("orders.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.OrdersRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetInvoicesByCustomerId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -85,7 +86,7 @@ internal static class InvoiceEndpoints
                     _ => Results.NotFound()
                 };
             })
-            .RequireAuthorization("orders.write").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.OrdersWrite).RequireAuthorization(Policies.TenantScoped)
             .WithName("OrdersFinalizeInvoice")
             .WithDescription(
                 "Finalizes a draft invoice and publishes InvoiceFinalized through the orders outbox in the same " +

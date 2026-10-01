@@ -1,13 +1,13 @@
-using System.Net;
-using System.Text.Json;
 using FluentAssertions;
-using Identity.Modules.Authorization;
+using Identity.Contracts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SharedKernel.Events;
+using System.Net;
+using System.Text.Json;
 
 namespace ModularMonolith.Api.Tests;
 

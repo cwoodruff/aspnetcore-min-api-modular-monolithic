@@ -1,8 +1,9 @@
+using Catalog.Modules.Services;
+using Identity.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Catalog.Modules.Services;
 using SharedKernel.TrafficControl;
 
 namespace Catalog.Modules.Endpoints;
@@ -21,7 +22,7 @@ internal static class AlbumEndpoints
 
                 return album is not null ? TypedResults.Ok(album) : Results.NotFound();
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("CatalogGetAlbumById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -40,7 +41,7 @@ internal static class AlbumEndpoints
 
                 return Results.Json(albums);
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetAllAlbums")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -60,7 +61,7 @@ internal static class AlbumEndpoints
 
                 return Results.Json(albums);
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetAlbumsByArtistId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
