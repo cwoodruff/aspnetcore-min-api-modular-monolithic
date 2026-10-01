@@ -49,7 +49,6 @@ public class TrackEndpointsTests(ApiFactory factory)
     [InlineData("/api/catalog/tracks/album/1")]
     [InlineData("/api/catalog/tracks/genre/1")]
     [InlineData("/api/catalog/tracks/mediatype/1")]
-    [InlineData("/api/catalog/tracks/invoice/1")]
     public async Task Track_Collections_ShouldReturn200_WhenAuthorized(string url)
     {
         var tenantFactory = _factory.WithTenantUser();

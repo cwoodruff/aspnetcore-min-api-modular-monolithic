@@ -1,6 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Npgsql;
-using SharedKernel.Persistence;
 using Testcontainers.PostgreSql;
 
 namespace ModularMonolith.Api.Tests;
@@ -11,14 +12,14 @@ namespace ModularMonolith.Api.Tests;
 /// <remarks>
 ///     Every host a test boots gets its own <c>CREATE DATABASE ... TEMPLATE</c> clone, so tests can
 ///     write freely and test classes keep running in parallel (the per-host isolation the copied
-///     SQLite file used to give). Repository tests use <see cref="CreateEmptyDatabase" /> plus
-///     Respawn instead; see <see cref="RepositoryDatabaseFixture" />. The container is removed by the
+///     SQLite file used to give). The template is migrated and seeded by the host's own composition
+///     and <see cref="DbSeeder" />, so it has exactly the schema the app runs with. Service-level
+///     database tests live in ModularMonolith.Services.Tests. The container is removed by the
 ///     Testcontainers resource reaper when the test process exits.
 /// </remarks>
 public static class PostgresFixture
 {
     private const string TemplateDatabase = "chinook_template";
-    private const string EmptyTemplateDatabase = "chinook_empty_template";
 
     private static readonly Lazy<Task<PostgreSqlContainer>> Container = new(StartAsync);
 
@@ -30,18 +31,6 @@ public static class PostgresFixture
     /// <summary>A new database holding the full Chinook seed.</summary>
     public static string CreateSeededDatabase() => RunSync(() => CloneAsync(TemplateDatabase));
 
-    /// <summary>A new database with the schema applied and no rows.</summary>
-    public static string CreateEmptyDatabase() => RunSync(() => CloneAsync(EmptyTemplateDatabase));
-
-    public static AppDbContext CreateContext(string connectionString)
-    {
-        var options = PersistenceRegistration
-            .UseAppDatabase(new DbContextOptionsBuilder<AppDbContext>(), connectionString)
-            .EnableSensitiveDataLogging()
-            .Options;
-        return new AppDbContext((DbContextOptions<AppDbContext>)options);
-    }
-
     private static async Task<PostgreSqlContainer> StartAsync()
     {
         // Durability settings are off: the data lives only as long as the test run.
@@ -51,20 +40,23 @@ public static class PostgresFixture
             .Build();
         await container.StartAsync().ConfigureAwait(false);
 
-        await ExecuteAsync(container, $"CREATE DATABASE {EmptyTemplateDatabase}").ConfigureAwait(false);
-        await using (var empty = CreateContext(ConnectionString(container, EmptyTemplateDatabase, pooling: false)))
-        {
-            await empty.Database.MigrateAsync().ConfigureAwait(false);
-        }
-
         await ExecuteAsync(container, $"CREATE DATABASE {TemplateDatabase}").ConfigureAwait(false);
-        await using (var seeded = CreateContext(ConnectionString(container, TemplateDatabase, pooling: false)))
-        {
-            // The same path the host takes in Development.
-            await DbSeeder.MigrateAndSeedAsync(seeded, SeedScriptPath).ConfigureAwait(false);
-        }
+        await MigrateAndSeedAsync(ConnectionString(container, TemplateDatabase, pooling: false)).ConfigureAwait(false);
 
         return container;
+    }
+
+    // The same composition and seeding path the host takes in Development: every module registers its
+    // own DbContext, and DbSeeder migrates them in order before loading the seed.
+    private static async Task MigrateAndSeedAsync(string connectionString)
+    {
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = Environments.Development });
+        builder.Configuration["ConnectionStrings:AppDatabase"] = connectionString;
+        HostComposition.ConfigureServices(builder);
+
+        await using var provider = builder.Services.BuildServiceProvider();
+        await using var scope = provider.CreateAsyncScope();
+        await DbSeeder.MigrateAndSeedAsync(scope.ServiceProvider, SeedScriptPath).ConfigureAwait(false);
     }
 
     private static async Task<string> CloneAsync(string template)

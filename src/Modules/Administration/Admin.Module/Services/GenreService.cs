@@ -1,15 +1,16 @@
+using Admin.Modules.Data;
+using Admin.Modules.Domain;
+using Admin.Modules.Mapping;
+using Admin.Modules.Models;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
-using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
-using SharedKernel.Persistence.Extensions;
-using SharedKernel.Persistence.Repositories;
 
 namespace Admin.Modules.Services;
 
 internal sealed class GenreService(
-    IGenreRepository repo,
+    AdministrationDbContext db,
     ICacheFacade cache,
     ICacheKeyComposer keys,
     IValidator<GenreApiModel> validator,
@@ -28,8 +29,8 @@ internal sealed class GenreService(
 
         return await cache.GetOrAddAsync<GenreApiModel?>(key, async _ =>
         {
-            var g = await repo.GetById(id);
-            return g?.Convert();
+            var g = await LoadByIdAsync(id, ct);
+            return g?.ToApiModel();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -47,8 +48,8 @@ internal sealed class GenreService(
 
         return await cache.GetOrAddAsync<IEnumerable<GenreApiModel>>(key, async _ =>
         {
-            var genreEntities = await repo.GetAll();
-            return genreEntities.ConvertAll();
+            var genreEntities = await db.Genres.AsNoTracking().ToListAsync(ct);
+            return genreEntities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -66,12 +67,13 @@ internal sealed class GenreService(
         }
 
         var genre = new Genre { Name = name };
-        var created = await repo.Add(genre);
+        db.Genres.Add(genre);
+        await db.SaveChangesAsync(ct);
 
         // Invalidate cache
         await cache.RemoveByTagAsync(GenreTags[0], ct);
 
-        return created?.Convert();
+        return genre.ToApiModel();
     }
 
     public async Task<bool> UpdateGenreAsync(int id, string name, CancellationToken ct)
@@ -84,10 +86,12 @@ internal sealed class GenreService(
         }
 
         var genre = new Genre { Id = id, Name = name };
-        var updated = await repo.Update(genre);
-
+        var updated = await db.Genres.AnyAsync(e => e.Id == genre.Id, ct);
         if (updated)
         {
+            db.Genres.Update(genre);
+            await db.SaveChangesAsync(ct);
+
             // Invalidate cache
             await cache.RemoveByTagAsync(GenreTags[0], ct);
             var key = keys.Compose(
@@ -103,7 +107,14 @@ internal sealed class GenreService(
 
     public async Task<bool> DeleteGenreAsync(int id, CancellationToken ct)
     {
-        var deleted = await repo.Delete(id);
+        var toDelete = await db.Genres.FindAsync([id], ct);
+        if (toDelete is not null)
+        {
+            db.Genres.Remove(toDelete);
+            await db.SaveChangesAsync(ct);
+        }
+
+        var deleted = toDelete is not null;
 
         if (deleted)
         {
@@ -119,4 +130,11 @@ internal sealed class GenreService(
 
         return deleted;
     }
+
+    private async Task<Genre?> LoadByIdAsync(int id, CancellationToken ct)
+    {
+        return await db.Genres
+            .AsNoTracking()
+            .SingleOrDefaultAsync(e => e.Id == id, ct);
+        }
 }

@@ -1,279 +1,134 @@
-### EF Core plan for the modular monolith (SQLite, single DbContext)
+### EF Core in the modular monolith: one DbContext per module
 
-> **Provider note (phase 1):** the database is now PostgreSQL 17, with each table in
-> its owning module's schema, an EF Core `InitialSchema` migration, and the
-> Chinook seed in `data/chinook-postgres-seed.sql`. See
-> [ADR-0002](adr/0002-database-engine.md). The SQLite details below are out of
-> date; this document is rewritten for the per-module `DbContext` shape in
-> phase 2 of [the upgrade plan](upgrade-plan.md).
+**Status: Implemented (phase 2).** Decisions: [ADR-0002](adr/0002-database-engine.md)
+(PostgreSQL), [ADR-0003](adr/0003-one-dbcontext-per-module.md) (a context per
+module), [ADR-0004](adr/0004-orders-to-administration-customer.md) to
+[ADR-0007](adr/0007-catalog-to-administration-mediatype.md) (the cross-module
+references).
 
-**Status: Implemented**
+## Shape
 
-This document outlines how Entity Framework Core is integrated into this modular
-monolith:
+| Module | Context | Schema | Entities |
+|---|---|---|---|
+| Catalog | `CatalogDbContext` | `catalog` | Artist, Album, Track, Playlist, PlaylistTrack |
+| Orders | `OrdersDbContext` | `orders` | Invoice, InvoiceLine |
+| Administration | `AdministrationDbContext` | `administration` | Customer, Employee, Genre, MediaType |
+| Identity | none | | |
+| Reporting | none yet (a read-only context in phase 6) | | |
 
-- A single DbContext (`AppDbContext`) serves the entire app.
-- All modules access the same SQLite database (Chinook) via `IAppDbContext` or
-  `AppDbContext`.
-- The database file is `data/chinook.db` located under the host content root or
-  at the solution root.
-- Repository pattern implemented via `SharedKernel.Persistence` (interfaces) and
-  `SharedKernel.DataSQLite` (implementations).
+Each module keeps, all `internal`:
 
-Goals
+```
+<Module>.Module/
+  Domain/        entities (no base class; each declares its Id)
+  Data/          <Module>DbContext, <Module>DbContextFactory (design time), Migrations/
+  Models/        API models returned by endpoints
+  Mapping/       <Module>Mappings: ToApiModel, ToEntity, ToApiModels
+  Validation/    FluentValidation validators
+  Services/      services that query the context directly
+```
 
-- One database, one DbContext, many modules.
-- Keep module boundaries: modules depend only on SharedKernel abstractions, not
-  on the host or on each other.
-- Centralized migrations and schema ownership to avoid conflicts while allowing
-  per‑module schema evolution.
-- Simple local dev story with a stable SQLite file path that works for CLI,
-  Rider/VS, Docker.
+There is no repository layer and no shared persistence project. EF Core is the
+repository: services query their module's context, reads use `AsNoTracking`,
+and projections that used to live in repositories are private `Load*Async`
+methods in the service that needs them.
 
-High‑level architecture
+## Registration
 
-- SharedKernel.Persistence (new class library)
-    - Contains the single EF Core DbContext (AppDbContext) and related
-      configuration extensions.
-    - Exposes a minimal IAppDbContext abstraction for modules that prefer not to
-      depend on EF Core types directly.
-    - Hosts EF Core migrations.
-- Host (ModularMonolith.Api)
-    - Registers the DbContext and provides the connection string (pointing to
-      /data/chinook.db).
-    - Manages database lifecycle at startup (EnsureCreated/ApplyMigrations in
-      Development/Test as needed).
-- Modules (e.g., Catalog.Module, Orders.Module, etc.)
-    - Reference SharedKernel and, optionally, SharedKernel.Persistence only
-      through abstractions.
-    - Prefer depending on IAppDbContext or repositories defined in each module (
-      but implemented using AppDbContext).
+Each module registers its own context and validators in `RegisterServices`:
 
-Project layout changes
+```csharp
+services.AddModuleDbContext<CatalogDbContext>(CatalogDbContext.Schema);
+services.AddValidatorsFromAssemblyContaining<AlbumValidator>(includeInternalTypes: true);
+```
 
-1) Create project:
-   src/Shared/SharedKernel.Persistence/SharedKernel.Persistence.csproj
-    - References: Microsoft.EntityFrameworkCore,
-      Microsoft.EntityFrameworkCore.Sqlite, Microsoft.EntityFrameworkCore.Design
-    - TargetFramework: align with the solution TFMs (currently net10.0 in
-      project files).
+`AddModuleDbContext` (in `SharedKernel/Persistence/ModuleDbContextOptions.cs`)
+does the only provider setup in the solution:
 
-2) Add AppDbContext in the new project
-    - public sealed class AppDbContext : DbContext
-    - Initially empty DbSets (you can add per‑module entities later via partials
-      or in this project with a per‑module folder).
-    - Conventions configured in OnModelCreating (UTC DateTime, string lengths,
-      etc.).
+- `AddDbContextPool<T>` (pool size 128) against `ConnectionStrings:AppDatabase`,
+  read from the built host's configuration so tests can override it;
+- `UseNpgsql` with `MigrationsHistoryTable("__EFMigrationsHistory", schema)`;
+- a second registration as `DbContext`, so the host can migrate every module's
+  context without seeing its internal type.
 
-3) Add IAppDbContext abstraction (optional but recommended)
-    - public interface IAppDbContext
-        - Expose minimal members used broadly: DbSet<T> Set<T>(), Task<int>
-          SaveChangesAsync(...)
-        - Avoid exposing EF‑specific APIs to modules if you want to keep strict
-          boundaries.
-    - AppDbContext implements IAppDbContext.
+Each context sets `HasDefaultSchema(Schema)` and calls
+`ModuleDbContextOptions.UseUtcDateTimes` in `ConfigureConventions`: Npgsql only
+writes UTC values to `timestamp with time zone`, and JSON dates without a zone
+bind as `Unspecified`, so they are treated as UTC.
 
-4) Registration extensions
-    - public static class PersistenceRegistration
-        - AddKernelPersistence(this IServiceCollection, IConfiguration):
-            - Adds AppDbContext with AddDbContextPool<AppDbContext> using SQLite
-              connection string.
-            - Registers IAppDbContext to resolve as AppDbContext.
-        - Connection string name: AppDatabase (see below).
+## Cross-module references
 
-5) Design‑time factory for migrations
-    - class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
-        - Builds DbContextOptions using the same connection string rules as
-          runtime (see Connection string and path).
-    - Enables running `dotnet ef migrations add` from the
-      SharedKernel.Persistence project folder.
+No navigation property and no foreign key crosses a module line. These columns
+are plain ids with an index (for the `by-customer`, `by-track`, `by-genre` and
+`by-media-type` lookups):
 
-Connection string and path
+| Column | Refers to | ADR |
+|---|---|---|
+| `orders.Invoice.CustomerId` | `administration.Customer` | 0004 |
+| `orders.InvoiceLine.TrackId` | `catalog.Track` | 0005 |
+| `catalog.Track.GenreId` | `administration.Genre` | 0006 |
+| `catalog.Track.MediaTypeId` | `administration.MediaType` | 0007 |
 
-- Connection string name: AppDatabase
-- Value (in host appsettings.json): Data Source=<absolute path to solution>
-  /data/chinook.db
-- Build absolute path at runtime from the host content root:
-    - var dataPath = Path.Combine(app.Environment.ContentRootPath, "data", "
-      chinook.db");
-    - var connectionString = $"Data Source={dataPath}";
-- Alternative: keep a literal in appsettings.Development.json but normalize to
-  absolute at startup so EF gets a full path.
-- Ensure the /data directory exists in local dev (repo already contains
-  data/chinook.db).
+Validators require these ids to be present; nothing yet checks that the row
+exists. Phase 3 adds read contracts in the owning module's `*.Contracts`
+project, and phase 6 adds an orphan check. Within a module, relationships and
+foreign keys stay as they were (Album to Artist, Track to Album, Playlist to
+Track, InvoiceLine to Invoice, Customer to Employee, Employee to Employee).
 
-Registration in the host (ModularMonolith.Api)
+`ModuleBoundaryTests.Each_Module_DbContext_Maps_Only_Its_Own_Entities` fails
+if a context's model contains an entity type from another assembly.
 
-- During Program.cs service configuration:
-    - builder.Services.AddKernelPersistence(builder.Configuration);
-- Optionally, at startup:
-    - If (Development or Test): apply migrations automatically or EnsureCreated
-      for an initial bring‑up.
-- Example (pseudo‑code):
+## Migrations
 
-  builder.Services.AddKernelPersistence(builder.Configuration);
+Each module's migrations live in its `Data/Migrations` folder and record
+themselves in `<schema>.__EFMigrationsHistory`. The tool is pinned in
+`dotnet-tools.json`:
 
-  var app = builder.Build();
+```
+dotnet tool restore
+dotnet ef migrations add <Name> --project src/Modules/Catalog/Catalog.Module --context CatalogDbContext --output-dir Data/Migrations
+dotnet ef migrations list --project src/Modules/Orders/Orders.Module --context OrdersDbContext
+dotnet ef migrations script --project src/Modules/Administration/Admin.Module --context AdministrationDbContext
+```
 
-  if (app.Environment.IsDevelopment())
-  {
-  using var scope = app.Services.CreateScope();
-  var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-  db.Database.EnsureCreated(); // or db.Database.Migrate(); if using migrations
-  }
+The design-time factories read `ConnectionStrings__AppDatabase` and fall back
+to the docker-compose database. Generated migration classes are made
+`internal` so the module assemblies keep exporting only their composition
+class (`PublicSurfaceTests`).
 
-How modules access the DbContext
+Each context's first migration is `InitialSchema`. Together they produce the
+phase 1 schema minus the four cross-schema foreign keys, plus one history
+table per schema (checked with `pg_dump --schema-only`). A phase 1 database
+cannot be upgraded in place because its history table was in `public`; local
+volumes are recreated with `docker compose down -v`.
 
-- Option A (recommended): depend on IAppDbContext (from
-  SharedKernel.Persistence) in module services/handlers, and use Set<T>() to
-  query/update entities.
-- Option B (implemented): define per‑module repositories (interfaces in
-  SharedKernel.Persistence, implementations in SharedKernel.DataSQLite) that
-  internally depend on IAppDbContext.
-- Option C (current pattern): Use a service layer that wraps repositories with
-  caching, validation, and business logic.
-- Avoid making modules depend on the host project. They should only reference
-  SharedKernel (+ SharedKernel.Persistence for EF abstractions).
-- Entities are centralized in SharedKernel.Persistence/Entities/.
+## Startup and seeding
 
-Service layer integration
+In Development and Test, when `Database:MigrateAndSeedOnStartup` is true, the
+host's `DbSeeder` (`src/ModularMonolith.Api/DbSeeder.cs`):
 
-- Services inject repositories (e.g., ICustomerRepository) and ICacheFacade
-- Services handle:
-    - Input validation via FluentValidation
-    - Cache-aside pattern for reads
-    - Cache invalidation on writes
-    - Entity-to-DTO conversion
-- Endpoints inject services (not repositories directly) for data access
-- Example flow: Endpoint → Service → Repository → DbContext
+1. resolves every module context registered as `DbContext`;
+2. migrates them in order: Administration, Catalog, Orders (Reporting joins in
+   phase 6), and fails on a context with no place in that order;
+3. loads `data/chinook-postgres-seed.sql` in one transaction if
+   `catalog."Track"` is empty.
 
-Entity type configuration organization (mapping)
+Other environments apply migrations as a deployment step.
 
-- Prefer per‑module folders under SharedKernel.Persistence:
-    - Entities/Catalog
-    - Entities/Orders
-    - Entities/Administration
-    - Entities/Reporting
-    - Entities/Identity
-- Use IEntityTypeConfiguration<T> classes per entity and apply configurations in
-  AppDbContext.OnModelCreating via ModelBuilder.ApplyConfigurationsFromAssembly(
-  typeof(AppDbContext).Assembly).
-- If you want modules to contribute their mappings without depending on EF:
-    - Define a small contract IModelBuilderContributor in
-      SharedKernel.Persistence with a method: void Contribute(ModelBuilder
-      modelBuilder)
-    - Modules can register IModelBuilderContributor implementations via DI, and
-      AppDbContext can discover and apply them. This is optional and more
-      advanced.
+## Health checks
 
-Migrations strategy
+Catalog, Orders and Administration report `connected` from their own
+context's `Database.CanConnectAsync`. Identity and Reporting own no tables
+yet; their data-health endpoints call `ModuleDbContextOptions.CanConnectAsync`,
+which only opens a connection.
 
-- Keep all migrations in SharedKernel.Persistence.
-- Workflow:
-    1. Modify or add entity configurations.
-    2. From src/Shared/SharedKernel.Persistence:
-       `dotnet ef migrations add <Name>`
-    3. Commit the generated migration files.
-    4. At runtime in Dev/Test: call Database.Migrate() or EnsureCreated(). In
-       Production: prefer migrations run in CI/CD before app starts.
-- Versioning and ownership:
-    - Prefix migration names with the module (e.g., Catalog_Initial,
-      Orders_AddOrderItem) to signal ownership.
+## Tests
 
-Transactions and cross‑module operations
-
-- The single DbContext enables atomic multi‑aggregate operations across modules
-  when required. Keep cross‑module transactions rare.
-- Use ambient transactions scoped to a single request. The default per‑request
-  DbContext lifetime is Scoped.
-- If you need an explicit unit of work, expose it via SharedKernel.Persistence (
-  e.g., IUnitOfWork implemented by AppDbContext).
-
-Performance and resilience
-
-- Use AddDbContextPool for connection pooling.
-- With SQLite, concurrency is limited; prefer short transactions and avoid
-  long‑running read locks.
-- Consider `PRAGMA journal_mode = WAL` for better concurrency if needed (can be
-  set via connection string or OnConfiguring).
-
-Testing
-
-- Integration tests can either:
-    - Use the same SQLite file but redirect to a temporary path under the test’s
-      working folder; or
-    - Use SQLite in‑memory mode with connection string "DataSource=:memory:" and
-      keep the connection open for test lifetime.
-- Provide a test helper to override the AppDatabase connection string in
-  WebApplicationFactory.
-
-Docker and deployment
-
-- Ensure the /data folder is created in the container image and the file is
-  copied/mounted:
-    - Dockerfile: `RUN mkdir -p /app/data` and `COPY data/chinook.db /app/data/`
-    - Use ContentRoot /app to resolve absolute path for the connection string at
-      runtime.
-- For production, consider migrating away from SQLite to a server RDBMS; the
-  AppDbContext and repository patterns remain the same with a provider change.
-
-Security and access control
-
-- Enforce data access rules in repositories or domain services within modules.
-- Avoid exposing DbContext directly to controllers/endpoints; use services that
-  encapsulate queries and commands.
-
-Current implementation status (updated 2026-01)
-
-- SharedKernel.Persistence project:
-    - `AppDbContext` with full Chinook schema: Albums, Artists, Customers,
-      Employees, Genres, Invoices, InvoiceLines, MediaTypes, Playlists,
-      PlaylistTracks, Tracks.
-    - `IAppDbContext` abstraction for modules preferring to avoid direct EF Core
-      dependency.
-    - `PersistenceRegistration.AddKernelPersistence` extension with DbContext
-      pooling (128 pool size).
-    - `AppDbContextFactory` for design-time tooling (migrations).
-    - Repository interfaces: `IAlbumRepository`, `IArtistRepository`,
-      `ICustomerRepository`, `IEmployeeRepository`, `IGenreRepository`,
-      `IInvoiceRepository`, `IInvoiceLineRepository`, `IMediaTypeRepository`,
-      `IPlaylistRepository`, `ITrackRepository`.
-- SharedKernel.DataSQLite project:
-    - Concrete repository implementations for all entities above.
-    - `BaseRepository<T>` with common CRUD operations.
-- Host wiring (src/ModularMonolith.Api/HostComposition.cs):
-    - Auto-discovers SQLite file path from
-      `src/ModularMonolith.Api/data/chinook.db` or repo root `/data/chinook.db`.
-    - Sets `ConnectionStrings:AppDatabase` at runtime when not provided.
-    - Registers all repository interfaces with their SQLite implementations.
-    - Calls `AddKernelPersistence(builder.Configuration)`.
-- Testing:
-    - Integration tests use `WebApplicationFactory<Program>` with SQLite.
-    - Repository unit tests in `tests/ModularMonolith.Api.Tests/Repositories/`.
-- Target frameworks:
-    - `Directory.Build.props` specifies `net10.0`; individual csproj files do
-      not override it.
-
-Tips and commands
-
-- Add a migration (from src/Shared/SharedKernel.Persistence):
-    - dotnet ef migrations add <Name>
-- Design-time override of the connection string for migrations:
-    - Set environment variable ConnectionStrings__AppDatabase to an absolute
-      SQLite Data Source before running dotnet ef.
-    - Example (POSIX shells): export ConnectionStrings__AppDatabase="Data
-      Source=/absolute/path/to/data/chinook.db"
-
-Deliverables checklist
-
-- [x] Create SharedKernel.Persistence project with AppDbContext, IAppDbContext,
-  registration extensions, and design‑time factory.
-- [x] Add EF Core packages and Sqlite provider.
-- [x] Host registers persistence via AddKernelPersistence and configures
-  absolute path to /data/chinook.db.
-- [x] Repository pattern implemented (interfaces in SharedKernel.Persistence,
-  implementations in SharedKernel.DataSQLite).
-- [ ] Migrations are created and applied in Dev/Test as appropriate. (Using
-  existing Chinook schema; no custom migrations yet.)
-- [x] Modules depend only on SharedKernel (+ SharedKernel.Persistence for
-  IAppDbContext) and use it via DI.
+- `ModularMonolith.Services.Tests` runs each service against its module's real
+  context on PostgreSQL (Testcontainers). `ModuleDatabaseFixture` migrates all
+  three contexts once; before each test Respawn empties the module schemas
+  (keeping the history tables) and `TestData` writes a small graph through
+  each module's own context.
+- `ModularMonolith.Api.Tests` builds one seeded template database through
+  `HostComposition` and `DbSeeder`, and gives every test host its own
+  `CREATE DATABASE ... TEMPLATE` clone.

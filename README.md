@@ -16,32 +16,29 @@ docs/Walkthrough.md.
     HostComposition.cs                     (service registration and the explicit module list)
     ModuleComposition.cs                   (startup checks: duplicate routes, unknown policies)
   /Modules
-    /Catalog/Catalog.Module                    (Class Library)
-      /Services                            (IArtistService, IAlbumService, ITrackService, IPlaylistService)
-      /Endpoints                           (ArtistEndpoints, AlbumEndpoints, TrackEndpoints, etc.)
-    /Orders/Orders.Module                  (Class Library)
-      /Services                            (IInvoiceService, IInvoiceLineService)
-      /Endpoints                           (InvoiceEndpoints, InvoiceLineEndpoints)
-    /Administration/Admin.Module           (Class Library)
-      /Services                            (ICustomerService, IEmployeeService, IGenreService, IMediaTypeService)
-      /Endpoints                           (CustomerEndpoints, EmployeeEndpoints, GenreEndpoints, etc.)
-    /Reporting/Reporting.Module            (Class Library - health endpoints only)
-    /Identity/Identity.Module              (Class Library)
-      /Services                            (TokenService, UserStore, RefreshTokenStore)
-      /Endpoints                           (AuthEndpoints)
-      /Authorization                       (PolicyRegistry, TenantAuthorizationHandler)
-      /KeyManagement                       (DevKeyMaterialService)
+    /Catalog
+      /Catalog.Contracts                   (public: what other modules may depend on; empty for now)
+      /Catalog.Module                      (internal except the composition class)
+        /Domain                            (Artist, Album, Track, Playlist, PlaylistTrack)
+        /Data                              (CatalogDbContext, schema "catalog", Migrations/)
+        /Models, /Mapping, /Validation     (API models, entity<->model mapping, FluentValidation)
+        /Services, /Endpoints              (ArtistService, AlbumService, TrackService, PlaylistService)
+    /Orders
+      /Orders.Contracts
+      /Orders.Module                       (Invoice, InvoiceLine; OrdersDbContext, schema "orders")
+    /Administration
+      /Administration.Contracts
+      /Admin.Module                        (Customer, Employee, Genre, MediaType; AdministrationDbContext,
+                                            schema "administration")
+    /Reporting/Reporting.Module            (health endpoints only; owns a read model from phase 6)
+    /Identity
+      /Identity.Contracts
+      /Identity.Module                     (tokens, users, authorization policies, key management)
   /Shared
-    /SharedKernel                          (Class Library for cross-cutting primitives)
+    /SharedKernel                          (cross-cutting primitives only; nothing domain-shaped)
       /Caching                             (ICacheFacade, CacheKeyComposer, CompositeCacheFacade)
       /TrafficControl                      (RateLimitPolicyRegistry, PartitionKeys)
-    /SharedKernel.Persistence              (Class Library for EF Core, entities, validation)
-      /Entities                            (Album, Artist, Customer, Employee, Genre, etc.)
-      /ApiModels                           (AlbumApiModel, ArtistApiModel, etc.)
-      /Repositories                        (IAlbumRepository, IArtistRepository, etc.)
-      /Validation                          (FluentValidation validators)
-    /SharedKernel.DataSQLite               (Class Library for EF Core repository implementations; name predates PostgreSQL)
-      /Repositories                        (AlbumRepository, ArtistRepository, BaseRepository<T>)
+      /Persistence                         (ModuleDbContextOptions: UseNpgsql with schema + history table)
 /tests
   /ModularMonolith.Api.Tests               (xUnit integration tests using WebApplicationFactory)
   /ModularMonolith.Services.Tests          (xUnit service-layer tests for Catalog, Orders, and Administration)
@@ -99,14 +96,14 @@ validation, and caching:
 
 - **Input validation** - FluentValidation before persistence operations
 - **Cache management** - Cache-aside pattern with tag-based invalidation
-- **Repository orchestration** - Coordinate data access
+- **Data access** - Query the module's own `DbContext` directly; EF Core is the repository
 - **Error handling** - Graceful degradation with null/empty returns
 
 ### Service pattern example
 
 ```csharp
-public sealed class CustomerService(
-    ICustomerRepository repo,
+internal sealed class CustomerService(
+    AdministrationDbContext db,
     ICacheFacade cache,
     ICacheKeyComposer keys,
     IValidator<CustomerApiModel> validator) : ICustomerService
@@ -116,13 +113,15 @@ public sealed class CustomerService(
     {
         var key = keys.Compose("administration", "customer", "v1", discriminator: $"by-id:{id}");
         return await cache.GetOrAddAsync<CustomerApiModel?>(key, async _ =>
-        {
-            return await repo.GetById(id);
-        }, new CacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-            Tags = ["administration:customer"]
-        }, ct);
+            await db.Customers.AsNoTracking()
+                .Where(c => c.Id == id)
+                .Select(c => new CustomerApiModel { Id = c.Id, FirstName = c.FirstName /* ... */ })
+                .SingleOrDefaultAsync(ct),
+            new CacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
+                Tags = ["administration:customer"]
+            }, ct);
     }
 
     // Write with validation and cache invalidation
@@ -132,9 +131,11 @@ public sealed class CustomerService(
         if (!result.IsValid)
             throw new ValidationException(result.Errors);
 
-        var created = await repo.Add(model.Convert());
+        var entity = model.ToEntity();
+        db.Customers.Add(entity);
+        await db.SaveChangesAsync(ct);
         await cache.RemoveByTagAsync("administration:customer", ct);
-        return created?.Convert();
+        return entity.ToApiModel();
     }
 }
 ```
@@ -150,11 +151,11 @@ public sealed class CustomerService(
 
 ## Validation with FluentValidation
 
-All input validation uses FluentValidation with validators in
-`SharedKernel.Persistence/Validation/`:
+All input validation uses FluentValidation. Each module keeps its validators,
+`internal`, in its own `Validation/` folder:
 
 ```csharp
-public class CustomerValidator : AbstractValidator<CustomerApiModel>
+internal sealed class CustomerValidator : AbstractValidator<CustomerApiModel>
 {
     public CustomerValidator()
     {
@@ -167,10 +168,10 @@ public class CustomerValidator : AbstractValidator<CustomerApiModel>
 }
 ```
 
-Validators are auto-registered via assembly scanning:
+Each module registers its own validators in `RegisterServices`:
 
 ```csharp
-services.AddValidatorsFromAssemblyContaining<CustomerValidator>();
+services.AddValidatorsFromAssemblyContaining<CustomerValidator>(includeInternalTypes: true);
 ```
 
 Validation failures and malformed request bodies are centralized in
@@ -620,7 +621,7 @@ through `GET /api/identity/.well-known/jwks.json`.
     - Key shape example: {env}:{app}:catalog:album:v1::::by-id:{id}
     - Default TTL: 20 minutes (with jitter to avoid stampede). Adjust via
       Caching:* configuration if needed.
-- Data source: PostgreSQL (`catalog` schema) via AppDbContext; includes Artist info.
+- Data source: PostgreSQL (`catalog` schema) via CatalogDbContext; includes Artist info.
 
 How it works
 
@@ -673,25 +674,37 @@ Notes
 
 ## Data and persistence
 
-- Engine: PostgreSQL 17, one `AppDbContext` shared by all modules for now. See
-  [ADR-0002](docs/adr/0002-database-engine.md) and docs/EFCore-Plan.md.
-- Schemas: each table lives in the schema of the module that owns it
-  (`catalog`, `orders`, `administration`; see
-  [ADR-0001](docs/adr/0001-module-map-and-ownership.md)).
-- Migrations: `src/Shared/SharedKernel.Persistence/Migrations`. The `dotnet-ef`
-  tool is pinned in `dotnet-tools.json`; run `dotnet tool restore` once, then
-  for example
-  `dotnet ef migrations list --project src/Shared/SharedKernel.Persistence`.
-  The design-time factory reads `ConnectionStrings__AppDatabase` and falls back
-  to the compose database.
-- Seed: `data/chinook-postgres-seed.sql`, loaded by `DbSeeder` in Development
-  and Test when `catalog."Track"` is empty. Turn it off with
+- Engine: PostgreSQL 17 ([ADR-0002](docs/adr/0002-database-engine.md)).
+- One `DbContext` per module ([ADR-0003](docs/adr/0003-one-dbcontext-per-module.md)):
+  `CatalogDbContext`, `OrdersDbContext` and `AdministrationDbContext`. Each maps
+  only its own module's entities, uses its own schema (`catalog`, `orders`,
+  `administration`; see [ADR-0001](docs/adr/0001-module-map-and-ownership.md))
+  and keeps its migration history in `<schema>.__EFMigrationsHistory`. Each
+  module registers its context in `RegisterServices` with
+  `ModuleDbContextOptions.AddModuleDbContext<T>(schema)`; the host registers
+  none. Contexts are pooled (`AddDbContextPool`, 128 per module).
+- No navigation property or foreign key crosses a module line. `Invoice.CustomerId`,
+  `InvoiceLine.TrackId`, `Track.GenreId` and `Track.MediaTypeId` are plain,
+  indexed ids; ADR-0004 to ADR-0007 record what that means for each.
+- Migrations live in each module's `Data/Migrations`. The `dotnet-ef` tool is
+  pinned in `dotnet-tools.json`; run `dotnet tool restore` once, then for
+  example:
+  ```
+  dotnet ef migrations list --project src/Modules/Catalog/Catalog.Module --context CatalogDbContext
+  dotnet ef migrations add <Name> --project src/Modules/Orders/Orders.Module --context OrdersDbContext --output-dir Data/Migrations
+  ```
+  Each module's design-time factory reads `ConnectionStrings__AppDatabase` and
+  falls back to the compose database.
+- Seed: `data/chinook-postgres-seed.sql`. In Development and Test the host's
+  `DbSeeder` migrates Administration, Catalog, then Orders, and loads the seed
+  when `catalog."Track"` is empty. Turn it off with
   `Database:MigrateAndSeedOnStartup=false`. Other environments apply
   migrations as a deployment step.
+- Upgrading a local database from phase 1: the history tables moved into the
+  module schemas, so a phase 1 compose volume cannot be migrated in place. Run
+  `docker compose down -v` once; the next `dotnet run` recreates and seeds it.
 
-### DbContext pooling and Repository pattern
-
-#### Connection string configuration
+### Connection string configuration
 
 - Set the PostgreSQL connection via appsettings (ConnectionStrings:
   AppDatabase), user secrets, or the environment variable
@@ -722,7 +735,7 @@ private static readonly string[] CustomerTags = ["administration:customer", "adm
 
 // Read with caching
 var key = keys.Compose("administration", "customer", "v1", discriminator: $"by-id:{id}");
-return await cache.GetOrAddAsync<CustomerApiModel?>(key, async _ => await repo.GetById(id),
+return await cache.GetOrAddAsync<CustomerApiModel?>(key, async _ => await LoadByIdAsync(id, ct),
     new CacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20), Tags = CustomerTags }, ct);
 
 // Write with cache invalidation
@@ -732,68 +745,16 @@ await cache.RemoveByTagAsync(CustomerTags[0], ct);
 See [docs/caching-strategy.md](docs/caching-strategy.md) for complete
 documentation including service-level patterns.
 
-This solution uses the Repository pattern with DbContext pooling for high
-throughput:
-
-- Repository interfaces: Defined in
-  `src/Shared/SharedKernel.Persistence/Repositories/` (e.g., `IAlbumRepository`,
-  `IArtistRepository`, etc.).
-- Repository implementations: Defined in
-  `src/Shared/SharedKernel.DataSQLite/Repositories/` with a `BaseRepository<T>`
-  providing common CRUD operations.
-- How the DbContext is registered:
-  `AddDbContextPool<AppDbContext>(..., poolSize: 128)` in
-  `src/Shared/SharedKernel.Persistence/PersistenceRegistration.cs`.
-- Why pooling matters: The 128 AppDbContext instances resolved from DI are
-  reused, reducing allocations and connection overhead.
-- How modules consume data: Inject repository interfaces (e.g.,
-  `IAlbumRepository`) or `IAppDbContext`/`AppDbContext` directly in endpoint
-  handlers.
-
 ### How modules access data
 
-Modules access data via repository interfaces or the DbContext directly:
-
-**Option 1: Repository pattern (preferred)**
-
-- Inject repository interfaces in endpoint handlers:
-  ```csharp
-  group.MapGet("/albums/{id}", async (int id, IAlbumRepository repo, CancellationToken ct) =>
-  {
-      var album = await repo.GetByIdAsync(id, ct);
-      return album is null ? Results.NotFound() : Results.Ok(album);
-  });
-  ```
-
-**Option 2: Direct DbContext access**
-
-- For health checks or custom queries, inject `AppDbContext` directly:
-  ```csharp
-  group.MapGet("/data-health", async (AppDbContext db, CancellationToken ct) =>
-  {
-      var ok = await db.Database.CanConnectAsync(ct);
-      // ...
-  });
-  ```
-
-**Option 3: IAppDbContext abstraction**
-
-- For services that need EF Core but want to avoid concrete DbContext
-  dependency:
-  ```csharp
-  public sealed class MyService(IAppDbContext db)
-  {
-      public async Task<List<Album>> GetAlbumsAsync(CancellationToken ct)
-          => await db.Set<Album>().ToListAsync(ct);
-  }
-  ```
-
-Notes:
-
-- Repository interfaces are in `SharedKernel.Persistence/Repositories/`
-- Repository implementations are in `SharedKernel.DataSQLite/Repositories/`
-- The host registers all repositories in `HostComposition.ConfigureServices`
-- The host reads the PostgreSQL connection string from ConnectionStrings:AppDatabase
+A module reads and writes only its own tables, through its own `DbContext`,
+from its services. There is no repository layer: EF Core is the repository,
+reads use `AsNoTracking`, and query projections live as private `Load*Async`
+methods next to the service code that uses them. To use another module's data,
+a module goes through that module's `*.Contracts` project (phase 3 adds the
+first read contracts), never a join. The architecture tests enforce both: no
+module depends on another module's assembly, and each context's model contains
+only its own module's entity types.
 
 ## Documentation
 
@@ -811,8 +772,8 @@ Detailed documentation is available in the `/docs` folder:
   implementation and patterns
 - [Caching Strategy](docs/caching-strategy.md) - Multi-tier caching with
   tag-based invalidation
-- [EF Core Plan](docs/EFCore-Plan.md) - Database architecture and repository
-  pattern
+- [EF Core Plan](docs/EFCore-Plan.md) - Per-module DbContexts, schemas,
+  migrations and seeding
 - [Walkthrough](docs/Walkthrough.md) - Step-by-step guide to recreate the
   solution
 
@@ -838,10 +799,12 @@ The solution includes three test projects:
 - `tests/ModularMonolith.Api.Tests/` - integration tests using
   `WebApplicationFactory`, against PostgreSQL in a Testcontainers container.
   Each test host gets its own clone of a seeded template database, so test
-  classes run in parallel; repository tests share an empty database reset with
-  Respawn (`PostgresFixture`, `ApiFactory`, `RepositoryDatabaseFixture`)
+  classes run in parallel (`PostgresFixture`, `ApiFactory`). The template is
+  built through `HostComposition` and `DbSeeder`, exactly as the app does
 - `tests/ModularMonolith.Services.Tests/` - service-layer tests for Catalog,
-  Orders, and Administration
+  Orders, and Administration against each module's real `DbContext` on
+  PostgreSQL (Testcontainers), reset with Respawn between tests
+  (`ModuleDatabaseFixture`)
 - `tests/ModularMonolith.Architecture.Tests/` - architecture tests such as
   `PublicSurfaceTests` and `GuardrailTests`
 

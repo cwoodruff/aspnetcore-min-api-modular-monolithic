@@ -1,135 +1,101 @@
 using FluentAssertions;
 using FluentValidation;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
+using Orders.Modules.Data;
+using Orders.Modules.Domain;
+using Orders.Modules.Models;
 using Orders.Modules.Services;
-using SharedKernel.Caching;
-using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
-using SharedKernel.Persistence.Repositories;
-using Xunit;
+using Orders.Modules.Validation;
 
 namespace ModularMonolith.Services.Tests.Orders;
 
-public class InvoiceLineServiceTests
+[Collection(ModuleDatabaseDefinition.Name)]
+public sealed class InvoiceLineServiceTests(ModuleDatabaseFixture database) : IAsyncLifetime
 {
-    private readonly IInvoiceLineRepository _repo = Substitute.For<IInvoiceLineRepository>();
-    private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
-    private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
-    private readonly IValidator<InvoiceLineApiModel> _validator = Substitute.For<IValidator<InvoiceLineApiModel>>();
-    private readonly ILogger<InvoiceLineService> _logger = NullLogger<InvoiceLineService>.Instance;
-    private readonly InvoiceLineService _service;
+    private readonly RecordingCache _cache = new();
+    private OrdersDbContext _db = null!;
+    private InvoiceLineService _service = null!;
 
-    public InvoiceLineServiceTests()
+    public async Task InitializeAsync()
     {
-        // Default successful validation
-        _validator.ValidateAsync(Arg.Any<InvoiceLineApiModel>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
-
-        _service = new InvoiceLineService(_repo, _cache, _keys, _validator, _logger);
-        
-        _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
+        await database.ResetAndSeedAsync();
+        _db = database.CreateOrdersContext();
+        _service = new InvoiceLineService(_db, _cache, RecordingCache.Keys(), new InvoiceLineValidator(),
+            NullLogger<InvoiceLineService>.Instance);
     }
+
+    public async Task DisposeAsync() => await _db.DisposeAsync();
+
+    private static InvoiceLineApiModel ValidLine(int id = 0) => new()
+    {
+        Id = id, InvoiceId = TestData.Invoice, TrackId = TestData.Track1, UnitPrice = 0.99m, Quantity = 1
+    };
 
     [Fact]
     public async Task CreateInvoiceLineAsync_ShouldThrowValidationException_WhenValidationFails()
     {
-        // Arrange
-        var model = new InvoiceLineApiModel { InvoiceId = 1, TrackId = 1, UnitPrice = -1m }; // Invalid unit price
-        var ct = CancellationToken.None;
-        
-        _validator.ValidateAsync(Arg.Any<InvoiceLineApiModel>(), ct)
-            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult(new[] 
-            { 
-                new FluentValidation.Results.ValidationFailure("UnitPrice", "UnitPrice must be greater than 0") 
-            })));
+        var model = ValidLine();
+        model.Quantity = 0;
 
-        // Act & Assert
-        await _service.Invoking(s => s.CreateInvoiceLineAsync(model, ct))
+        await _service.Invoking(s => s.CreateInvoiceLineAsync(model, CancellationToken.None))
             .Should().ThrowAsync<ValidationException>();
-        await _repo.DidNotReceive().Add(Arg.Any<InvoiceLine>());
+        await using var check = database.CreateOrdersContext();
+        (await check.InvoiceLines.CountAsync()).Should().Be(2);
     }
 
     [Fact]
     public async Task CreateInvoiceLineAsync_ShouldAddAndInvalidateCache()
     {
-        // Arrange
-        var model = new InvoiceLineApiModel { InvoiceId = 1, TrackId = 1, UnitPrice = 0.99m, Quantity = 1 };
-        var ct = CancellationToken.None;
-        var created = new InvoiceLine { Id = 10, InvoiceId = 1, TrackId = 1, UnitPrice = 0.99m };
-        _repo.Add(Arg.Any<InvoiceLine>()).Returns(created);
+        var result = await _service.CreateInvoiceLineAsync(ValidLine(), CancellationToken.None);
 
-        // Act
-        var result = await _service.CreateInvoiceLineAsync(model, ct);
-
-        // Assert
         result.Should().NotBeNull();
-        result!.UnitPrice.Should().Be(0.99m);
-        await _repo.Received(1).Add(Arg.Is<InvoiceLine>(il => il != null && il.UnitPrice == 0.99m));
-        await _cache.Received(1).RemoveByTagAsync("orders:invoiceline", ct);
+        await using var check = database.CreateOrdersContext();
+        (await check.InvoiceLines.CountAsync(l => l.InvoiceId == TestData.Invoice)).Should().Be(3);
+        _cache.RemovedTags.Should().Equal("orders:invoiceline");
     }
 
     [Fact]
     public async Task UpdateInvoiceLineAsync_ShouldUpdateAndInvalidateCache()
     {
-        // Arrange
-        var model = new InvoiceLineApiModel { Id = 1, InvoiceId = 1, TrackId = 1, UnitPrice = 0.99m, Quantity = 1 };
-        var ct = CancellationToken.None;
-        _repo.Update(Arg.Any<InvoiceLine>()).Returns(true);
+        var model = ValidLine(1);
+        model.Quantity = 5;
 
-        // Act
-        var result = await _service.UpdateInvoiceLineAsync(model, ct);
+        var result = await _service.UpdateInvoiceLineAsync(model, CancellationToken.None);
 
-        // Assert
         result.Should().BeTrue();
-        await _repo.Received(1).Update(Arg.Is<InvoiceLine>(il => il != null && il.Id == 1 && il.UnitPrice == 0.99m));
-        await _cache.Received(1).RemoveByTagAsync("orders:invoiceline", ct);
-        await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
+        await using var check = database.CreateOrdersContext();
+        (await check.InvoiceLines.SingleAsync(l => l.Id == 1)).Quantity.Should().Be(5);
+        _cache.RemovedTags.Should().Equal("orders:invoiceline");
+        _cache.RemovedKeys.Should().ContainSingle();
     }
 
     [Fact]
     public async Task GetInvoiceLineByIdAsync_ShouldReturnFromCache()
     {
-        // Arrange
-        var id = 1;
-        var ct = CancellationToken.None;
-        var expected = new InvoiceLineApiModel { Id = id, InvoiceId = 1, TrackId = 1, UnitPrice = 0.99m };
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<object?>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(expected);
+        // The service returns the entity for this lookup, as the repository it replaced did.
+        var result = (InvoiceLine?)await _service.GetInvoiceLineByIdAsync(1, CancellationToken.None);
 
-        // Act
-        var result = await _service.GetInvoiceLineByIdAsync(id, ct);
-
-        // Assert
-        result.Should().BeEquivalentTo(expected);
+        result.Should().NotBeNull();
+        result!.TrackId.Should().Be(TestData.Track1);
     }
 
     [Fact]
     public async Task GetInvoiceLinesByInvoiceIdAsync_ShouldReturnMappedList()
     {
-        // Arrange
-        var invoiceId = 1;
-        var ct = CancellationToken.None;
-        var entities = new List<InvoiceLine> { new() { Id = 1, InvoiceId = invoiceId, TrackId = 1, UnitPrice = 0.99m } };
-        
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<IEnumerable<object>>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(async callInfo => 
-            {
-                var factory = callInfo.ArgAt<Func<CancellationToken, Task<IEnumerable<object>>>>(1);
-                return await factory(ct);
-            });
+        (await _service.GetInvoiceLinesByInvoiceIdAsync(TestData.Invoice, CancellationToken.None)).Should().HaveCount(2);
+    }
 
-        _repo.GetByInvoiceId(invoiceId).Returns(entities);
+    [Fact]
+    public async Task GetInvoiceLinesByTrackIdAsync_ShouldReturnLines()
+    {
+        (await _service.GetInvoiceLinesByTrackIdAsync(TestData.Track2, CancellationToken.None)).Should().ContainSingle();
+    }
 
-        // Act
-        var result = await _service.GetInvoiceLinesByInvoiceIdAsync(invoiceId, ct);
-
-        // Assert
-        result.Should().HaveCount(1);
-        var first = result.First() as InvoiceLineApiModel;
-        first.Should().NotBeNull();
-        first!.UnitPrice.Should().Be(0.99m);
+    [Fact]
+    public async Task UnknownIds_ShouldReturnEmpty()
+    {
+        (await _service.GetInvoiceLinesByInvoiceIdAsync(TestData.Unknown, CancellationToken.None)).Should().BeEmpty();
+        (await _service.GetInvoiceLinesByTrackIdAsync(TestData.Unknown, CancellationToken.None)).Should().BeEmpty();
     }
 }

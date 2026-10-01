@@ -30,8 +30,10 @@
         <ProjectReference Include="..\..\src\Modules\Identity\Identity.Module\Identity.Module.csproj"/>
         <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Module\Reporting.Module.csproj"/>
         <ProjectReference Include="..\..\src\Shared\SharedKernel\SharedKernel.csproj"/>
-        <ProjectReference Include="..\..\src\Shared\SharedKernel.Persistence\SharedKernel.Persistence.csproj"/>
-        <ProjectReference Include="..\..\src\Shared\SharedKernel.DataSQLite\SharedKernel.DataSQLite.csproj"/>
+        <ProjectReference Include="..\..\src\Modules\Catalog\Catalog.Contracts\Catalog.Contracts.csproj"/>
+        <ProjectReference Include="..\..\src\Modules\Orders\Orders.Contracts\Orders.Contracts.csproj"/>
+        <ProjectReference Include="..\..\src\Modules\Administration\Administration.Contracts\Administration.Contracts.csproj"/>
+        <ProjectReference Include="..\..\src\Modules\Identity\Identity.Contracts\Identity.Contracts.csproj"/>
     </ItemGroup>
 
 </Project>

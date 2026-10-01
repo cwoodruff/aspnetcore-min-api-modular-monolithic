@@ -13,8 +13,11 @@ internal static class ArchitectureConstants
                 typeof(Identity.Modules.IdentityModule).Assembly,
                 typeof(Reporting.Modules.ReportingModule).Assembly,
                 typeof(SharedKernel.IModule).Assembly,
-                typeof(SharedKernel.Persistence.AppDbContext).Assembly,
-                typeof(SharedKernel.DataSQLite.Repositories.BaseRepository<>).Assembly
+                // Contracts assemblies hold no types yet, so they are loaded by name.
+                System.Reflection.Assembly.Load(CatalogContractsAssembly),
+                System.Reflection.Assembly.Load(OrdersContractsAssembly),
+                System.Reflection.Assembly.Load(AdministrationContractsAssembly),
+                System.Reflection.Assembly.Load(IdentityContractsAssembly)
             )
             .Build();
 
@@ -24,9 +27,21 @@ internal static class ArchitectureConstants
     public const string IdentityAssembly = "Identity.Module";
     public const string ReportingAssembly = "Reporting.Module";
 
+    public const string CatalogContractsAssembly = "Catalog.Contracts";
+    public const string OrdersContractsAssembly = "Orders.Contracts";
+    public const string AdministrationContractsAssembly = "Administration.Contracts";
+    public const string IdentityContractsAssembly = "Identity.Contracts";
+
+    // Contracts assemblies are public by design; PublicSurfaceTests restricts only the Module assemblies.
+    public static readonly string[] AllContractsAssemblies =
+    [
+        CatalogContractsAssembly,
+        OrdersContractsAssembly,
+        AdministrationContractsAssembly,
+        IdentityContractsAssembly
+    ];
+
     public const string SharedKernelAssembly = "SharedKernel";
-    public const string SharedKernelPersistenceAssembly = "SharedKernel.Persistence";
-    public const string SharedKernelDataSQLiteAssembly = "SharedKernel.DataSQLite";
 
     public static readonly string[] AllModuleAssemblies =
     [
@@ -39,9 +54,7 @@ internal static class ArchitectureConstants
 
     public static readonly string[] AllSharedAssemblies =
     [
-        SharedKernelAssembly,
-        SharedKernelPersistenceAssembly,
-        SharedKernelDataSQLiteAssembly
+        SharedKernelAssembly
     ];
 
     // The only test assembly each module may grant InternalsVisibleTo. Null means none.

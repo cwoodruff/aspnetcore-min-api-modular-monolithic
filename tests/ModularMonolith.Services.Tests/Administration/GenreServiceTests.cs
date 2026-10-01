@@ -1,136 +1,112 @@
+using Admin.Modules.Data;
 using Admin.Modules.Services;
+using Admin.Modules.Validation;
 using FluentAssertions;
 using FluentValidation;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
-using SharedKernel.Caching;
-using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
-using SharedKernel.Persistence.Repositories;
-using Xunit;
 
 namespace ModularMonolith.Services.Tests.Administration;
 
-public class GenreServiceTests
+[Collection(ModuleDatabaseDefinition.Name)]
+public sealed class GenreServiceTests(ModuleDatabaseFixture database) : IAsyncLifetime
 {
-    private readonly IGenreRepository _repo = Substitute.For<IGenreRepository>();
-    private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
-    private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
-    private readonly IValidator<GenreApiModel> _validator = Substitute.For<IValidator<GenreApiModel>>();
-    private readonly ILogger<GenreService> _logger = NullLogger<GenreService>.Instance;
-    private readonly GenreService _service;
+    private readonly RecordingCache _cache = new();
+    private AdministrationDbContext _db = null!;
+    private GenreService _service = null!;
 
-    public GenreServiceTests()
+    public async Task InitializeAsync()
     {
-        _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
-
-        // Default successful validation
-        _validator.ValidateAsync(Arg.Any<GenreApiModel>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
-
-        _service = new GenreService(_repo, _cache, _keys, _validator, _logger);
+        await database.ResetAndSeedAsync();
+        _db = database.CreateAdministrationContext();
+        _service = new GenreService(_db, _cache, RecordingCache.Keys(), new GenreValidator(),
+            NullLogger<GenreService>.Instance);
     }
+
+    public async Task DisposeAsync() => await _db.DisposeAsync();
 
     [Fact]
     public async Task GetGenreByIdAsync_ShouldReturnMappedEntity_WhenFound()
     {
-        // Arrange
-        var id = 1;
-        var ct = CancellationToken.None;
-        var entity = new Genre { Id = id, Name = "Rock" };
+        var result = await _service.GetGenreByIdAsync(TestData.Genre, CancellationToken.None);
 
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<GenreApiModel?>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(async callInfo => 
-            {
-                var factory = callInfo.ArgAt<Func<CancellationToken, Task<GenreApiModel?>>>(1);
-                return await factory(ct);
-            });
-
-        _repo.GetById(id).Returns(entity);
-
-        // Act
-        var result = await _service.GetGenreByIdAsync(id, ct);
-
-        // Assert
         result.Should().NotBeNull();
-        result!.Id.Should().Be(id);
+        result!.Id.Should().Be(TestData.Genre);
         result.Name.Should().Be("Rock");
+    }
+
+    [Fact]
+    public async Task GetGenreByIdAsync_ShouldReturnNull_WhenMissing()
+    {
+        (await _service.GetGenreByIdAsync(TestData.Unknown, CancellationToken.None)).Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetAllGenresAsync_ShouldReturnSeededEntities()
+    {
+        var all = (await _service.GetAllGenresAsync(CancellationToken.None)).ToList();
+
+        all.Should().ContainSingle().Which.Name.Should().Be("Rock");
     }
 
     [Fact]
     public async Task CreateGenreAsync_ShouldAddAndInvalidateCache()
     {
-        // Arrange
-        var name = "Jazz";
-        var ct = CancellationToken.None;
-        var created = new Genre { Id = 10, Name = name };
-        _repo.Add(Arg.Any<Genre>()).Returns(created);
+        var result = await _service.CreateGenreAsync("Jazz", CancellationToken.None);
 
-        // Act
-        var result = await _service.CreateGenreAsync(name, ct);
-
-        // Assert
         result.Should().NotBeNull();
-        result!.Name.Should().Be(name);
-        await _repo.Received(1).Add(Arg.Is<Genre>(g => g != null && g.Name == name));
-        await _cache.Received(1).RemoveByTagAsync("administration:genre", ct);
+        result!.Id.Should().BeGreaterThan(TestData.Genre, "the identity sequence starts after the seeded ids");
+        result.Name.Should().Be("Jazz");
+        await using var check = database.CreateAdministrationContext();
+        (await check.Genres.SingleAsync(g => g.Id == result.Id)).Name.Should().Be("Jazz");
+        _cache.RemovedTags.Should().Equal("administration:genre");
     }
 
     [Fact]
     public async Task CreateGenreAsync_ShouldThrowValidationException_WhenValidationFails()
     {
-        // Arrange
-        var name = ""; // Invalid
-        var ct = CancellationToken.None;
-        
-        _validator.ValidateAsync(Arg.Any<GenreApiModel>(), ct)
-            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult(new[] 
-            { 
-                new FluentValidation.Results.ValidationFailure("Name", "Name is required") 
-            })));
+        var tooLong = new string('x', 121);
 
-        // Act & Assert
-        await _service.Invoking(s => s.CreateGenreAsync(name, ct))
+        await _service.Invoking(s => s.CreateGenreAsync(tooLong, CancellationToken.None))
             .Should().ThrowAsync<ValidationException>();
-        await _repo.DidNotReceive().Add(Arg.Any<Genre>());
+        await using var check = database.CreateAdministrationContext();
+        (await check.Genres.CountAsync()).Should().Be(1);
     }
 
     [Fact]
     public async Task UpdateGenreAsync_ShouldUpdateAndInvalidateCache()
     {
-        // Arrange
-        var id = 1;
-        var name = "Pop";
-        var ct = CancellationToken.None;
-        _repo.Update(Arg.Any<Genre>()).Returns(true);
+        var result = await _service.UpdateGenreAsync(TestData.Genre, "Pop", CancellationToken.None);
 
-        // Act
-        var result = await _service.UpdateGenreAsync(id, name, ct);
-
-        // Assert
         result.Should().BeTrue();
-        await _repo.Received(1).Update(Arg.Is<Genre>(g => g != null && g.Id == id && g.Name == name));
-        await _cache.Received(1).RemoveByTagAsync("administration:genre", ct);
-        await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
+        await using var check = database.CreateAdministrationContext();
+        (await check.Genres.SingleAsync(g => g.Id == TestData.Genre)).Name.Should().Be("Pop");
+        _cache.RemovedTags.Should().Equal("administration:genre");
+        _cache.RemovedKeys.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task UpdateGenreAsync_ShouldReturnFalse_WhenMissing()
+    {
+        (await _service.UpdateGenreAsync(TestData.Unknown, "Pop", CancellationToken.None)).Should().BeFalse();
+        _cache.RemovedTags.Should().BeEmpty();
     }
 
     [Fact]
     public async Task DeleteGenreAsync_ShouldDeleteAndInvalidateCache()
     {
-        // Arrange
-        var id = 1;
-        var ct = CancellationToken.None;
-        _repo.Delete(id).Returns(true);
+        var result = await _service.DeleteGenreAsync(TestData.Genre, CancellationToken.None);
 
-        // Act
-        var result = await _service.DeleteGenreAsync(id, ct);
-
-        // Assert
         result.Should().BeTrue();
-        await _repo.Received(1).Delete(id);
-        await _cache.Received(1).RemoveByTagAsync("administration:genre", ct);
-        await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
+        await using var check = database.CreateAdministrationContext();
+        (await check.Genres.AnyAsync(g => g.Id == TestData.Genre)).Should().BeFalse();
+        _cache.RemovedTags.Should().Equal("administration:genre");
+        _cache.RemovedKeys.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task DeleteGenreAsync_ShouldReturnFalse_WhenMissing()
+    {
+        (await _service.DeleteGenreAsync(TestData.Unknown, CancellationToken.None)).Should().BeFalse();
     }
 }

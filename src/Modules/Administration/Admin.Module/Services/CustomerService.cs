@@ -1,14 +1,16 @@
+using Admin.Modules.Data;
+using Admin.Modules.Domain;
+using Admin.Modules.Mapping;
+using Admin.Modules.Models;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
-using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Extensions;
-using SharedKernel.Persistence.Repositories;
 
 namespace Admin.Modules.Services;
 
 internal sealed class CustomerService(
-    ICustomerRepository repo,
+    AdministrationDbContext db,
     ICacheFacade cache,
     ICacheKeyComposer keys,
     IValidator<CustomerApiModel> validator,
@@ -27,7 +29,7 @@ internal sealed class CustomerService(
             $"by-id:{id}");
 
         return await cache.GetOrAddAsync<CustomerApiModel?>(key, async _ =>
-            await repo.GetById(id)
+            await LoadByIdAsync(id, ct)
         , new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -45,8 +47,8 @@ internal sealed class CustomerService(
 
         return await cache.GetOrAddAsync<IEnumerable<CustomerApiModel>>(key, async _ =>
         {
-            var customerEntities = await repo.GetAll();
-            return customerEntities.ConvertAll();
+            var customerEntities = await db.Customers.AsNoTracking().ToListAsync(ct);
+            return customerEntities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -64,8 +66,8 @@ internal sealed class CustomerService(
 
         return await cache.GetOrAddAsync<IEnumerable<CustomerApiModel>>(key, async _ =>
         {
-            var customerEntities = await repo.GetBySupportRepId(id);
-            return customerEntities.ConvertAll();
+            var customerEntities = await LoadBySupportRepIdAsync(id, ct);
+            return customerEntities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -81,13 +83,14 @@ internal sealed class CustomerService(
             throw new ValidationException(result.Errors);
         }
 
-        var entity = model.Convert();
-        var created = await repo.Add(entity);
+        var entity = model.ToEntity();
+        db.Customers.Add(entity);
+        await db.SaveChangesAsync(ct);
 
         // Invalidate cache
         await cache.RemoveByTagAsync(CustomerTags[0], ct);
 
-        return created?.Convert();
+        return entity.ToApiModel();
     }
 
     public async Task<bool> UpdateCustomerAsync(CustomerApiModel model, CancellationToken ct)
@@ -98,11 +101,13 @@ internal sealed class CustomerService(
             throw new ValidationException(result.Errors);
         }
 
-        var entity = model.Convert();
-        var updated = await repo.Update(entity);
-
+        var entity = model.ToEntity();
+        var updated = await db.Customers.AnyAsync(e => e.Id == entity.Id, ct);
         if (updated)
         {
+            db.Customers.Update(entity);
+            await db.SaveChangesAsync(ct);
+
             // Invalidate cache
             await cache.RemoveByTagAsync(CustomerTags[0], ct);
             var key = keys.Compose(
@@ -115,4 +120,39 @@ internal sealed class CustomerService(
 
         return updated;
     }
+
+    private async Task<List<Customer>> LoadBySupportRepIdAsync(int id, CancellationToken ct)
+    {
+        return await db.Customers
+            .Where(a => a.SupportRepId == id)
+            .AsNoTracking()
+            .ToListAsync(ct);
+        }
+
+    private async Task<CustomerApiModel?> LoadByIdAsync(int id, CancellationToken ct)
+    {
+        return await db.Customers
+            .Where(c => c.Id == id)
+            .Select(c => new CustomerApiModel
+            {
+                Id = c.Id,
+                FirstName = c.FirstName,
+                LastName = c.LastName,
+                // ... other fields ...
+                SupportRepId = c.SupportRepId,
+                SupportRepName = c.SupportRep != null ? c.SupportRep.FirstName + " " + c.SupportRep.LastName : null,
+                SupportRep = c.SupportRep == null
+                    ? null
+                    : new EmployeeApiModel
+                    {
+                        Id = c.SupportRep.Id,
+                        FirstName = c.SupportRep.FirstName,
+                        LastName = c.SupportRep.LastName,
+                        Title = c.SupportRep.Title
+                        // No Customers collection here
+                    }
+            })
+            .AsNoTracking()
+            .SingleOrDefaultAsync(ct);
+        }
 }

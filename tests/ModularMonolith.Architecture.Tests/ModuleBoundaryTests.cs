@@ -1,4 +1,9 @@
 using ArchUnitNET.xUnit;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using ModularMonolith.Api;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 
 namespace ModularMonolith.Architecture.Tests;
@@ -66,5 +71,59 @@ public class ModuleBoundaryTests
 
             rule.Check(Architecture);
         }
+    }
+
+    public static TheoryData<string, string> ContractsModulePairs()
+    {
+        var data = new TheoryData<string, string>();
+        foreach (var contracts in ArchitectureConstants.AllContractsAssemblies)
+        {
+            foreach (var module in ArchitectureConstants.AllModuleAssemblies)
+            {
+                data.Add(contracts, module);
+            }
+        }
+
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(ContractsModulePairs))]
+    public void Contracts_Should_Not_Depend_On_Any_Module(string contractsAssembly, string moduleAssembly)
+    {
+        // Contracts are what other modules compile against; a reference back into any module would
+        // drag that module's internals into every consumer.
+        var rule = Types()
+            .That()
+            .ResideInAssembly(contractsAssembly)
+            .Should()
+            .NotDependOnAnyTypesThat()
+            .ResideInAssembly(moduleAssembly)
+            .Because($"{contractsAssembly} is a public contract and must not reference {moduleAssembly}")
+            .WithoutRequiringPositiveResults();
+
+        rule.Check(Architecture);
+    }
+
+    [Fact]
+    public void Each_Module_DbContext_Maps_Only_Its_Own_Entities()
+    {
+        // Build the container the app runs with; each module registers its context as DbContext too.
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = Environments.Development });
+        HostComposition.ConfigureServices(builder);
+        using var provider = builder.Services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+
+        var contexts = scope.ServiceProvider.GetServices<DbContext>().ToArray();
+        Assert.Equal(3, contexts.Length);
+
+        var violations = contexts
+            .SelectMany(context => context.Model.GetEntityTypes()
+                .Where(entity => entity.ClrType.Assembly != context.GetType().Assembly)
+                .Select(entity =>
+                    $"{context.GetType().Name} maps {entity.ClrType.FullName} from {entity.ClrType.Assembly.GetName().Name}"))
+            .ToArray();
+
+        Assert.Empty(violations);
     }
 }

@@ -14,17 +14,10 @@ internal static class IdentityDataHealthEndpoints
     public static void MapIdentityDataHealthEndpoints(this IEndpointRouteBuilder group)
     {
         group.MapGet("/data-health",
-                async (AppDbContext db, IHostEnvironment env, IConfiguration cfg, CancellationToken ct) =>
+                async (IHostEnvironment env, IConfiguration cfg, CancellationToken ct) =>
                 {
-                    bool canConnect;
-                    try
-                    {
-                        canConnect = await db.Database.CanConnectAsync(ct);
-                    }
-                    catch
-                    {
-                        canConnect = false;
-                    }
+                    // No tables of its own yet; report whether the shared database is reachable.
+                    var canConnect = await ModuleDbContextOptions.CanConnectAsync(cfg, ct);
 
                     var timestampUtc = DateTime.UtcNow.ToString("O");
                     var status = canConnect ? "Data-Healthy" : "Degraded";

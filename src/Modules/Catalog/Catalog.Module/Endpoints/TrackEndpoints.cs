@@ -149,25 +149,5 @@ internal static class TrackEndpoints
             .WithTags("Catalog")
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
-
-        // GET /api/catalog/tracks/invoice/{id}
-        group.MapGet("tracks/invoice/{id:int}", [Authorize] async (
-                int id,
-                ITrackService service,
-                CancellationToken ct) =>
-            {
-                var tracks = await service.GetTracksByInvoiceIdAsync(id, ct);
-
-                return Results.Json(tracks);
-            })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
-            .WithName("GetTracksByInvoiceId")
-            .Produces(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized)
-            .Produces(StatusCodes.Status403Forbidden)
-            .Produces(StatusCodes.Status404NotFound)
-            .WithTags("Catalog")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

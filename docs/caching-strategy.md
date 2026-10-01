@@ -42,7 +42,7 @@ Every service that requires caching injects these dependencies:
 
 ```csharp
 public sealed class CustomerService(
-    ICustomerRepository repo,           // Data access
+    AdministrationDbContext db,          // The module's own DbContext
     ICacheFacade cache,                  // Cache operations
     ICacheKeyComposer keys,              // Key composition
     IValidator<CustomerApiModel> validator  // Validation

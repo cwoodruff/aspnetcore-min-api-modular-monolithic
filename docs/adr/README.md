@@ -21,3 +21,8 @@ record that supersedes the old one and update the old one's Status line.
 |---|---|---|
 | [0001](0001-module-map-and-ownership.md) | Module map and entity ownership | Accepted |
 | [0002](0002-database-engine.md) | PostgreSQL, one schema per owning module | Accepted |
+| [0003](0003-one-dbcontext-per-module.md) | One DbContext, schema and migration history per module | Accepted |
+| [0004](0004-orders-to-administration-customer.md) | Orders refers to Customer by id only | Accepted |
+| [0005](0005-orders-to-catalog-track.md) | Orders refers to Track by id only | Accepted |
+| [0006](0006-catalog-to-administration-genre.md) | Catalog refers to Genre by id only | Accepted |
+| [0007](0007-catalog-to-administration-mediatype.md) | Catalog refers to MediaType by id only | Accepted |

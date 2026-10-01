@@ -1,72 +1,43 @@
+using Admin.Modules.Data;
+using Admin.Modules.Models;
 using Admin.Modules.Services;
+using Admin.Modules.Validation;
 using FluentAssertions;
-using FluentValidation;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
-using SharedKernel.Caching;
-using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
-using SharedKernel.Persistence.Repositories;
-using Xunit;
 
 namespace ModularMonolith.Services.Tests.Administration;
 
-public class MediaTypeServiceTests
+[Collection(ModuleDatabaseDefinition.Name)]
+public sealed class MediaTypeServiceTests(ModuleDatabaseFixture database) : IAsyncLifetime
 {
-    private readonly IMediaTypeRepository _repo = Substitute.For<IMediaTypeRepository>();
-    private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
-    private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
-    private readonly IValidator<MediaTypeApiModel> _validator = Substitute.For<IValidator<MediaTypeApiModel>>();
-    private readonly ILogger<MediaTypeService> _logger = NullLogger<MediaTypeService>.Instance;
-    private readonly MediaTypeService _service;
+    private readonly RecordingCache _cache = new();
+    private AdministrationDbContext _db = null!;
+    private MediaTypeService _service = null!;
 
-    public MediaTypeServiceTests()
+    public async Task InitializeAsync()
     {
-        _service = new MediaTypeService(_repo, _cache, _keys, _validator, _logger);
-        
-        _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
+        await database.ResetAndSeedAsync();
+        _db = database.CreateAdministrationContext();
+        _service = new MediaTypeService(_db, _cache, RecordingCache.Keys(), new MediaTypeValidator(),
+            NullLogger<MediaTypeService>.Instance);
     }
+
+    public async Task DisposeAsync() => await _db.DisposeAsync();
 
     [Fact]
     public async Task GetMediaTypeByIdAsync_ShouldReturnFromCache()
     {
-        // Arrange
-        var id = 1;
-        var ct = CancellationToken.None;
-        var expected = new MediaTypeApiModel { Id = id, Name = "MPEG audio file" };
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<MediaTypeApiModel?>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(expected);
+        var result = await _service.GetMediaTypeByIdAsync(TestData.MediaType, CancellationToken.None);
 
-        // Act
-        var result = await _service.GetMediaTypeByIdAsync(id, ct);
-
-        // Assert
-        result.Should().BeEquivalentTo(expected);
+        result.Should().NotBeNull();
+        result!.Name.Should().Be("MP3");
     }
 
     [Fact]
     public async Task GetAllMediaTypesAsync_ShouldReturnMappedList()
     {
-        // Arrange
-        var ct = CancellationToken.None;
-        var entities = new List<MediaType> { new() { Id = 1, Name = "MPEG audio file" } };
-        
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<IEnumerable<MediaTypeApiModel>>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(async callInfo => 
-            {
-                var factory = callInfo.ArgAt<Func<CancellationToken, Task<IEnumerable<MediaTypeApiModel>>>>(1);
-                return await factory(ct);
-            });
+        var all = (await _service.GetAllMediaTypesAsync(CancellationToken.None)).ToList();
 
-        _repo.GetAll().Returns(entities);
-
-        // Act
-        var result = await _service.GetAllMediaTypesAsync(ct);
-
-        // Assert
-        result.Should().HaveCount(1);
-        result.First().Name.Should().Be("MPEG audio file");
+        all.Should().ContainSingle().Which.Should().BeEquivalentTo(new MediaTypeApiModel { Id = TestData.MediaType, Name = "MP3" });
     }
 }

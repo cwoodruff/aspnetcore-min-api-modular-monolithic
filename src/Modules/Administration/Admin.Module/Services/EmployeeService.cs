@@ -1,14 +1,16 @@
+using Admin.Modules.Data;
+using Admin.Modules.Domain;
+using Admin.Modules.Mapping;
+using Admin.Modules.Models;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
-using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Extensions;
-using SharedKernel.Persistence.Repositories;
 
 namespace Admin.Modules.Services;
 
 internal sealed class EmployeeService(
-    IEmployeeRepository repo,
+    AdministrationDbContext db,
     ICacheFacade cache,
     ICacheKeyComposer keys,
     IValidator<EmployeeApiModel> validator,
@@ -27,7 +29,7 @@ internal sealed class EmployeeService(
             $"by-id:{id}");
 
         return await cache.GetOrAddAsync<EmployeeApiModel?>(key, async _ =>
-            await repo.GetById(id)
+            await LoadByIdAsync(id, ct)
         , new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -45,8 +47,8 @@ internal sealed class EmployeeService(
 
         return await cache.GetOrAddAsync<IEnumerable<EmployeeApiModel>>(key, async _ =>
         {
-            var employeeEntities = await repo.GetAll();
-            return employeeEntities.ConvertAll();
+            var employeeEntities = await db.Employees.AsNoTracking().ToListAsync(ct);
+            return employeeEntities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -64,8 +66,8 @@ internal sealed class EmployeeService(
 
         return await cache.GetOrAddAsync<IEnumerable<EmployeeApiModel>>(key, async _ =>
         {
-            var employeeEntities = await repo.GetDirectReports(id);
-            return employeeEntities.ConvertAll();
+            var employeeEntities = await LoadDirectReportsAsync(id, ct);
+            return employeeEntities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -83,8 +85,8 @@ internal sealed class EmployeeService(
 
         return await cache.GetOrAddAsync<EmployeeApiModel?>(key, async _ =>
         {
-            var m = await repo.GetReportsTo(id);
-            return m?.Convert();
+            var m = await LoadReportsToAsync(id, ct);
+            return m?.ToApiModel();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -100,13 +102,14 @@ internal sealed class EmployeeService(
             throw new ValidationException(result.Errors);
         }
 
-        var entity = model.Convert();
-        var created = await repo.Add(entity);
+        var entity = model.ToEntity();
+        db.Employees.Add(entity);
+        await db.SaveChangesAsync(ct);
 
         // Invalidate cache
         await cache.RemoveByTagAsync(EmployeeTags[0], ct);
 
-        return created?.Convert();
+        return entity.ToApiModel();
     }
 
     public async Task<bool> UpdateEmployeeAsync(EmployeeApiModel model, CancellationToken ct)
@@ -117,11 +120,13 @@ internal sealed class EmployeeService(
             throw new ValidationException(result.Errors);
         }
 
-        var entity = model.Convert();
-        var updated = await repo.Update(entity);
-
+        var entity = model.ToEntity();
+        var updated = await db.Employees.AnyAsync(e => e.Id == entity.Id, ct);
         if (updated)
         {
+            db.Employees.Update(entity);
+            await db.SaveChangesAsync(ct);
+
             // Invalidate cache
             await cache.RemoveByTagAsync(EmployeeTags[0], ct);
             var key = keys.Compose(
@@ -134,4 +139,45 @@ internal sealed class EmployeeService(
 
         return updated;
     }
+
+    private async Task<Employee> LoadReportsToAsync(int id, CancellationToken ct)
+    {
+        return (await db.Employees.FindAsync([id], ct))!;
+        }
+
+    private async Task<List<Employee>> LoadDirectReportsAsync(int id, CancellationToken ct)
+    {
+        return await db.Employees.Where(e => e.ReportsTo == id).AsNoTracking().ToListAsync(ct);
+        }
+
+    private async Task<EmployeeApiModel?> LoadByIdAsync(int id, CancellationToken ct)
+    {
+        return await db.Employees
+            .Where(e => e.Id == id)
+            .Select(e => new EmployeeApiModel
+            {
+                Id = e.Id,
+                FirstName = e.FirstName,
+                LastName = e.LastName,
+                Title = e.Title,
+                ReportsTo = e.ReportsTo,
+                BirthDate = e.BirthDate,
+                HireDate = e.HireDate,
+                Address = e.Address,
+                City = e.City,
+                State = e.State,
+                Country = e.Country,
+                PostalCode = e.PostalCode,
+                Phone = e.Phone,
+                Fax = e.Fax,
+                Email = e.Email,
+                ReportsToNavigation = e.ReportsToNavigation != null
+                    ? (e.ReportsToNavigation.FirstName + " " + e.ReportsToNavigation.LastName)
+                    : null,
+                Customers = new List<CustomerApiModel>(), // avoid deep cycles
+                InverseReportsToNavigation = new List<EmployeeApiModel>()
+            })
+            .AsNoTracking()
+            .SingleOrDefaultAsync(ct);
+        }
 }

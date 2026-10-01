@@ -7,6 +7,8 @@ using Reporting.Modules;
 
 namespace ModularMonolith.Architecture.Tests;
 
+// Module assemblies export only their composition surface. Each module's *.Contracts assembly is the
+// place for types other modules may use, and is public by design, so it is not listed here.
 public class PublicSurfaceTests
 {
     public static TheoryData<Type, Type[]> ModulePublicTypes()

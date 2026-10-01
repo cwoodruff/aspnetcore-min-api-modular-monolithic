@@ -1,14 +1,16 @@
+using Catalog.Modules.Data;
+using Catalog.Modules.Domain;
+using Catalog.Modules.Mapping;
+using Catalog.Modules.Models;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
-using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Extensions;
-using SharedKernel.Persistence.Repositories;
 
 namespace Catalog.Modules.Services;
 
 internal class TrackService(
-    ITrackRepository repository,
+    CatalogDbContext db,
     ICacheFacade cache,
     ICacheKeyComposer keys,
     IValidator<TrackApiModel> validator,
@@ -27,7 +29,7 @@ internal class TrackService(
             $"by-id:{id}");
 
         return await cache.GetOrAddAsync<object?>(key, async _ =>
-            await repository.GetById(id)
+            await LoadByIdAsync(id, ct)
         , new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -45,8 +47,8 @@ internal class TrackService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            var entities = await repository.GetAll();
-            return entities.ConvertAll();
+            var entities = await db.Tracks.AsNoTracking().ToListAsync(ct);
+            return entities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -64,8 +66,8 @@ internal class TrackService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            var entities = await repository.GetByArtistId(id);
-            return entities.ConvertAll();
+            var entities = await LoadByArtistIdAsync(id, ct);
+            return entities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -83,8 +85,8 @@ internal class TrackService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            var entities = await repository.GetByPlaylistId(id);
-            return entities.ConvertAll();
+            var entities = await LoadByPlaylistIdAsync(id, ct);
+            return entities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -102,8 +104,8 @@ internal class TrackService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            var entities = await repository.GetByAlbumId(id);
-            return entities.ConvertAll();
+            var entities = await LoadByAlbumIdAsync(id, ct);
+            return entities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -121,8 +123,8 @@ internal class TrackService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            var entities = await repository.GetByGenreId(id);
-            return entities.ConvertAll();
+            var entities = await LoadByGenreIdAsync(id, ct);
+            return entities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -140,27 +142,8 @@ internal class TrackService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            var entities = await repository.GetByMediaTypeId(id);
-            return entities.ConvertAll();
-        }, new CacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
-            Tags = TrackTags
-        }, ct) ?? [];
-    }
-
-    public async Task<IEnumerable<object>> GetTracksByInvoiceIdAsync(int id, CancellationToken ct)
-    {
-        var key = keys.Compose(
-            "catalog",
-            "track",
-            "v1",
-            $"by-invoice:{id}");
-
-        return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
-        {
-            var entities = await repository.GetByInvoiceId(id);
-            return entities.ConvertAll();
+            var entities = await LoadByMediaTypeIdAsync(id, ct);
+            return entities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -176,13 +159,14 @@ internal class TrackService(
             throw new ValidationException(result.Errors);
         }
 
-        var entity = model.Convert();
-        var created = await repository.Add(entity);
+        var entity = model.ToEntity();
+        db.Tracks.Add(entity);
+        await db.SaveChangesAsync(ct);
 
         // Invalidate cache
         await cache.RemoveByTagAsync(TrackTags[0], ct);
 
-        return created?.Convert();
+        return entity.ToApiModel();
     }
 
     public async Task<bool> UpdateTrackAsync(TrackApiModel model, CancellationToken ct)
@@ -193,11 +177,13 @@ internal class TrackService(
             throw new ValidationException(result.Errors);
         }
 
-        var entity = model.Convert();
-        var updated = await repository.Update(entity);
-
+        var entity = model.ToEntity();
+        var updated = await db.Tracks.AnyAsync(e => e.Id == entity.Id, ct);
         if (updated)
         {
+            db.Tracks.Update(entity);
+            await db.SaveChangesAsync(ct);
+
             // Invalidate cache
             await cache.RemoveByTagAsync(TrackTags[0], ct);
             var key = keys.Compose(
@@ -210,4 +196,57 @@ internal class TrackService(
 
         return updated;
     }
+
+    private async Task<List<Track>> LoadByAlbumIdAsync(int id, CancellationToken ct)
+    {
+        return await db.Tracks.Where(a => a.AlbumId == id)
+            .AsNoTracking().ToListAsync(ct);
+        }
+
+    private async Task<List<Track>> LoadByGenreIdAsync(int id, CancellationToken ct)
+    {
+        return await db.Tracks.Where(a => a.GenreId == id)
+            .AsNoTracking().ToListAsync(ct);
+        }
+
+    private async Task<List<Track>> LoadByMediaTypeIdAsync(int id, CancellationToken ct)
+    {
+        return await db.Tracks.Where(a => a.MediaTypeId == id)
+            .AsNoTracking().ToListAsync(ct);
+        }
+
+    private async Task<List<Track>> LoadByPlaylistIdAsync(int id, CancellationToken ct)
+    {
+        return await db.PlaylistTracks.Where(p => p.PlaylistId == id).Select(p => p.Track!)
+            .AsNoTracking().ToListAsync(ct);
+        }
+
+    private async Task<List<Track>> LoadByArtistIdAsync(int id, CancellationToken ct)
+    {
+        return await db.Albums.Where(a => a.ArtistId == id).SelectMany(t => t.Tracks!)
+            .AsNoTracking().ToListAsync(ct);
+        }
+
+    private async Task<TrackApiModel?> LoadByIdAsync(int id, CancellationToken ct)
+    {
+        return await db.Tracks
+            .Where(t => t.Id == id)
+            .Select(t => new TrackApiModel
+            {
+                Id = t.Id,
+                Name = t.Name,
+                AlbumId = t.AlbumId,
+                MediaTypeId = t.MediaTypeId,
+                GenreId = t.GenreId,
+                Composer = t.Composer,
+                Milliseconds = t.Milliseconds,
+                Bytes = t.Bytes,
+                UnitPrice = t.UnitPrice,
+                AlbumName = t.Album != null ? t.Album.Title : null,
+                Album = null,
+                Playlists = new List<PlaylistApiModel>()
+            })
+            .AsNoTracking()
+            .SingleOrDefaultAsync(ct);
+        }
 }

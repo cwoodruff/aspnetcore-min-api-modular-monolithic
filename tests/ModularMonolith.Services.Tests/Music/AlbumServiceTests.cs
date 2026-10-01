@@ -1,135 +1,91 @@
+using Catalog.Modules.Data;
+using Catalog.Modules.Models;
+using Catalog.Modules.Services;
+using Catalog.Modules.Validation;
 using FluentAssertions;
 using FluentValidation;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using Catalog.Modules.Services;
-using NSubstitute;
-using SharedKernel.Caching;
-using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Entities;
-using SharedKernel.Persistence.Repositories;
-using Xunit;
 
 namespace ModularMonolith.Services.Tests.Catalog;
 
-public class AlbumServiceTests
+[Collection(ModuleDatabaseDefinition.Name)]
+public sealed class AlbumServiceTests(ModuleDatabaseFixture database) : IAsyncLifetime
 {
-    private readonly IAlbumRepository _repo = Substitute.For<IAlbumRepository>();
-    private readonly ICacheFacade _cache = Substitute.For<ICacheFacade>();
-    private readonly ICacheKeyComposer _keys = Substitute.For<ICacheKeyComposer>();
-    private readonly IValidator<AlbumApiModel> _validator = Substitute.For<IValidator<AlbumApiModel>>();
-    private readonly ILogger<AlbumService> _logger = NullLogger<AlbumService>.Instance;
-    private readonly AlbumService _service;
+    private readonly RecordingCache _cache = new();
+    private CatalogDbContext _db = null!;
+    private AlbumService _service = null!;
 
-    public AlbumServiceTests()
+    public async Task InitializeAsync()
     {
-        // Default successful validation
-        _validator.ValidateAsync(Arg.Any<AlbumApiModel>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult()));
-
-        _service = new AlbumService(_repo, _cache, _keys, _validator, _logger);
-
-        _keys.Compose(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(global::ModularMonolith.Services.Tests.TestCacheKeys.FromComposeCall);
+        await database.ResetAndSeedAsync();
+        _db = database.CreateCatalogContext();
+        _service = new AlbumService(_db, _cache, RecordingCache.Keys(), new AlbumValidator(),
+            NullLogger<AlbumService>.Instance);
     }
+
+    public async Task DisposeAsync() => await _db.DisposeAsync();
 
     [Fact]
     public async Task CreateAlbumAsync_ShouldThrowValidationException_WhenValidationFails()
     {
-        // Arrange
-        var model = new AlbumApiModel { Title = "" };
-        var ct = CancellationToken.None;
+        var model = new AlbumApiModel { Title = "ab", ArtistId = TestData.Artist };
 
-        _validator.ValidateAsync(Arg.Any<AlbumApiModel>(), ct)
-            .Returns(Task.FromResult(new FluentValidation.Results.ValidationResult(new[]
-            {
-                new FluentValidation.Results.ValidationFailure("Title", "Title is required")
-            })));
-
-        // Act & Assert
-        await _service.Invoking(s => s.CreateAlbumAsync(model, ct))
+        await _service.Invoking(s => s.CreateAlbumAsync(model, CancellationToken.None))
             .Should().ThrowAsync<ValidationException>();
-        await _repo.DidNotReceive().Add(Arg.Any<Album>());
+        await using var check = database.CreateCatalogContext();
+        (await check.Albums.CountAsync()).Should().Be(1);
     }
 
     [Fact]
     public async Task CreateAlbumAsync_ShouldAddAndInvalidateCache()
     {
-        // Arrange
-        var model = new AlbumApiModel { Title = "Big Ones", ArtistId = 1 };
-        var ct = CancellationToken.None;
-        var created = new Album { Id = 10, Title = "Big Ones", ArtistId = 1 };
-        _repo.Add(Arg.Any<Album>()).Returns(created);
+        var model = new AlbumApiModel { Title = "Second Album", ArtistId = TestData.Artist };
 
-        // Act
-        var result = await _service.CreateAlbumAsync(model, ct);
+        var result = await _service.CreateAlbumAsync(model, CancellationToken.None);
 
-        // Assert
         result.Should().NotBeNull();
-        result!.Title.Should().Be("Big Ones");
-        await _repo.Received(1).Add(Arg.Is<Album>(a => a != null && a.Title == "Big Ones"));
-        await _cache.Received(1).RemoveByTagAsync("catalog:album", ct);
+        await using var check = database.CreateCatalogContext();
+        (await check.Albums.AnyAsync(a => a.Id == result!.Id && a.Title == "Second Album")).Should().BeTrue();
+        _cache.RemovedTags.Should().Equal("catalog:album");
     }
 
     [Fact]
     public async Task UpdateAlbumAsync_ShouldUpdateAndInvalidateCache()
     {
-        // Arrange
-        var model = new AlbumApiModel { Id = 1, Title = "Big Ones", ArtistId = 1 };
-        var ct = CancellationToken.None;
-        _repo.Update(Arg.Any<Album>()).Returns(true);
+        var model = new AlbumApiModel { Id = TestData.Album, Title = "Renamed", ArtistId = TestData.Artist };
 
-        // Act
-        var result = await _service.UpdateAlbumAsync(model, ct);
+        var result = await _service.UpdateAlbumAsync(model, CancellationToken.None);
 
-        // Assert
         result.Should().BeTrue();
-        await _repo.Received(1).Update(Arg.Is<Album>(a => a != null && a.Id == 1 && a.Title == "Big Ones"));
-        await _cache.Received(1).RemoveByTagAsync("catalog:album", ct);
-        await _cache.Received(1).RemoveAsync(Arg.Any<CacheKey>(), ct);
+        await using var check = database.CreateCatalogContext();
+        (await check.Albums.SingleAsync(a => a.Id == TestData.Album)).Title.Should().Be("Renamed");
+        _cache.RemovedTags.Should().Equal("catalog:album");
+        _cache.RemovedKeys.Should().ContainSingle();
     }
 
     [Fact]
     public async Task GetAlbumByIdAsync_ShouldReturnFromCache()
     {
-        // Arrange
-        var id = 1;
-        var ct = CancellationToken.None;
-        var expected = new AlbumApiModel { Id = id, Title = "Big Ones" };
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<AlbumApiModel?>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(expected);
+        var result = await _service.GetAlbumByIdAsync(TestData.Album, CancellationToken.None);
 
-        // Act
-        var result = await _service.GetAlbumByIdAsync(id, ct);
-
-        // Assert
-        result.Should().BeEquivalentTo(expected);
+        result.Should().NotBeNull();
+        result!.ArtistName.Should().Be("Artist A");
+        result.Tracks.Select(t => t.Id).Should().BeEquivalentTo([TestData.Track1, TestData.Track2]);
     }
 
     [Fact]
     public async Task GetAlbumsByArtistIdAsync_ShouldReturnMappedList()
     {
-        // Arrange
-        var artistId = 1;
-        var ct = CancellationToken.None;
-        var entities = new List<Album> { new() { Id = 1, Title = "Big Ones", ArtistId = artistId } };
+        var albums = (await _service.GetAlbumsByArtistIdAsync(TestData.Artist, CancellationToken.None))
+            .Cast<AlbumApiModel>().ToList();
 
-        _cache.GetOrAddAsync(Arg.Any<CacheKey>(), Arg.Any<Func<CancellationToken, Task<IEnumerable<object>>>>(), Arg.Any<CacheEntryOptions>(), ct)
-            .Returns(async callInfo =>
-            {
-                var factory = callInfo.ArgAt<Func<CancellationToken, Task<IEnumerable<object>>>>(1);
-                return await factory(ct);
-            });
+        albums.Should().ContainSingle().Which.ArtistName.Should().Be("Artist A");
+    }
 
-        _repo.GetByArtistId(artistId).Returns(entities);
-
-        // Act
-        var result = await _service.GetAlbumsByArtistIdAsync(artistId, ct);
-
-        // Assert
-        result.Should().HaveCount(1);
-        var first = result.First() as AlbumApiModel;
-        first.Should().NotBeNull();
-        first!.Title.Should().Be("Big Ones");
+    [Fact]
+    public async Task GetAlbumsByArtistIdAsync_ShouldReturnEmptyWhenNoAlbums()
+    {
+        (await _service.GetAlbumsByArtistIdAsync(TestData.Unknown, CancellationToken.None)).Should().BeEmpty();
     }
 }

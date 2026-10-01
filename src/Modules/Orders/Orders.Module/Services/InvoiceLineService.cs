@@ -1,14 +1,16 @@
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Orders.Modules.Data;
+using Orders.Modules.Domain;
+using Orders.Modules.Mapping;
+using Orders.Modules.Models;
 using SharedKernel.Caching;
-using SharedKernel.Persistence.ApiModels;
-using SharedKernel.Persistence.Extensions;
-using SharedKernel.Persistence.Repositories;
 
 namespace Orders.Modules.Services;
 
 internal class InvoiceLineService(
-    IInvoiceLineRepository repository,
+    OrdersDbContext db,
     ICacheFacade cache,
     ICacheKeyComposer keys,
     IValidator<InvoiceLineApiModel> validator,
@@ -27,7 +29,7 @@ internal class InvoiceLineService(
             $"by-id:{id}");
 
         return await cache.GetOrAddAsync<object?>(key, async _ =>
-            await repository.GetById(id)
+            await LoadByIdAsync(id, ct)
         , new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -45,8 +47,8 @@ internal class InvoiceLineService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            var entities = await repository.GetAll();
-            return entities.ConvertAll();
+            var entities = await db.InvoiceLines.AsNoTracking().ToListAsync(ct);
+            return entities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -64,8 +66,8 @@ internal class InvoiceLineService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            var entities = await repository.GetByInvoiceId(id);
-            return entities.ConvertAll();
+            var entities = await LoadByInvoiceIdAsync(id, ct);
+            return entities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -83,8 +85,8 @@ internal class InvoiceLineService(
 
         return await cache.GetOrAddAsync<IEnumerable<object>>(key, async _ =>
         {
-            var entities = await repository.GetByTrackId(id);
-            return entities.ConvertAll();
+            var entities = await LoadByTrackIdAsync(id, ct);
+            return entities.ToApiModels();
         }, new CacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -100,13 +102,14 @@ internal class InvoiceLineService(
             throw new ValidationException(result.Errors);
         }
 
-        var entity = model.Convert();
-        var created = await repository.Add(entity);
+        var entity = model.ToEntity();
+        db.InvoiceLines.Add(entity);
+        await db.SaveChangesAsync(ct);
 
         // Invalidate cache
         await cache.RemoveByTagAsync(InvoiceLineTags[0], ct);
 
-        return created?.Convert();
+        return entity.ToApiModel();
     }
 
     public async Task<bool> UpdateInvoiceLineAsync(InvoiceLineApiModel model, CancellationToken ct)
@@ -117,11 +120,13 @@ internal class InvoiceLineService(
             throw new ValidationException(result.Errors);
         }
 
-        var entity = model.Convert();
-        var updated = await repository.Update(entity);
-
+        var entity = model.ToEntity();
+        var updated = await db.InvoiceLines.AnyAsync(e => e.Id == entity.Id, ct);
         if (updated)
         {
+            db.InvoiceLines.Update(entity);
+            await db.SaveChangesAsync(ct);
+
             // Invalidate cache
             await cache.RemoveByTagAsync(InvoiceLineTags[0], ct);
             var key = keys.Compose(
@@ -134,4 +139,23 @@ internal class InvoiceLineService(
 
         return updated;
     }
+
+    private async Task<List<InvoiceLine>> LoadByInvoiceIdAsync(int id, CancellationToken ct)
+    {
+        return await db.InvoiceLines.Where(a => a.InvoiceId == id)
+            .AsNoTracking().ToListAsync(ct);
+        }
+
+    private async Task<List<InvoiceLine>> LoadByTrackIdAsync(int id, CancellationToken ct)
+    {
+        return await db.InvoiceLines.Where(a => a.TrackId == id)
+            .AsNoTracking().ToListAsync(ct);
+        }
+
+    private async Task<InvoiceLine?> LoadByIdAsync(int id, CancellationToken ct)
+    {
+        return await db.InvoiceLines
+            .AsNoTracking()
+            .SingleOrDefaultAsync(e => e.Id == id, ct);
+        }
 }
