@@ -166,6 +166,21 @@ internal sealed class CustomerService(
 
 ## Validation with FluentValidation
 
+Write endpoints with a body validate it before the handler runs, with
+`ValidationFilter<TRequest>` from SharedKernel:
+
+```csharp
+group.MapPost("/genres", GenreHandlers.CreateGenre)
+    .AddEndpointFilter<ValidationFilter<CreateGenreRequest>>();
+```
+
+The filter asks for an `IRequestValidator<TRequest>` (SharedKernel never
+references FluentValidation, ADR-0012); Administration registers
+`FluentRequestValidator<T>`, which serves its FluentValidation validators. An
+invalid body gets the same 400 problem body as a `ValidationException` thrown
+by a service (title "Request validation failed.", `errors`, `traceId`); the
+service-level validation stays as the fallback.
+
 All input validation uses FluentValidation. Each module keeps its validators,
 `internal`, in its own `Validation/` folder:
 
@@ -199,6 +214,19 @@ See [docs/validation-strategy.md](docs/validation-strategy.md) for complete
 documentation.
 
 ## Endpoints
+
+Every endpoint maps to a static method on an internal `*Handlers` class in its
+module (`group.MapGet("/albums/{id:int}", AlbumHandlers.GetAlbumById)`); the
+`*Endpoints` classes only map routes and attach policies. Handlers return typed
+results (`Task<Results<Ok<AlbumApiModel>, NotFound>>`), so OpenAPI shows the
+exact responses, and they can be unit tested by calling them with a fake
+service. The health and data-health handlers return `IResult`: their body is
+minimal or detailed depending on the environment.
+
+Endpoint filters: a module group's filters (request metrics) run before an
+endpoint's own filters (validation), and filters on one builder run in the
+order they were added. `EndpointFilterTests` checks this.
+
 
 The host discovers all modules and composes their endpoints under conventional
 groups:
@@ -400,8 +428,10 @@ Dockerfile, browse http://localhost:8080/swagger.
   signing key. AllowAnonymous.
 - Swagger UI is enabled at `/swagger` only when the app runs in the
   `Development` or `Demo` environment.
-- The OpenAPI document is generated with title "Modular Monolith API" (v1)
-  when Swagger is enabled.
+- OpenAPI documents: `/swagger/v1/swagger.json` (all modules) and one per
+  module, `/swagger/{catalog|orders|admin|identity|reporting}/swagger.json`,
+  each holding only the endpoints tagged with that module. Swagger UI lists
+  them all. Response types come from the handlers' typed results.
 - JWT Bearer auth is integrated into Swagger:
     - Click the "Authorize" button in Swagger UI and paste the access token
       only (do NOT include the `Bearer ` prefix). Swagger will add it
@@ -861,6 +891,24 @@ Administration keeps `CustomerPurchaseSummary`
 
 Configuration: `Outbox:Enabled` (default `true`) and
 `Outbox:PollIntervalSeconds` (default `1`).
+
+## Native AOT readiness
+
+SharedKernel and the four Contracts projects build with `IsAotCompatible`, so
+the trimming and AOT analyzers run on every build and any warning fails it.
+They use the configuration-binding source generator, carry the
+`DynamicallyAccessedMembers` annotations their generic helpers need, dispatch
+integration events through typed delegates instead of reflection, and
+serialize outbox payloads and L2 cache entries through `JsonTypeInfo` from the
+JSON options registered under `ModuleJson.OptionsKey`. This host registers
+reflection-based options (`AddReflectionJsonSerialization()`); an AOT host
+would register the modules' source-generated `JsonSerializerContext`s there
+instead.
+
+The modules and the host are not AOT-compatible yet, and are not analysed:
+Swashbuckle and FluentValidation rely on reflection, and EF Core's runtime
+model building and query translation would need compiled models and
+precompiled queries. Publishing is unchanged (no `PublishAot`).
 
 ## Failure domain
 
