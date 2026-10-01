@@ -17,13 +17,12 @@ public class SharedKernelDependencyTests
         {
             var rule = Types()
                 .That()
-                .ResideInAssembly(sharedAssembly)
+                .ResideInAssembly(ArchitectureConstants.FullName(sharedAssembly))
                 .Should()
                 .NotDependOnAnyTypesThat()
-                .ResideInAssembly(moduleAssembly)
+                .ResideInAssembly(ArchitectureConstants.FullName(moduleAssembly))
                 .Because(
-                    $"{sharedAssembly} is a shared kernel and must not depend on {moduleAssembly}")
-                .WithoutRequiringPositiveResults();
+                    $"{sharedAssembly} is a shared kernel and must not depend on {moduleAssembly}");
 
             rule.Check(Architecture);
         }

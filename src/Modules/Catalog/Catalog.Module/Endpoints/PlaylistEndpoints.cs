@@ -1,8 +1,9 @@
+using Catalog.Modules.Services;
+using Identity.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Catalog.Modules.Services;
 using SharedKernel.TrafficControl;
 
 namespace Catalog.Modules.Endpoints;
@@ -21,7 +22,7 @@ internal static class PlaylistEndpoints
 
                 return playlist is not null ? TypedResults.Ok(playlist) : Results.NotFound();
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("CatalogGetPlaylistById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -40,7 +41,7 @@ internal static class PlaylistEndpoints
 
                 return Results.Json(playlists);
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetAllPlaylists")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)

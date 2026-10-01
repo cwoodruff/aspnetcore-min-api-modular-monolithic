@@ -1,16 +1,14 @@
+using Identity.Contracts;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Identity.Modules.Authorization;
 
 internal static class PolicyRegistry
 {
-    public const string AdminPolicy = "role.admin";
-    public const string TenantScopedPolicy = "tenant.scoped";
-
     public static void Register(AuthorizationOptions options)
     {
         // Do not set a global fallback policy; endpoints remain anonymous unless marked with RequireAuthorization.
-        // Permission-based policies (other modules can refer by string name)
+        // One policy per permission, named after it; other modules apply them by the Identity.Contracts constants.
         AddPermissionPolicy(options, Permissions.CatalogRead);
         AddPermissionPolicy(options, Permissions.CatalogWrite);
         AddPermissionPolicy(options, Permissions.OrdersRead);
@@ -21,14 +19,14 @@ internal static class PolicyRegistry
         AddPermissionPolicy(options, Permissions.ReportView);
 
         // Role-based convenience policies
-        options.AddPolicy(AdminPolicy, policy =>
+        options.AddPolicy(Policies.Admin, policy =>
         {
             policy.RequireAuthenticatedUser();
             policy.RequireRole("Admin");
         });
 
         // Tenant scoped policy
-        options.AddPolicy(TenantScopedPolicy, policy =>
+        options.AddPolicy(Policies.TenantScoped, policy =>
         {
             policy.RequireAuthenticatedUser();
             policy.AddRequirements(TenantRequirement.Instance);

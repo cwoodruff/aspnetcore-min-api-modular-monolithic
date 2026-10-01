@@ -1,8 +1,9 @@
+using Catalog.Modules.Services;
+using Identity.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Catalog.Modules.Services;
 using SharedKernel.TrafficControl;
 
 namespace Catalog.Modules.Endpoints;
@@ -21,7 +22,7 @@ internal static class ArtistEndpoints
 
                 return artist is not null ? TypedResults.Ok(artist) : Results.NotFound();
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("CatalogGetArtistById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -40,7 +41,7 @@ internal static class ArtistEndpoints
 
                 return Results.Json(artists);
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetAllArtists")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)

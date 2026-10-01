@@ -1,12 +1,12 @@
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
-using Identity.Modules.Authorization;
+using Identity.Contracts;
 using Identity.Modules.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 
 namespace ModularMonolith.Api.Tests;
 

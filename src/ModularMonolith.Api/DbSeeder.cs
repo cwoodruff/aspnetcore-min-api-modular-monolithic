@@ -18,7 +18,7 @@ public static class DbSeeder
     public static async Task MigrateAndSeedAsync(IServiceProvider services, string seedScriptPath,
         CancellationToken ct = default)
     {
-        var contexts = services.GetServices<DbContext>()
+        var contexts = services.GetKeyedServices<DbContext>(KeyedService.AnyKey)
             .OrderBy(context => Array.IndexOf(MigrationOrder, context.Model.GetDefaultSchema()))
             .ToArray();
 

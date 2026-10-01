@@ -1,3 +1,4 @@
+using Identity.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -14,7 +15,7 @@ internal static class OutboxEndpoints
         // GET /api/orders/outbox/dead-letters
         group.MapGet("/outbox/dead-letters", [Authorize] async (DeadLetterService service, CancellationToken ct) =>
                 Results.Json(await service.ListAsync(ct)))
-            .RequireAuthorization("role.admin")
+            .RequireAuthorization(Policies.Admin)
             .WithName("OrdersListDeadLetters")
             .WithDescription("Outbox messages whose delivery failed six times. Each stays here until retried.")
             .Produces(StatusCodes.Status200OK)
@@ -30,7 +31,7 @@ internal static class OutboxEndpoints
                 DeadLetterService service,
                 CancellationToken ct) =>
                 await service.RetryAsync(id, ct) ? Results.NoContent() : Results.NotFound())
-            .RequireAuthorization("role.admin")
+            .RequireAuthorization(Policies.Admin)
             .WithName("OrdersRetryDeadLetter")
             .WithDescription("Resets the attempt count so the dispatcher delivers the message again on its next poll.")
             .Produces(StatusCodes.Status204NoContent)

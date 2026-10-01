@@ -31,7 +31,7 @@ public static class AdministrationModule
             services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<IMediaTypeService, MediaTypeService>();
 
-            services.AddScoped<IIntegrationEventHandler<InvoiceFinalized>, InvoiceFinalizedHandler>();
+            services.AddIntegrationEventHandler<InvoiceFinalized, InvoiceFinalizedHandler>(AdministrationDbContext.Schema);
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)

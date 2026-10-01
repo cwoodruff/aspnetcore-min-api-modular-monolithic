@@ -1,6 +1,7 @@
-using System.Collections.Concurrent;
+using Identity.Contracts;
 using Identity.Modules.Authorization;
 using Microsoft.Extensions.Options;
+using System.Collections.Concurrent;
 
 namespace Identity.Modules.Services;
 

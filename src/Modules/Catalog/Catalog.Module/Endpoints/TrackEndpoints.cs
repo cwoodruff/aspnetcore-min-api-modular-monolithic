@@ -1,8 +1,9 @@
+using Catalog.Modules.Services;
+using Identity.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Catalog.Modules.Services;
 using SharedKernel.TrafficControl;
 
 namespace Catalog.Modules.Endpoints;
@@ -21,7 +22,7 @@ internal static class TrackEndpoints
 
                 return track is not null ? Results.Json(track) : Results.NotFound();
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("CatalogGetTrackById")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -41,7 +42,7 @@ internal static class TrackEndpoints
 
                 return sales is not null ? Results.Json(sales) : Results.NotFound();
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("CatalogGetTrackSales")
             .WithDescription(
                 "Units sold, counted from InvoiceFinalized events. Eventually consistent: an invoice finalized " +
@@ -63,7 +64,7 @@ internal static class TrackEndpoints
 
                 return Results.Json(tracks);
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetAllTracks")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -83,7 +84,7 @@ internal static class TrackEndpoints
 
                 return Results.Json(tracks);
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetTracksByArtistId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -103,7 +104,7 @@ internal static class TrackEndpoints
 
                 return Results.Json(tracks);
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetTracksByPlaylistId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -123,7 +124,7 @@ internal static class TrackEndpoints
 
                 return Results.Json(tracks);
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetTracksByAlbumId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -143,7 +144,7 @@ internal static class TrackEndpoints
 
                 return Results.Json(tracks);
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetTracksByGenreId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
@@ -163,7 +164,7 @@ internal static class TrackEndpoints
 
                 return Results.Json(tracks);
             })
-            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .RequireAuthorization(Permissions.CatalogRead).RequireAuthorization(Policies.TenantScoped)
             .WithName("GetTracksByMediaTypeId")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)

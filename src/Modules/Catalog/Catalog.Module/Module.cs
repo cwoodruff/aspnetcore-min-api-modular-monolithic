@@ -31,7 +31,7 @@ public static class CatalogModule
             services.AddScoped<IPlaylistService, PlaylistService>();
             services.AddScoped<ITrackService, TrackService>();
 
-            services.AddScoped<IIntegrationEventHandler<InvoiceFinalized>, InvoiceFinalizedHandler>();
+            services.AddIntegrationEventHandler<InvoiceFinalized, InvoiceFinalizedHandler>(CatalogDbContext.Schema);
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)

@@ -14,6 +14,8 @@ namespace SharedKernel.Events;
 /// Semantics, chosen on purpose:
 /// <list type="bullet">
 ///   <item>At least once. Each handler is guarded by its module's inbox, so it takes effect once.</item>
+///   <item>Handlers are found by module key (<see cref="EventServiceCollectionExtensions.AddIntegrationEventHandler{TEvent,THandler}" />),
+///   and each runs on the DbContext registered under the same key.</item>
 ///   <item>A row is done when every handler has succeeded; a handler that already succeeded is skipped
 ///   by its inbox when the row is retried.</item>
 ///   <item>Retries after 1s, 5s, 30s, 2m and 10m. The sixth failed delivery dead-letters the row, which
@@ -99,11 +101,13 @@ public abstract class OutboxDispatcher(IConfiguration configuration, TimeProvide
 /// <summary>Dispatcher for the outbox in <typeparamref name="TContext" />'s schema.</summary>
 public abstract class OutboxDispatcher<TContext>(
     IServiceScopeFactory scopes,
+    IEnumerable<IntegrationEventSubscription> subscriptions,
     IConfiguration configuration,
     TimeProvider time,
     ILogger logger) : OutboxDispatcher(configuration, time, logger)
     where TContext : DbContext
 {
+    private readonly IntegrationEventSubscription[] _subscriptions = [.. subscriptions];
     private Dictionary<string, Type>? _eventTypes;
 
     /// <summary>The event types this module publishes.</summary>
@@ -179,39 +183,41 @@ public abstract class OutboxDispatcher<TContext>(
         }
 
         var handlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
-        int handlerCount;
-        await using (var probe = scopes.CreateAsyncScope())
-        {
-            handlerCount = probe.ServiceProvider.GetServices(handlerType).Count();
-        }
-
         var failures = new List<string>();
-        for (var i = 0; i < handlerCount; i++)
+        foreach (var moduleKey in _subscriptions.Where(s => s.EventType == eventType).Select(s => s.ModuleKey).Distinct())
         {
-            // A scope per handler: each gets its own module context and transaction.
-            await using var handlerScope = scopes.CreateAsyncScope();
-            var handler = handlerScope.ServiceProvider.GetServices(handlerType).ElementAt(i)!;
-            var handlerName = handler.GetType().FullName ?? handler.GetType().Name;
-            try
+            int handlerCount;
+            await using (var probe = scopes.CreateAsyncScope())
             {
-                // The inbox lives in the handler's own module: the context from the handler's assembly.
-                var handlerContext = handlerScope.ServiceProvider.GetServices<DbContext>()
-                    .Single(context => context.GetType().Assembly == handler.GetType().Assembly);
-                await InboxGuard.RunAsync(handlerContext, message.Id, handlerName, Time.GetUtcNow(),
-                    token => (Task)handlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEvent>.HandleAsync))!
-                        .Invoke(handler, [integrationEvent, token])!,
-                    ct);
+                handlerCount = probe.ServiceProvider.GetKeyedServices(handlerType, moduleKey).Count();
             }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+
+            for (var i = 0; i < handlerCount; i++)
             {
-                throw;
-            }
+                // A scope per handler: each gets its own module context and transaction.
+                await using var handlerScope = scopes.CreateAsyncScope();
+                var handler = handlerScope.ServiceProvider.GetKeyedServices(handlerType, moduleKey).ElementAt(i)!;
+                var handlerName = handler.GetType().FullName ?? handler.GetType().Name;
+                try
+                {
+                    // The inbox lives in the handler's own module: the context registered under the same key.
+                    var handlerContext = handlerScope.ServiceProvider.GetRequiredKeyedService<DbContext>(moduleKey);
+                    await InboxGuard.RunAsync(handlerContext, message.Id, handlerName, Time.GetUtcNow(),
+                        token => (Task)handlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEvent>.HandleAsync))!
+                            .Invoke(handler, [integrationEvent, token])!,
+                        ct);
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    throw;
+                }
 #pragma warning disable CA1031 // One handler failing must not stop the others; the failure goes on the row.
-            catch (Exception ex)
+                catch (Exception ex)
 #pragma warning restore CA1031
-            {
-                OutboxLog.HandlerFailed(Logger, handlerName, message.Id, ex);
-                failures.Add($"{handlerName}: {ex.GetBaseException().Message}");
+                {
+                    OutboxLog.HandlerFailed(Logger, handlerName, message.Id, ex);
+                    failures.Add($"{handlerName}: {ex.GetBaseException().Message}");
+                }
             }
         }
 
