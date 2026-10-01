@@ -16,7 +16,12 @@ public static class ModuleDbContextOptions
     public const string ConnectionName = "AppDatabase";
     public const string HistoryTable = "__EFMigrationsHistory";
 
-    /// <summary>Registers a pooled DbContext for a module whose tables live in <paramref name="schema" />.</summary>
+    /// <summary>
+    /// Registers a pooled DbContext for a module whose tables live in <paramref name="schema" />. The schema
+    /// name is also the module's key for keyed registrations (ADR-0012): the context is additionally
+    /// registered as a <see cref="DbContext" /> keyed by it, so the host can migrate every module's context
+    /// and the outbox dispatcher can find a handler's inbox without seeing the module's internal types.
+    /// </summary>
     public static IServiceCollection AddModuleDbContext<TContext>(this IServiceCollection services, string schema)
         where TContext : DbContext
     {
@@ -27,9 +32,7 @@ public static class ModuleDbContextOptions
             (sp, options) => Use(options, sp.GetRequiredService<IConfiguration>().GetConnectionString(ConnectionName), schema),
             poolSize: 128);
 
-        // Also visible as the base type, so the host can migrate every module's context in order
-        // without seeing the module's internal type.
-        services.AddScoped<DbContext>(sp => sp.GetRequiredService<TContext>());
+        services.AddKeyedScoped<DbContext>(schema, (sp, _) => sp.GetRequiredService<TContext>());
         return services;
     }
 

@@ -10,11 +10,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Patterns;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using ModularMonolith.Api;
+using SharedKernel.Events;
 using Orders.Modules;
 using Reporting.Modules;
 
@@ -72,7 +74,7 @@ public class GuardrailTests(HostWithoutDatabaseFactory factory) : IClassFixture<
         foreach (var moduleAssembly in moduleAssemblies)
         {
             var serviceClasses = builder.Services
-                .Select(descriptor => descriptor.IsKeyedService ? null : descriptor.ImplementationType)
+                .Select(descriptor => descriptor.IsKeyedService ? descriptor.KeyedImplementationType : descriptor.ImplementationType)
                 .OfType<Type>()
                 .Where(type => type.Assembly == moduleAssembly && !type.IsVisible && !type.ContainsGenericParameters)
                 .Distinct();
@@ -115,6 +117,32 @@ public class GuardrailTests(HostWithoutDatabaseFactory factory) : IClassFixture<
     }
 
     [Fact]
+    public void Integration_Event_Handlers_Resolve_Only_Within_Their_Own_Module_Key()
+    {
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = Environments.Development });
+        HostComposition.ConfigureServices(builder);
+        using var provider = builder.Services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
+        using var scope = provider.CreateScope();
+
+        var subscriptions = scope.ServiceProvider.GetServices<IntegrationEventSubscription>().ToArray();
+        Assert.NotEmpty(subscriptions);
+
+        foreach (var subscription in subscriptions)
+        {
+            var handlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(subscription.EventType);
+
+            // Never unkeyed: an unkeyed resolve would hand every module's handlers to anyone who asks.
+            Assert.Empty(scope.ServiceProvider.GetServices(handlerType));
+
+            // Under a module's key, only that module's handlers: the assembly of the context with the same key.
+            var moduleAssembly = scope.ServiceProvider.GetRequiredKeyedService<DbContext>(subscription.ModuleKey).GetType().Assembly;
+            var handlers = scope.ServiceProvider.GetKeyedServices(handlerType, subscription.ModuleKey).ToArray();
+            Assert.NotEmpty(handlers);
+            Assert.All(handlers, handler => Assert.Equal(moduleAssembly, handler!.GetType().Assembly));
+        }
+    }
+
+    [Fact]
     public void Every_Authorization_Policy_Referenced_By_An_Endpoint_Is_Registered()
     {
         var endpoints = factory.Services.GetRequiredService<EndpointDataSource>().Endpoints;
@@ -122,6 +150,27 @@ public class GuardrailTests(HostWithoutDatabaseFactory factory) : IClassFixture<
 
         Assert.Contains(endpoints, endpoint => endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>().Any(data => data.Policy is not null));
         Assert.Empty(ModuleComposition.FindUnknownPolicies(endpoints, policyProvider));
+    }
+
+    [Fact]
+    public void Every_Endpoint_Policy_Name_Is_An_Identity_Contracts_Constant()
+    {
+        // The runtime form of "no string literal policy names": whatever the source says, every policy an
+        // endpoint requires must be one of the compiled names Identity publishes (ADR-0011).
+        var compiledNames = new[] { typeof(Identity.Contracts.Permissions), typeof(Identity.Contracts.Policies) }
+            .SelectMany(type => type.GetFields(BindingFlags.Public | BindingFlags.Static))
+            .Where(field => field.IsLiteral)
+            .Select(field => (string)field.GetRawConstantValue()!)
+            .ToHashSet(StringComparer.Ordinal);
+
+        var used = factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
+            .SelectMany(endpoint => endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>())
+            .Select(data => data.Policy)
+            .OfType<string>()
+            .ToHashSet(StringComparer.Ordinal);
+
+        Assert.NotEmpty(used);
+        Assert.Empty(used.Except(compiledNames));
     }
 
     [Fact]

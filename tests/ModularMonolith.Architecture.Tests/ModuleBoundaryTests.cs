@@ -108,13 +108,13 @@ public class ModuleBoundaryTests
     [Fact]
     public void Each_Module_DbContext_Maps_Only_Its_Own_Entities()
     {
-        // Build the container the app runs with; each module registers its context as DbContext too.
+        // Build the container the app runs with; each module registers its context as a DbContext keyed by module.
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = Environments.Development });
         HostComposition.ConfigureServices(builder);
         using var provider = builder.Services.BuildServiceProvider();
         using var scope = provider.CreateScope();
 
-        var contexts = scope.ServiceProvider.GetServices<DbContext>().ToArray();
+        var contexts = scope.ServiceProvider.GetKeyedServices<DbContext>(KeyedService.AnyKey).ToArray();
         Assert.Equal(3, contexts.Length);
 
         // The one exception is the outbox/inbox plumbing SharedKernel defines for every module to map
