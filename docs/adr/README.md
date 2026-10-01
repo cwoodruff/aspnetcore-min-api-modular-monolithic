@@ -20,3 +20,4 @@ record that supersedes the old one and update the old one's Status line.
 | ADR | Title | Status |
 |---|---|---|
 | [0001](0001-module-map-and-ownership.md) | Module map and entity ownership | Accepted |
+| [0002](0002-database-engine.md) | PostgreSQL, one schema per owning module | Accepted |

@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace ModularMonolith.Api.Tests;
 
-public class CustomerEndpointsTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public class CustomerEndpointsTests(ApiFactory factory)
+    : IClassFixture<ApiFactory>
 {
     private readonly WebApplicationFactory<Program> _factory = factory.WithWebHostBuilder(_ => { });
 

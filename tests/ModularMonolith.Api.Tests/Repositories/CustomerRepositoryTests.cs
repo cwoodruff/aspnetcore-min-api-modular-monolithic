@@ -3,12 +3,13 @@ using SharedKernel.DataSQLite.Repositories;
 
 namespace ModularMonolith.Api.Tests.Repositories;
 
-public class CustomerRepositoryTests
+[Collection(RepositoryDatabaseDefinition.Name)]
+public class CustomerRepositoryTests(RepositoryDatabaseFixture database)
 {
     [Fact]
     public async Task GetBySupportRepId_ShouldReturnCustomers()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new CustomerRepository(ctx);
 
@@ -20,7 +21,7 @@ public class CustomerRepositoryTests
     [Fact]
     public async Task GetBySupportRepId_ShouldReturnEmptyForUnknownRep()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new CustomerRepository(ctx);
 

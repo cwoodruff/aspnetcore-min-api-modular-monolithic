@@ -3,12 +3,13 @@ using SharedKernel.DataSQLite.Repositories;
 
 namespace ModularMonolith.Api.Tests.Repositories;
 
-public class TrackRepositoryTests
+[Collection(RepositoryDatabaseDefinition.Name)]
+public class TrackRepositoryTests(RepositoryDatabaseFixture database)
 {
     [Fact]
     public async Task GetByAlbumId_ShouldReturnTracksInAlbum()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new TrackRepository(ctx);
 
@@ -20,7 +21,7 @@ public class TrackRepositoryTests
     [Fact]
     public async Task GetByGenreId_ShouldReturnTracksInGenre()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new TrackRepository(ctx);
 
@@ -32,7 +33,7 @@ public class TrackRepositoryTests
     [Fact]
     public async Task GetByMediaTypeId_ShouldReturnTracksWithMediaType()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new TrackRepository(ctx);
 
@@ -44,7 +45,7 @@ public class TrackRepositoryTests
     [Fact]
     public async Task GetByPlaylistId_ShouldReturnTracksInPlaylist()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new TrackRepository(ctx);
 
@@ -55,7 +56,7 @@ public class TrackRepositoryTests
     [Fact]
     public async Task GetByArtistId_ShouldReturnTracksByArtist()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new TrackRepository(ctx);
 
@@ -66,7 +67,7 @@ public class TrackRepositoryTests
     [Fact]
     public async Task GetByInvoiceId_ShouldReturnTracksOnInvoice()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new TrackRepository(ctx);
 
@@ -77,7 +78,7 @@ public class TrackRepositoryTests
     [Fact]
     public async Task UnknownIds_ShouldReturnEmpty()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new TrackRepository(ctx);
 

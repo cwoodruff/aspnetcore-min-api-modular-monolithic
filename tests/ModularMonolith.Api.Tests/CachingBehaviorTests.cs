@@ -10,8 +10,8 @@ namespace ModularMonolith.Api.Tests;
 ///     Tests for caching behavior.
 ///     Verifies that endpoints use cache correctly and invalidate on writes.
 /// </summary>
-public class CachingBehaviorTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public class CachingBehaviorTests(ApiFactory factory)
+    : IClassFixture<ApiFactory>
 {
     private readonly WebApplicationFactory<Program> _factory = factory.WithWebHostBuilder(_ => { });
 

@@ -5,6 +5,7 @@ using Identity.Modules.Extensions;
 using Microsoft.AspNetCore.Diagnostics;
 using ModularMonolith.Api;
 using SharedKernel;
+using SharedKernel.Persistence;
 using SharedKernel.TrafficControl;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,15 @@ var builder = WebApplication.CreateBuilder(args);
 var modules = HostComposition.ConfigureServices(builder);
 
 var app = builder.Build();
+
+if ((app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Test"))
+    && app.Configuration.GetValue<bool>("Database:MigrateAndSeedOnStartup"))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    await DbSeeder.MigrateAndSeedAsync(
+        scope.ServiceProvider.GetRequiredService<AppDbContext>(),
+        Path.Combine(AppContext.BaseDirectory, DbSeeder.SeedScriptRelativePath));
+}
 
 // Middleware
 if (!app.Environment.IsDevelopment())

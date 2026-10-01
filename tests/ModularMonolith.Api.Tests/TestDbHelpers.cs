@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using SharedKernel.Persistence;
 using SharedKernel.Persistence.Entities;
 
@@ -7,23 +6,6 @@ namespace ModularMonolith.Api.Tests;
 
 public static class TestDbHelpers
 {
-    private static readonly IServiceProvider SharedProvider = new ServiceCollection()
-        .AddEntityFrameworkInMemoryDatabase()
-        .BuildServiceProvider();
-
-    public static AppDbContext CreateInMemoryContext(string dbName)
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(dbName)
-            .UseInternalServiceProvider(SharedProvider)
-            .EnableSensitiveDataLogging()
-            .Options;
-        var ctx = new AppDbContext(options);
-        ctx.Database.EnsureDeleted();
-        ctx.Database.EnsureCreated();
-        return ctx;
-    }
-
     public static void SeedMinimalGraph(AppDbContext db)
     {
         // Employees
@@ -84,5 +66,24 @@ public static class TestDbHelpers
         db.InvoiceLines.AddRange(il1, il2);
 
         db.SaveChanges();
+
+        // The graph uses explicit ids; move each identity sequence past them so later inserts do not collide.
+        db.Database.ExecuteSqlRaw(ResetSequencesSql);
     }
+
+    private const string ResetSequencesSql = """
+        SELECT setval(pg_get_serial_sequence(t, 'Id'), m)
+        FROM (VALUES
+            ('catalog."Artist"', (SELECT max("Id") FROM catalog."Artist")),
+            ('catalog."Album"', (SELECT max("Id") FROM catalog."Album")),
+            ('catalog."Track"', (SELECT max("Id") FROM catalog."Track")),
+            ('catalog."Playlist"', (SELECT max("Id") FROM catalog."Playlist")),
+            ('orders."Invoice"', (SELECT max("Id") FROM orders."Invoice")),
+            ('orders."InvoiceLine"', (SELECT max("Id") FROM orders."InvoiceLine")),
+            ('administration."Customer"', (SELECT max("Id") FROM administration."Customer")),
+            ('administration."Employee"', (SELECT max("Id") FROM administration."Employee")),
+            ('administration."Genre"', (SELECT max("Id") FROM administration."Genre")),
+            ('administration."MediaType"', (SELECT max("Id") FROM administration."MediaType"))
+        ) AS seeded(t, m)
+        """;
 }

@@ -10,8 +10,8 @@ namespace ModularMonolith.Api.Tests;
 /// <summary>
 ///     Tests for POST/PUT/DELETE operations on Genre endpoints.
 /// </summary>
-public class GenreWriteEndpointsTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public class GenreWriteEndpointsTests(ApiFactory factory)
+    : IClassFixture<ApiFactory>
 {
     private readonly WebApplicationFactory<Program> _factory = factory.WithWebHostBuilder(_ => { });
 

@@ -16,8 +16,8 @@ namespace ModularMonolith.Api.Tests;
 /// <summary>
 ///     Tests for Identity module endpoints (login, refresh, logout, userinfo, JWKS).
 /// </summary>
-public class IdentityEndpointsTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public class IdentityEndpointsTests(ApiFactory factory)
+    : IClassFixture<ApiFactory>
 {
     private readonly WebApplicationFactory<Program> _factory = factory.WithSeededIdentityUsers();
 

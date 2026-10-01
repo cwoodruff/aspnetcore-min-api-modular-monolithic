@@ -70,44 +70,6 @@ public static class HostComposition
         });
         services.AddProblemDetails();
 
-        // EF Core persistence registration
-        // Resolve SQLite path for AppDbContext if not provided via configuration/environment.
-        var existing = configuration.GetConnectionString("AppDatabase")
-                       ?? configuration["ConnectionStrings:AppDatabase"]
-                       ?? Environment.GetEnvironmentVariable("ConnectionStrings__AppDatabase");
-        if (string.IsNullOrWhiteSpace(existing))
-        {
-            static bool HasUsableDb(string path)
-            {
-                return File.Exists(path) && new FileInfo(path).Length > 0;
-            }
-
-            static string? TryFindDb(string contentRoot)
-            {
-                var contentDb = Path.Combine(contentRoot, "data", "chinook.db");
-                if (HasUsableDb(contentDb))
-                {
-                    return contentDb;
-                }
-
-                var current = new DirectoryInfo(AppContext.BaseDirectory);
-                while (current is not null && !HasUsableDb(Path.Combine(current.FullName, "data", "chinook.db")))
-                {
-                    current = current.Parent;
-                }
-
-                var root = current?.FullName;
-                var rootDb = root is not null ? Path.Combine(root, "data", "chinook.db") : null;
-                return rootDb is not null && HasUsableDb(rootDb) ? rootDb : null;
-            }
-
-            var dbPath = TryFindDb(builder.Environment.ContentRootPath);
-            if (!string.IsNullOrWhiteSpace(dbPath))
-            {
-                configuration["ConnectionStrings:AppDatabase"] = $"Data Source={dbPath}";
-            }
-        }
-
         // Data Repositories
         services.AddScoped<IAlbumRepository, AlbumRepository>()
             .AddScoped<IArtistRepository, ArtistRepository>()
@@ -120,6 +82,7 @@ public static class HostComposition
             .AddScoped<IPlaylistRepository, PlaylistRepository>()
             .AddScoped<ITrackRepository, TrackRepository>();
 
+        // EF Core persistence: PostgreSQL via ConnectionStrings:AppDatabase
         services.AddKernelPersistence(configuration);
 
         services.AddCors(options =>

@@ -3,12 +3,13 @@ using SharedKernel.DataSQLite.Repositories;
 
 namespace ModularMonolith.Api.Tests.Repositories;
 
-public class EmployeeRepositoryTests
+[Collection(RepositoryDatabaseDefinition.Name)]
+public class EmployeeRepositoryTests(RepositoryDatabaseFixture database)
 {
     [Fact]
     public async Task GetReportsTo_ShouldReturnEmployeeById()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new EmployeeRepository(ctx);
 
@@ -20,7 +21,7 @@ public class EmployeeRepositoryTests
     [Fact]
     public async Task GetDirectReports_ShouldReturnEmployeesReportingToManager()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new EmployeeRepository(ctx);
 
