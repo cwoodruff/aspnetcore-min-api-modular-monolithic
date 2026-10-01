@@ -31,7 +31,7 @@ public sealed class ModuleDatabaseFixture : IAsyncLifetime
 
     private Respawner? _respawner;
 
-    private string ConnectionString => _container.GetConnectionString();
+    internal string ConnectionString => _container.GetConnectionString();
 
     public async Task InitializeAsync()
     {
