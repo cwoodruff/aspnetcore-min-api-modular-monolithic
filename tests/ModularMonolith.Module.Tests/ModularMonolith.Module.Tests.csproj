@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- CA1716: "Module" is a VB keyword; the project name comes from the upgrade plan. -->
+    <NoWarn>$(NoWarn);CA1707;CS8620;CA1716</NoWarn>
+    <RootNamespace>ModularMonolith.Module.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" Version="8.10.0" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" Version="10.10.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
+    <PackageReference Include="NSubstitute" Version="6.2.0" />
+    <PackageReference Include="Respawn" Version="7.0.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.15.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Each module host loads its own slice of the Chinook seed. -->
+    <None Include="..\..\data\chinook-postgres-seed.sql" Link="data\chinook-postgres-seed.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Administration\Admin.Module\Admin.Module.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Catalog\Catalog.Module\Catalog.Module.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Identity.Module\Identity.Module.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Orders\Orders.Module\Orders.Module.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Module\Reporting.Module.csproj" />
+    <ProjectReference Include="..\..\src\Shared\SharedKernel\SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>
