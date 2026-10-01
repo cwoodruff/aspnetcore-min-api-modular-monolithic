@@ -165,15 +165,21 @@ app.UseExceptionHandler(exceptionHandlerApp =>
 });
 app.UseStatusCodePages();
 
-// OWASP A05: Security headers to prevent clickjacking, MIME-sniffing, and XSS
+// OWASP A05: Security headers to prevent clickjacking, MIME-sniffing, and XSS.
+// Applied in OnStarting so they survive the exception handler's Response.Clear().
 app.Use(async (ctx, next) =>
 {
-    ctx.Response.Headers.XContentTypeOptions = "nosniff";
-    ctx.Response.Headers.XFrameOptions = "DENY";
-    ctx.Response.Headers.XXSSProtection = "0"; // modern browsers: CSP replaces this
-    ctx.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-    ctx.Response.Headers.ContentSecurityPolicy = "default-src 'self'; frame-ancestors 'none'";
-    ctx.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+    ctx.Response.OnStarting(() =>
+    {
+        var headers = ctx.Response.Headers;
+        headers.XContentTypeOptions = "nosniff";
+        headers.XFrameOptions = "DENY";
+        headers.XXSSProtection = "0"; // modern browsers: CSP replaces this
+        headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+        headers.ContentSecurityPolicy = "default-src 'self'; frame-ancestors 'none'";
+        headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+        return Task.CompletedTask;
+    });
     await next();
 });
 
