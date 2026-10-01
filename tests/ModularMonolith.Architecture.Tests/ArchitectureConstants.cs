@@ -69,4 +69,13 @@ internal static class ArchitectureConstants
             [IdentityAssembly] = "ModularMonolith.Api.Tests",
             [ReportingAssembly] = null
         };
+
+    /// <summary>
+    /// ArchUnitNET's ResideInAssembly matches the assembly's full name ("Catalog.Module, Version=...").
+    /// A short name matches no type at all, which silently turns a rule into a no-op, so every rule
+    /// selects assemblies through this.
+    /// </summary>
+    public static string FullName(string assemblyName) =>
+        System.Reflection.Assembly.Load(assemblyName).FullName
+        ?? throw new InvalidOperationException($"Assembly {assemblyName} has no full name.");
 }

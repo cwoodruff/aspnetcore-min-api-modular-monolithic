@@ -36,12 +36,11 @@ public class ModuleBoundaryTests
     {
         var rule = Types()
             .That()
-            .ResideInAssembly(sourceModule)
+            .ResideInAssembly(ArchitectureConstants.FullName(sourceModule))
             .Should()
             .NotDependOnAnyTypesThat()
-            .ResideInAssembly(targetModule)
-            .Because($"{sourceModule} must not reference {targetModule} to maintain module isolation")
-            .WithoutRequiringPositiveResults();
+            .ResideInAssembly(ArchitectureConstants.FullName(targetModule))
+            .Because($"{sourceModule} must not reference {targetModule} to maintain module isolation");
 
         rule.Check(Architecture);
     }
@@ -62,12 +61,11 @@ public class ModuleBoundaryTests
         {
             var rule = Types()
                 .That()
-                .ResideInAssembly(moduleName)
+                .ResideInAssembly(ArchitectureConstants.FullName(moduleName))
                 .Should()
                 .NotDependOnAnyTypesThat()
-                .ResideInAssembly(otherModule)
-                .Because($"{moduleName} should only depend on SharedKernel and framework assemblies, not {otherModule}")
-                .WithoutRequiringPositiveResults();
+                .ResideInAssembly(ArchitectureConstants.FullName(otherModule))
+                .Because($"{moduleName} should only depend on SharedKernel and framework assemblies, not {otherModule}");
 
             rule.Check(Architecture);
         }
@@ -95,11 +93,12 @@ public class ModuleBoundaryTests
         // drag that module's internals into every consumer.
         var rule = Types()
             .That()
-            .ResideInAssembly(contractsAssembly)
+            .ResideInAssembly(ArchitectureConstants.FullName(contractsAssembly))
             .Should()
             .NotDependOnAnyTypesThat()
-            .ResideInAssembly(moduleAssembly)
+            .ResideInAssembly(ArchitectureConstants.FullName(moduleAssembly))
             .Because($"{contractsAssembly} is a public contract and must not reference {moduleAssembly}")
+            // Catalog.Contracts and Administration.Contracts hold no types yet.
             .WithoutRequiringPositiveResults();
 
         rule.Check(Architecture);
@@ -154,7 +153,7 @@ public class ModuleBoundaryTests
                 .HaveFullName(handler.FullName!)
                 .Should()
                 .NotDependOnAnyTypesThat()
-                .ResideInAssembly(ArchitectureConstants.OrdersAssembly)
+                .ResideInAssembly(ArchitectureConstants.FullName(ArchitectureConstants.OrdersAssembly))
                 .Because($"{handler.FullName} may know Orders only through Orders.Contracts");
             rule.Check(Architecture);
         }
