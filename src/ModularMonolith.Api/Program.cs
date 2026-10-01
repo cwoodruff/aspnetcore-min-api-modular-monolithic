@@ -66,7 +66,14 @@ app.UseIdentityAuth();
 if (BuildInfoProvider.ShouldExposeOperationalMetadata(app.Environment))
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "All modules");
+        foreach (var (document, tag) in HostComposition.ModuleOpenApiDocuments)
+        {
+            options.SwaggerEndpoint($"/swagger/{document}/swagger.json", tag);
+        }
+    });
 }
 
 
