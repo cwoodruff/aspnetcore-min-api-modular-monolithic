@@ -1,51 +1,60 @@
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SharedKernel.Diagnostics;
 
 namespace SharedKernel.Caching;
 
 public static class CachingRegistration
 {
-    public static IServiceCollection AddCentralCaching(this IServiceCollection services, IConfiguration configuration)
+    /// <summary>
+    /// Gives a module its own memory cache, capped at <paramref name="sizeLimit" /> entries, and its own
+    /// <see cref="ICacheFacade" />, resolved keyed by <paramref name="moduleName" /> (ADR-0013). Filling one
+    /// module's cache cannot evict another's. The key composer and the optional shared L2 (Caching:Tier =
+    /// L1L2) are registered once.
+    /// </summary>
+    public static IServiceCollection AddModuleCache(this IServiceCollection services, string moduleName, long sizeLimit)
     {
-        services.AddOptions<CacheOptions>().Bind(configuration.GetSection("Caching"));
+        ArgumentException.ThrowIfNullOrWhiteSpace(moduleName);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sizeLimit);
 
-        // Always register L1 IMemoryCache
-        services.AddMemoryCache();
-        services.AddSingleton<IL1Cache, L1MemoryCacheAdapter>();
+        services.AddOptions<CacheOptions>().BindConfiguration("Caching");
+        services.TryAddSingleton<ICacheKeyComposer, CacheKeyComposer>();
+        services.TryAddSingleton<SharedL2Cache>();
+        services.AddModuleMeter(moduleName);
 
-        // Optionally register L2 provider (keep provider-agnostic; default to in-memory distributed)
-        var provider = configuration["Caching:Provider"] ?? "InMemory";
-        var tier = configuration["Caching:Tier"] ?? "L1";
-
-        if (string.Equals(tier, "L1L2", StringComparison.OrdinalIgnoreCase))
-        {
-            if (string.Equals(provider, "InMemory", StringComparison.OrdinalIgnoreCase))
-            {
-                services.AddDistributedMemoryCache();
-            }
-            // For Redis/others, assume host adds the specific provider package and registration.
-            // We still resolve IDistributedCache if available.
-
-            services.AddSingleton<IL2Cache>(sp =>
-            {
-                var dist = sp.GetService<IDistributedCache>();
-                return dist is not null ? new L2DistributedCacheAdapter(dist) : null!;
-            });
-        }
-
-        services.AddSingleton<ICacheKeyComposer, CacheKeyComposer>();
-        services.AddSingleton<ICacheFacade>(sp =>
-        {
-            var opts = sp.GetRequiredService<IOptions<CacheOptions>>();
-            var l1 = sp.GetRequiredService<IL1Cache>();
-            var logger = sp.GetRequiredService<ILogger<CompositeCacheFacade>>();
-            var l2 = sp.GetService<IL2Cache>();
-            return new CompositeCacheFacade(opts, l1, logger, l2);
-        });
-
+        services.AddKeyedSingleton<IMemoryCache>(moduleName,
+            (_, _) => new MemoryCache(new MemoryCacheOptions { SizeLimit = sizeLimit }));
+        services.AddKeyedSingleton<ICacheFacade>(moduleName, (sp, _) => new CompositeCacheFacade(
+            sp.GetRequiredService<IOptions<CacheOptions>>(),
+            new L1MemoryCacheAdapter(sp.GetRequiredKeyedService<IMemoryCache>(moduleName)),
+            sp.GetRequiredKeyedService<ModuleMeter>(moduleName),
+            sp.GetRequiredService<ILogger<CompositeCacheFacade>>(),
+            sp.GetRequiredService<SharedL2Cache>().Cache));
         return services;
+    }
+
+    /// <summary>The one L2 every module shares when Caching:Tier is L1L2; null otherwise.</summary>
+    internal sealed class SharedL2Cache(IOptions<CacheOptions> options, IServiceProvider services)
+    {
+        public IL2Cache? Cache { get; } = Create(options.Value, services);
+
+        private static L2DistributedCacheAdapter? Create(CacheOptions options, IServiceProvider services)
+        {
+            if (!options.Tier.Equals("L1L2", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            // InMemory falls back to a process-local distributed cache; other providers are registered by the host.
+            var distributed = services.GetService<IDistributedCache>()
+                              ?? (options.Provider.Equals("InMemory", StringComparison.OrdinalIgnoreCase)
+                                  ? new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions()))
+                                  : null);
+            return distributed is null ? null : new L2DistributedCacheAdapter(distributed);
+        }
     }
 }

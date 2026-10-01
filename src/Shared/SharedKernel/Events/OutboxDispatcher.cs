@@ -3,12 +3,15 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SharedKernel.Concurrency;
+using SharedKernel.Diagnostics;
 
 namespace SharedKernel.Events;
 
 /// <summary>
-/// Delivers one module's outbox to every registered handler (ADR-0008). The hosted loop calls
-/// <see cref="ProcessBatchAsync" />; tests call it directly instead of waiting for the loop.
+/// Delivers one module's outbox to every registered handler (ADR-0008). The hosted loop runs
+/// <see cref="ProcessBatchAsync" /> through the module's <see cref="ModuleWorkQueue" />; tests call it
+/// directly instead of waiting for the loop. Counts go to the module's <see cref="ModuleMeter" />.
 /// </summary>
 /// <remarks>
 /// Semantics, chosen on purpose:
@@ -25,7 +28,12 @@ namespace SharedKernel.Events;
 ///   no ordering across modules.</item>
 /// </list>
 /// </remarks>
-public abstract class OutboxDispatcher(IConfiguration configuration, TimeProvider time, ILogger logger)
+public abstract class OutboxDispatcher(
+    IConfiguration configuration,
+    TimeProvider time,
+    ModuleWorkQueue workQueue,
+    ModuleMeter meter,
+    ILogger logger)
     : BackgroundService
 {
     public const int BatchSize = 50;
@@ -37,16 +45,10 @@ public abstract class OutboxDispatcher(IConfiguration configuration, TimeProvide
         TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10)
     ];
 
-    private long _processed;
-    private long _failed;
-    private long _deadLettered;
-
-    // Counters for the module metrics helper (phase 5 wires them to System.Diagnostics.Metrics).
-    public long ProcessedCount => Interlocked.Read(ref _processed);
-    public long FailedDeliveryCount => Interlocked.Read(ref _failed);
-    public long DeadLetteredCount => Interlocked.Read(ref _deadLettered);
-
     protected TimeProvider Time { get; } = time;
+
+    /// <summary>The publishing module's meter: dispatched, retried and dead-lettered events.</summary>
+    protected ModuleMeter Meter { get; } = meter;
 
     protected ILogger Logger { get; } = logger;
 
@@ -66,7 +68,8 @@ public abstract class OutboxDispatcher(IConfiguration configuration, TimeProvide
             var handled = 0;
             try
             {
-                handled = await ProcessBatchAsync(stoppingToken);
+                // Through the module's bounded queue, so its background work runs one item at a time (ADR-0013).
+                handled = await workQueue.RunAsync(ProcessBatchAsync, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -92,10 +95,6 @@ public abstract class OutboxDispatcher(IConfiguration configuration, TimeProvide
             }
         }
     }
-
-    protected void CountProcessed() => Interlocked.Increment(ref _processed);
-    protected void CountFailed() => Interlocked.Increment(ref _failed);
-    protected void CountDeadLettered() => Interlocked.Increment(ref _deadLettered);
 }
 
 /// <summary>Dispatcher for the outbox in <typeparamref name="TContext" />'s schema.</summary>
@@ -104,7 +103,9 @@ public abstract class OutboxDispatcher<TContext>(
     IEnumerable<IntegrationEventSubscription> subscriptions,
     IConfiguration configuration,
     TimeProvider time,
-    ILogger logger) : OutboxDispatcher(configuration, time, logger)
+    ModuleWorkQueue workQueue,
+    ModuleMeter meter,
+    ILogger logger) : OutboxDispatcher(configuration, time, workQueue, meter, logger)
     where TContext : DbContext
 {
     private readonly IntegrationEventSubscription[] _subscriptions = [.. subscriptions];
@@ -137,22 +138,22 @@ public abstract class OutboxDispatcher<TContext>(
             if (error is null)
             {
                 message.ProcessedAt = now;
-                CountProcessed();
+                Meter.Dispatched();
                 continue;
             }
 
             message.Attempts++;
             message.LastError = error.Length > 2000 ? error[..2000] : error;
-            CountFailed();
             if (message.Attempts > RetryDelays.Count)
             {
                 message.DeadLetteredAt = now;
-                CountDeadLettered();
+                Meter.DeadLettered();
                 OutboxLog.DeadLettered(Logger, message.Id, message.EventType, message.Attempts);
             }
             else
             {
                 message.NextAttemptAt = now + RetryDelays[message.Attempts - 1];
+                Meter.Retried();
             }
         }
 

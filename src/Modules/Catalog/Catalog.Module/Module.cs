@@ -10,20 +10,28 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orders.Contracts.Events;
 using SharedKernel;
+using SharedKernel.Caching;
+using SharedKernel.Diagnostics;
 using SharedKernel.Events;
 using SharedKernel.Persistence;
+using SharedKernel.TrafficControl;
 
 namespace Catalog.Modules;
 
 public static class CatalogModule
 {
+    /// <summary>The module's name and its key for keyed services, caches, metrics and rate limits.</summary>
+    internal const string ModuleName = "Catalog";
+
     public sealed class Modules : IModule
     {
-        public string Name => "Catalog";
+        public string Name => ModuleName;
 
         public void RegisterServices(IServiceCollection services, IConfiguration config)
         {
-            services.AddModuleDbContext<CatalogDbContext>(CatalogDbContext.Schema);
+            services.AddModuleDbContext<CatalogDbContext>(ModuleName, CatalogDbContext.Schema);
+            services.AddModuleCache(ModuleName, config.GetValue($"Caching:Modules:{ModuleName}:SizeLimit", 1000));
+            services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Names.Catalog);
             services.AddValidatorsFromAssemblyContaining<AlbumValidator>(includeInternalTypes: true);
 
             services.AddScoped<IAlbumService, AlbumService>();
@@ -31,12 +39,14 @@ public static class CatalogModule
             services.AddScoped<IPlaylistService, PlaylistService>();
             services.AddScoped<ITrackService, TrackService>();
 
-            services.AddIntegrationEventHandler<InvoiceFinalized, InvoiceFinalizedHandler>(CatalogDbContext.Schema);
+            services.AddIntegrationEventHandler<InvoiceFinalized, InvoiceFinalizedHandler>(ModuleName);
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)
         {
-            var group = endpoints.MapGroup("/api/catalog");
+            var group = endpoints.MapGroup("/api/catalog")
+                .RequireRateLimiting(RateLimitPolicyRegistry.Names.Catalog)
+                .AddModuleMetrics(ModuleName);
 
             // Delegate to endpoint classes
             group.MapCatalogHealthEndpoints();

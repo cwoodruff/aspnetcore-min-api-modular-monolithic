@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Orders.Modules.Services;
-using SharedKernel.TrafficControl;
 
 namespace Orders.Modules.Endpoints;
 
@@ -29,8 +28,7 @@ internal static class InvoiceLineEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         // GET /api/orders/invoice-lines
         group.MapGet("invoice-lines/", [Authorize] async (
@@ -48,8 +46,7 @@ internal static class InvoiceLineEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         // GET /api/orders/invoice-lines/invoice/{id}
         group.MapGet("invoice-lines/invoice/{id:int}", [Authorize] async (
@@ -68,8 +65,7 @@ internal static class InvoiceLineEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         // GET /api/orders/invoice-lines/track/{id}
         group.MapGet("invoice-lines/track/{id:int}", [Authorize] async (
@@ -88,7 +84,6 @@ internal static class InvoiceLineEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
     }
 }

@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orders.Modules.Data;
 using Orders.Modules.Domain;
@@ -11,7 +12,7 @@ namespace Orders.Modules.Services;
 
 internal class InvoiceLineService(
     OrdersDbContext db,
-    ICacheFacade cache,
+    [FromKeyedServices(OrdersModule.ModuleName)] ICacheFacade cache,
     ICacheKeyComposer keys,
     IValidator<InvoiceLineApiModel> validator,
     ILogger<InvoiceLineService> logger) : IInvoiceLineService

@@ -1,26 +1,21 @@
-using Microsoft.Extensions.Configuration;
-
 namespace SharedKernel.TrafficControl;
 
 /// <summary>
-///     Central registry for rate limiting policy names and configuration binding.
-///     This is scaffolding only: populate constants for common policy names and
-///     later bind thresholds/algorithms from configuration under RateLimiting:Policies.
+/// Rate-limit policy names. Each module applies its own policy once, on its route group (ADR-0013), so
+/// a burst against one module exhausts that module's budget only. Limits come from configuration under
+/// RateLimiting:Policies:&lt;name&gt; (PermitLimit, WindowSeconds, QueueLimit).
 /// </summary>
-public sealed class RateLimitPolicyRegistry(IConfiguration configuration)
+public static class RateLimitPolicyRegistry
 {
-    /// <summary>
-    ///     Placeholder for future binding of policies from configuration.
-    /// </summary>
-    public IConfiguration Section => configuration.GetSection("RateLimiting");
-
-    // Canonical policy names (modules should reference these names only)
     public static class Names
     {
+        /// <summary>The host's root endpoint only.</summary>
         public const string GlobalPublicAnon = "global:public-anon";
-        public const string GlobalUserStandard = "global:user-standard";
-        public const string GlobalTenantStandard = "global:tenant-standard";
-        public const string GlobalAdminElevated = "global:admin-elevated";
-        public const string ReportingHeavy = "reporting:heavy";
+
+        public const string Catalog = "catalog:api";
+        public const string Orders = "orders:api";
+        public const string Administration = "admin:api";
+        public const string Identity = "identity:api";
+        public const string Reporting = "reporting:api";
     }
 }

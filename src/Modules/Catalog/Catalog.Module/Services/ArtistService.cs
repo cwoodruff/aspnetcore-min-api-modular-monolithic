@@ -4,6 +4,7 @@ using Catalog.Modules.Mapping;
 using Catalog.Modules.Models;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
 
@@ -11,7 +12,7 @@ namespace Catalog.Modules.Services;
 
 internal class ArtistService(
     CatalogDbContext db,
-    ICacheFacade cache,
+    [FromKeyedServices(CatalogModule.ModuleName)] ICacheFacade cache,
     ICacheKeyComposer keys,
     IValidator<ArtistApiModel> validator,
     ILogger<ArtistService> logger) : IArtistService

@@ -10,20 +10,28 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orders.Contracts.Events;
 using SharedKernel;
+using SharedKernel.Caching;
+using SharedKernel.Diagnostics;
 using SharedKernel.Events;
 using SharedKernel.Persistence;
+using SharedKernel.TrafficControl;
 
 namespace Admin.Modules;
 
 public static class AdministrationModule
 {
+    /// <summary>The module's name and its key for keyed services, caches, metrics and rate limits.</summary>
+    internal const string ModuleName = "Administration";
+
     public sealed class Modules : IModule
     {
-        public string Name => "Administration";
+        public string Name => ModuleName;
 
         public void RegisterServices(IServiceCollection services, IConfiguration config)
         {
-            services.AddModuleDbContext<AdministrationDbContext>(AdministrationDbContext.Schema);
+            services.AddModuleDbContext<AdministrationDbContext>(ModuleName, AdministrationDbContext.Schema);
+            services.AddModuleCache(ModuleName, config.GetValue($"Caching:Modules:{ModuleName}:SizeLimit", 500));
+            services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Names.Administration);
             services.AddValidatorsFromAssemblyContaining<CustomerValidator>(includeInternalTypes: true);
 
             services.AddScoped<ICustomerService, CustomerService>();
@@ -31,12 +39,14 @@ public static class AdministrationModule
             services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<IMediaTypeService, MediaTypeService>();
 
-            services.AddIntegrationEventHandler<InvoiceFinalized, InvoiceFinalizedHandler>(AdministrationDbContext.Schema);
+            services.AddIntegrationEventHandler<InvoiceFinalized, InvoiceFinalizedHandler>(ModuleName);
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)
         {
-            var group = endpoints.MapGroup("/api/admin");
+            var group = endpoints.MapGroup("/api/admin")
+                .RequireRateLimiting(RateLimitPolicyRegistry.Names.Administration)
+                .AddModuleMetrics(ModuleName);
 
             // Delegate to endpoint classes
             group.MapAdministrationHealthEndpoints();

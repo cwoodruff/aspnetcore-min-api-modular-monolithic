@@ -8,7 +8,8 @@ internal sealed class L1MemoryCacheAdapter(IMemoryCache cache) : IL1Cache
 
     public Task SetAsync<T>(string key, T value, CacheEntryOptions options, CancellationToken ct)
     {
-        var entryOptions = new MemoryCacheEntryOptions();
+        // Every entry counts as 1 against the module cache's SizeLimit (count-based bulkhead).
+        var entryOptions = new MemoryCacheEntryOptions { Size = 1 };
         if (options.AbsoluteExpirationRelativeToNow.HasValue)
         {
             entryOptions.SetAbsoluteExpiration(options.AbsoluteExpirationRelativeToNow.Value);

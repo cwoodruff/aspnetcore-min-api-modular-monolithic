@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
-using SharedKernel.TrafficControl;
 
 namespace Identity.Modules.Endpoints;
 
@@ -53,8 +52,7 @@ internal static partial class AuthEndpoints
             .AllowAnonymous()
             .WithTags("Identity")
             .WithName("IdentityLogin")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         // POST /api/identity/refresh
         group.MapPost("/refresh", async (RefreshRequest req, ITokenService tokens,
@@ -88,8 +86,7 @@ internal static partial class AuthEndpoints
             .AllowAnonymous()
             .WithTags("Identity")
             .WithName("IdentityRefresh")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         // POST /api/identity/logout
         // OWASP A01: Verify the authenticated user owns the session being revoked
@@ -115,8 +112,7 @@ internal static partial class AuthEndpoints
             .RequireAuthorization()
             .WithTags("Identity")
             .WithName("IdentityLogout")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         // GET /api/identity/userinfo
         group.MapGet("/userinfo", [Authorize](ClaimsPrincipal user) =>
@@ -133,16 +129,14 @@ internal static partial class AuthEndpoints
             })
             .WithTags("Identity")
             .WithName("IdentityUserInfo")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         // GET /.well-known/jwks.json
         group.MapGet("/.well-known/jwks.json", (IKeyMaterialService keys) => Results.Json(keys.GetJwksDocument()))
             .AllowAnonymous()
             .WithTags("Identity")
             .WithName("IdentityJWKS")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Failed login attempt for user '{Username}'")]

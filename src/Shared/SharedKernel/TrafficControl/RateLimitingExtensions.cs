@@ -1,39 +1,42 @@
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace SharedKernel.TrafficControl;
 
-/// <summary>
-///     Centralized registration and middleware hooks for rate limiting.
-///     NOTE: This is scaffolding only. Implementation should bind policies from configuration
-///     and register ASP.NET Core rate limiting with named policies. Modules must only reference
-///     policy names and never embed limiter logic.
-/// </summary>
 public static class RateLimitingExtensions
 {
     /// <summary>
-    ///     Registers the centralized rate limiting layer.
-    ///     Intended usage from the API host: builder.Services.AddRateLimiting(configuration);
+    /// Adds a fixed-window policy named <paramref name="policyName" />, partitioned by
+    /// <see cref="PartitionKeys.FromRequest" />. Limits are read from RateLimiting:Policies:&lt;name&gt; and
+    /// default to 60 requests per 60 seconds with no queue.
     /// </summary>
-    public static IServiceCollection AddRateLimiting(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddModuleRateLimitPolicy(this IServiceCollection services, string policyName)
     {
-        // Scaffold only: bind options and register policy registry.
-        // In a future implementation, this will:
-        // - Read RateLimiting:* configuration
-        // - Register named policies (AddRateLimiter)
-        // - Configure standard 429 header writer
-        services.AddSingleton<RateLimitPolicyRegistry>();
-        return services;
-    }
+        ArgumentException.ThrowIfNullOrWhiteSpace(policyName);
+        services.AddRateLimiter(_ => { });
+        services.AddOptions<RateLimiterOptions>().Configure<IConfiguration>((options, configuration) =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            var section = configuration.GetSection($"RateLimiting:Policies:{policyName}");
+            var permitLimit = section.GetValue("PermitLimit", 60);
+            var window = TimeSpan.FromSeconds(section.GetValue("WindowSeconds", 60.0));
+            var queueLimit = section.GetValue("QueueLimit", 0);
 
-    /// <summary>
-    ///     Adds the rate limiting middleware to the pipeline.
-    ///     Intended usage from the API host: app.UseRateLimiting();
-    /// </summary>
-    public static IApplicationBuilder UseRateLimiting(this IApplicationBuilder app)
-    {
-        // Scaffold only: in implementation, call app.UseRateLimiter();
-        return app;
+            options.AddPolicy(policyName, context => RateLimitPartition.GetFixedWindowLimiter(
+                PartitionKeys.FromRequest(context),
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = permitLimit,
+                    Window = window,
+                    QueueLimit = queueLimit,
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    AutoReplenishment = true
+                }));
+        });
+        return services;
     }
 }

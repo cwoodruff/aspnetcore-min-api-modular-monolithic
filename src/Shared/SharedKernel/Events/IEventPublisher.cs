@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.Diagnostics;
 
 namespace SharedKernel.Events;
 
@@ -13,7 +14,7 @@ public interface IEventPublisher
         where TEvent : IIntegrationEvent;
 }
 
-internal sealed class OutboxEventPublisher(TimeProvider time) : IEventPublisher
+internal sealed class OutboxEventPublisher(TimeProvider time, ModuleMeter meter) : IEventPublisher
 {
     public Task PublishAsync<TEvent>(TEvent integrationEvent, DbContext sameTransactionAs, CancellationToken ct)
         where TEvent : IIntegrationEvent
@@ -29,6 +30,7 @@ internal sealed class OutboxEventPublisher(TimeProvider time) : IEventPublisher
             OccurredAt = integrationEvent.OccurredAt,
             NextAttemptAt = time.GetUtcNow()
         });
+        meter.Published();
 
         return Task.CompletedTask;
     }

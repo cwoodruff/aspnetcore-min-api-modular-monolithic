@@ -1,4 +1,3 @@
-using System.Threading.RateLimiting;
 using Admin.Modules;
 using Catalog.Modules;
 using Identity.Modules;
@@ -8,7 +7,6 @@ using Microsoft.OpenApi;
 using Orders.Modules;
 using Reporting.Modules;
 using SharedKernel;
-using SharedKernel.Caching;
 using SharedKernel.TrafficControl;
 
 namespace ModularMonolith.Api;
@@ -81,25 +79,10 @@ public static class HostComposition
         // Identity Auth registration (lives in Identity module)
         services.AddIdentityAuth(configuration);
 
-        // Central caching registration (L1 IMemoryCache by default; L2 if configured)
-        services.AddCentralCaching(configuration);
-
-        // Option A: Minimal in-app rate limiting wiring
-        services.AddRateLimiter(options =>
-        {
-            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-
-            options.AddPolicy(RateLimitPolicyRegistry.Names.GlobalPublicAnon, context =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    PartitionKeys.FromRequest(context),
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = 60, // 60 requests per 60 seconds
-                        Window = TimeSpan.FromSeconds(60),
-                        QueueLimit = 0,
-                        AutoReplenishment = true
-                    }));
-        });
+        // Rate limiting: the root endpoint's policy here; each module adds and applies its own (ADR-0013).
+        // Each module also registers its own cache, meter and health check in RegisterServices.
+        services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+        services.AddHealthChecks();
 
         var modules = GetModules();
         foreach (var module in modules)

@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using SharedKernel;
-using SharedKernel.TrafficControl;
 
 namespace Admin.Modules.Endpoints;
 
@@ -54,7 +53,6 @@ internal static class AdministrationDataHealthEndpoints
             .WithName("AdministrationDataHealth")
             .Produces(200)
             .WithTags("Administration")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
     }
 }

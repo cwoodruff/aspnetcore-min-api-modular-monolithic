@@ -1,10 +1,11 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Orders.Contracts.Events;
 using Orders.Modules.Data;
 using Orders.Modules.Domain;
 using Orders.Modules.Mapping;
-using Orders.Contracts.Events;
 using Orders.Modules.Models;
 using SharedKernel.Caching;
 using SharedKernel.Events;
@@ -13,10 +14,10 @@ namespace Orders.Modules.Services;
 
 internal class InvoiceService(
     OrdersDbContext db,
-    ICacheFacade cache,
+    [FromKeyedServices(OrdersModule.ModuleName)] ICacheFacade cache,
     ICacheKeyComposer keys,
     IValidator<InvoiceApiModel> validator,
-    IEventPublisher events,
+    [FromKeyedServices(OrdersModule.ModuleName)] IEventPublisher events,
     TimeProvider time,
     ILogger<InvoiceService> logger) : IInvoiceService
 {

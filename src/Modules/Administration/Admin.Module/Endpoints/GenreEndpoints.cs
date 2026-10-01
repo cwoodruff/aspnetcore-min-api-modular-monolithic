@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using SharedKernel.TrafficControl;
 
 namespace Admin.Modules.Endpoints;
 
@@ -29,8 +28,7 @@ internal static class GenreEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         // GET /api/admin/genres
         group.MapGet("genres/", [Authorize] async (
@@ -48,8 +46,7 @@ internal static class GenreEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         // POST /api/admin/genres
         group.MapPost("/genres", [Authorize] async (
@@ -68,8 +65,7 @@ internal static class GenreEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .WithTags("Administration")
-            .Produces(429)
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429);
 
         // PUT /api/admin/genres/{id}
         group.MapPut("/genres/{id:int}", [Authorize] async (
@@ -90,8 +86,7 @@ internal static class GenreEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
-            .Produces(429)
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429);
 
         // DELETE /api/admin/genres/{id}
         group.MapDelete("/genres/{id:int}", [Authorize] async (
@@ -110,8 +105,7 @@ internal static class GenreEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Administration")
-            .Produces(429)
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429);
     }
 
     // Request DTOs with validation

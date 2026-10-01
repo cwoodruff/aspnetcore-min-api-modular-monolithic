@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Orders.Modules.Services;
-using SharedKernel.TrafficControl;
 
 namespace Orders.Modules.Endpoints;
 
@@ -22,8 +21,7 @@ internal static class OutboxEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .WithTags("Orders")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         // POST /api/orders/outbox/dead-letters/{id}/retry
         group.MapPost("/outbox/dead-letters/{id:guid}/retry", [Authorize] async (
@@ -39,7 +37,6 @@ internal static class OutboxEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
     }
 }
