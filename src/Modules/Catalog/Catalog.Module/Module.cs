@@ -1,5 +1,6 @@
 using Catalog.Modules.Data;
 using Catalog.Modules.Endpoints;
+using Catalog.Modules.Events;
 using Catalog.Modules.Services;
 using Catalog.Modules.Validation;
 using FluentValidation;
@@ -7,7 +8,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Orders.Contracts.Events;
 using SharedKernel;
+using SharedKernel.Events;
 using SharedKernel.Persistence;
 
 namespace Catalog.Modules;
@@ -27,6 +30,8 @@ public static class CatalogModule
             services.AddScoped<IArtistService, ArtistService>();
             services.AddScoped<IPlaylistService, PlaylistService>();
             services.AddScoped<ITrackService, TrackService>();
+
+            services.AddScoped<IIntegrationEventHandler<InvoiceFinalized>, InvoiceFinalizedHandler>();
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)

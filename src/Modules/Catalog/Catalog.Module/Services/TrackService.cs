@@ -197,35 +197,48 @@ internal class TrackService(
         return updated;
     }
 
+    /// <returns>Null if the track does not exist; zero sales if none have been counted yet.</returns>
+    /// <remarks>Not cached: the counts change whenever the orders outbox delivers.</remarks>
+    public async Task<TrackSalesApiModel?> GetTrackSalesAsync(int id, CancellationToken ct)
+    {
+        if (!await db.Tracks.AnyAsync(t => t.Id == id, ct))
+        {
+            return null;
+        }
+
+        var sales = await db.TrackSales.AsNoTracking().SingleOrDefaultAsync(s => s.TrackId == id, ct);
+        return new TrackSalesApiModel(id, sales?.TimesSold ?? 0, sales?.LastSoldAt);
+    }
+
     private async Task<List<Track>> LoadByAlbumIdAsync(int id, CancellationToken ct)
     {
         return await db.Tracks.Where(a => a.AlbumId == id)
             .AsNoTracking().ToListAsync(ct);
-        }
+    }
 
     private async Task<List<Track>> LoadByGenreIdAsync(int id, CancellationToken ct)
     {
         return await db.Tracks.Where(a => a.GenreId == id)
             .AsNoTracking().ToListAsync(ct);
-        }
+    }
 
     private async Task<List<Track>> LoadByMediaTypeIdAsync(int id, CancellationToken ct)
     {
         return await db.Tracks.Where(a => a.MediaTypeId == id)
             .AsNoTracking().ToListAsync(ct);
-        }
+    }
 
     private async Task<List<Track>> LoadByPlaylistIdAsync(int id, CancellationToken ct)
     {
         return await db.PlaylistTracks.Where(p => p.PlaylistId == id).Select(p => p.Track!)
             .AsNoTracking().ToListAsync(ct);
-        }
+    }
 
     private async Task<List<Track>> LoadByArtistIdAsync(int id, CancellationToken ct)
     {
         return await db.Albums.Where(a => a.ArtistId == id).SelectMany(t => t.Tracks!)
             .AsNoTracking().ToListAsync(ct);
-        }
+    }
 
     private async Task<TrackApiModel?> LoadByIdAsync(int id, CancellationToken ct)
     {
@@ -248,5 +261,5 @@ internal class TrackService(
             })
             .AsNoTracking()
             .SingleOrDefaultAsync(ct);
-        }
+    }
 }

@@ -20,5 +20,14 @@ internal sealed class Invoice
 
     public decimal Total { get; set; }
 
+    /// <summary>Draft until finalized; finalizing publishes InvoiceFinalized (ADR-0008).</summary>
+    public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
+
     public ICollection<InvoiceLine> InvoiceLines { get; set; } = new List<InvoiceLine>();
+}
+
+internal enum InvoiceStatus
+{
+    Draft,
+    Finalized
 }

@@ -1,5 +1,6 @@
 using Admin.Modules.Data;
 using Admin.Modules.Endpoints;
+using Admin.Modules.Events;
 using Admin.Modules.Services;
 using Admin.Modules.Validation;
 using FluentValidation;
@@ -7,7 +8,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Orders.Contracts.Events;
 using SharedKernel;
+using SharedKernel.Events;
 using SharedKernel.Persistence;
 
 namespace Admin.Modules;
@@ -27,6 +30,8 @@ public static class AdministrationModule
             services.AddScoped<IGenreService, GenreService>();
             services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<IMediaTypeService, MediaTypeService>();
+
+            services.AddScoped<IIntegrationEventHandler<InvoiceFinalized>, InvoiceFinalizedHandler>();
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)

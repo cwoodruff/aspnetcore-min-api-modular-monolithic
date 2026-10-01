@@ -121,13 +121,26 @@ internal sealed class CustomerService(
         return updated;
     }
 
+    /// <returns>Null if the customer does not exist; zeros if no purchase has been counted yet.</returns>
+    /// <remarks>Not cached: the summary changes whenever the orders outbox delivers.</remarks>
+    public async Task<CustomerPurchasesApiModel?> GetCustomerPurchasesAsync(int id, CancellationToken ct)
+    {
+        if (!await db.Customers.AnyAsync(c => c.Id == id, ct))
+        {
+            return null;
+        }
+
+        var summary = await db.CustomerPurchaseSummaries.AsNoTracking().SingleOrDefaultAsync(s => s.CustomerId == id, ct);
+        return new CustomerPurchasesApiModel(id, summary?.TotalSpent ?? 0m, summary?.InvoiceCount ?? 0, summary?.LastPurchaseAt);
+    }
+
     private async Task<List<Customer>> LoadBySupportRepIdAsync(int id, CancellationToken ct)
     {
         return await db.Customers
             .Where(a => a.SupportRepId == id)
             .AsNoTracking()
             .ToListAsync(ct);
-        }
+    }
 
     private async Task<CustomerApiModel?> LoadByIdAsync(int id, CancellationToken ct)
     {
@@ -154,5 +167,5 @@ internal sealed class CustomerService(
             })
             .AsNoTracking()
             .SingleOrDefaultAsync(ct);
-        }
+    }
 }

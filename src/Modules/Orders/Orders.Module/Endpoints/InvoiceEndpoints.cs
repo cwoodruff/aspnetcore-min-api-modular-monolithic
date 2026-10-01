@@ -69,5 +69,36 @@ internal static class InvoiceEndpoints
             .WithTags("Orders")
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+
+        // POST /api/orders/invoices/{id}/finalize
+        group.MapPost("/invoices/{id:int}/finalize", [Authorize] async (
+                int id,
+                IInvoiceService service,
+                CancellationToken ct) =>
+            {
+                return await service.FinalizeInvoiceAsync(id, ct) switch
+                {
+                    FinalizeInvoiceResult.Finalized => Results.Accepted(
+                        $"/api/orders/invoices/{id}",
+                        new { invoiceId = id, status = "Finalized", salesCountersUpdate = "eventual" }),
+                    FinalizeInvoiceResult.AlreadyFinalized => Results.Conflict(),
+                    _ => Results.NotFound()
+                };
+            })
+            .RequireAuthorization("orders.write").RequireAuthorization("tenant.scoped")
+            .WithName("OrdersFinalizeInvoice")
+            .WithDescription(
+                "Finalizes a draft invoice and publishes InvoiceFinalized through the orders outbox in the same " +
+                "transaction. Returns 202: the invoice is final now, but track sales and the customer's purchase " +
+                "summary are updated eventually, after the outbox is dispatched (salesCountersUpdate: \"eventual\"). " +
+                "Do not read them back expecting this invoice to be counted yet.")
+            .Produces(StatusCodes.Status202Accepted)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status409Conflict)
+            .WithTags("Orders")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
     }
 }

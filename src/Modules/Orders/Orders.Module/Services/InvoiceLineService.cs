@@ -144,18 +144,18 @@ internal class InvoiceLineService(
     {
         return await db.InvoiceLines.Where(a => a.InvoiceId == id)
             .AsNoTracking().ToListAsync(ct);
-        }
+    }
 
     private async Task<List<InvoiceLine>> LoadByTrackIdAsync(int id, CancellationToken ct)
     {
         return await db.InvoiceLines.Where(a => a.TrackId == id)
             .AsNoTracking().ToListAsync(ct);
-        }
+    }
 
     private async Task<InvoiceLine?> LoadByIdAsync(int id, CancellationToken ct)
     {
         return await db.InvoiceLines
             .AsNoTracking()
             .SingleOrDefaultAsync(e => e.Id == id, ct);
-        }
+    }
 }

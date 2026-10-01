@@ -21,7 +21,7 @@ public sealed class InvoiceServiceTests(ModuleDatabaseFixture database) : IAsync
         await database.ResetAndSeedAsync();
         _db = database.CreateOrdersContext();
         _service = new InvoiceService(_db, _cache, RecordingCache.Keys(), new InvoiceValidator(),
-            NullLogger<InvoiceService>.Instance);
+            ModuleHost.EventPublisher(), TimeProvider.System, NullLogger<InvoiceService>.Instance);
     }
 
     public async Task DisposeAsync() => await _db.DisposeAsync();

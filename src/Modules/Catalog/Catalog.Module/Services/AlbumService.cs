@@ -129,7 +129,7 @@ internal class AlbumService(
             .Include(a => a.Tracks)
             .AsNoTracking()
             .ToListAsync(ct);
-        }
+    }
 
     private async Task<AlbumApiModel?> LoadByIdAsync(int id, CancellationToken ct)
     {
@@ -176,5 +176,5 @@ internal class AlbumService(
             }).ToList()
         };
         return albumDto;
-        }
+    }
 }

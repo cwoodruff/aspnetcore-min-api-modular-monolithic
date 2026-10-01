@@ -147,5 +147,5 @@ internal class ArtistService(
         };
 
         return artistDto;
-        }
+    }
 }

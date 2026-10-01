@@ -141,5 +141,5 @@ internal class PlaylistService(
             Name = header.Name,
             Tracks = tracks
         };
-        }
+    }
 }

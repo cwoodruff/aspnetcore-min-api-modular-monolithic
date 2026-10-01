@@ -20,5 +20,8 @@ internal sealed class InvoiceApiModel
 
     public decimal Total { get; set; }
 
+    /// <summary>"Draft" or "Finalized". Read-only: create and update ignore it; finalize sets it.</summary>
+    public string? Status { get; set; }
+
     public ICollection<InvoiceLineApiModel> InvoiceLines { get; set; } = new List<InvoiceLineApiModel>();
 }

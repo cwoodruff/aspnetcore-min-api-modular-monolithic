@@ -109,5 +109,5 @@ internal sealed class MediaTypeService(
         return await db.MediaTypes
             .AsNoTracking()
             .SingleOrDefaultAsync(e => e.Id == id, ct);
-        }
+    }
 }

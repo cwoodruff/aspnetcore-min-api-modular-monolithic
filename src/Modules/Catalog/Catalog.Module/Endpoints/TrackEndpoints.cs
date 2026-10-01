@@ -31,6 +31,29 @@ internal static class TrackEndpoints
             .Produces(429) // Rate limiting
             .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
+        // GET /api/catalog/tracks/{id}/sales
+        group.MapGet("/tracks/{id:int}/sales", [Authorize] async (
+                int id,
+                ITrackService service,
+                CancellationToken ct) =>
+            {
+                var sales = await service.GetTrackSalesAsync(id, ct);
+
+                return sales is not null ? Results.Json(sales) : Results.NotFound();
+            })
+            .RequireAuthorization("catalog.read").RequireAuthorization("tenant.scoped")
+            .WithName("CatalogGetTrackSales")
+            .WithDescription(
+                "Units sold, counted from InvoiceFinalized events. Eventually consistent: an invoice finalized " +
+                "moments ago may not be counted yet.")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Catalog")
+            .Produces(429) // Rate limiting
+            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+
         // GET /api/catalog/tracks
         group.MapGet("tracks/", [Authorize] async (
                 ITrackService service,

@@ -1,8 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-    <!--
+<Project Sdk="Microsoft.NET.Sdk"><!--
         Public surface other modules may depend on: integration events, read DTOs and names.
         It must not reference any *.Module assembly (ModuleBoundaryTests).
     -->
 
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\SharedKernel\SharedKernel.csproj" />
+  </ItemGroup>
 </Project>

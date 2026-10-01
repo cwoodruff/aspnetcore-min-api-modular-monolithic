@@ -136,5 +136,5 @@ internal sealed class GenreService(
         return await db.Genres
             .AsNoTracking()
             .SingleOrDefaultAsync(e => e.Id == id, ct);
-        }
+    }
 }

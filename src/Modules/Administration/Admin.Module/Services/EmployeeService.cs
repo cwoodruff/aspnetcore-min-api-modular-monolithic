@@ -143,12 +143,12 @@ internal sealed class EmployeeService(
     private async Task<Employee> LoadReportsToAsync(int id, CancellationToken ct)
     {
         return (await db.Employees.FindAsync([id], ct))!;
-        }
+    }
 
     private async Task<List<Employee>> LoadDirectReportsAsync(int id, CancellationToken ct)
     {
         return await db.Employees.Where(e => e.ReportsTo == id).AsNoTracking().ToListAsync(ct);
-        }
+    }
 
     private async Task<EmployeeApiModel?> LoadByIdAsync(int id, CancellationToken ct)
     {
@@ -179,5 +179,5 @@ internal sealed class EmployeeService(
             })
             .AsNoTracking()
             .SingleOrDefaultAsync(ct);
-        }
+    }
 }
