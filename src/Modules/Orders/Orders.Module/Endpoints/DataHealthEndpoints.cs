@@ -5,7 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Orders.Modules.Data;
 using SharedKernel;
-using SharedKernel.TrafficControl;
 
 namespace Orders.Modules.Endpoints;
 
@@ -54,7 +53,6 @@ internal static class OrdersDataHealthEndpoints
             .WithName("OrdersDataHealth")
             .Produces(200)
             .WithTags("Orders")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
     }
 }

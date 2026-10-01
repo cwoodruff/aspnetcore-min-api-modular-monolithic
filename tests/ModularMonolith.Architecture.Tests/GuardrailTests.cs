@@ -174,6 +174,39 @@ public class GuardrailTests(HostWithoutDatabaseFactory factory) : IClassFixture<
     }
 
     [Fact]
+    public void Every_Module_Endpoint_Has_Exactly_Its_Modules_Rate_Limit_Policy()
+    {
+        // Applied once, on the module's route group (ADR-0013). A per-endpoint RequireRateLimiting would show
+        // up here as a second policy or a different one.
+        var expected = new Dictionary<string, string>
+        {
+            ["api/catalog"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.Catalog,
+            ["api/orders"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.Orders,
+            ["api/admin"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.Administration,
+            ["api/identity"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.Identity,
+            ["api/reporting"] = SharedKernel.TrafficControl.RateLimitPolicyRegistry.Names.Reporting
+        };
+
+        var moduleEndpoints = factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
+            .OfType<RouteEndpoint>()
+            .Select(endpoint => (endpoint, prefix: expected.Keys.SingleOrDefault(prefix =>
+                (endpoint.RoutePattern.RawText ?? string.Empty).TrimStart('/').StartsWith(prefix, StringComparison.Ordinal))))
+            .Where(entry => entry.prefix is not null)
+            .ToArray();
+        Assert.NotEmpty(moduleEndpoints);
+
+        var violations = moduleEndpoints
+            .Select(entry => (entry.endpoint, entry.prefix, policies: entry.endpoint.Metadata
+                .GetOrderedMetadata<Microsoft.AspNetCore.RateLimiting.EnableRateLimitingAttribute>()
+                .Select(attribute => attribute.PolicyName).ToArray()))
+            .Where(entry => entry.policies.Length != 1 || entry.policies[0] != expected[entry.prefix!])
+            .Select(entry => $"{entry.endpoint.DisplayName}: [{string.Join(", ", entry.policies)}]")
+            .ToArray();
+
+        Assert.Empty(violations);
+    }
+
+    [Fact]
     public void No_Two_Endpoints_Share_Route_And_Method()
     {
         var endpoints = factory.Services.GetRequiredService<EndpointDataSource>().Endpoints;

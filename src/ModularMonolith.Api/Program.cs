@@ -3,6 +3,8 @@ using System.Text.Json;
 using FluentValidation;
 using Identity.Modules.Extensions;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using ModularMonolith.Api;
 using SharedKernel;
 using SharedKernel.TrafficControl;
@@ -103,6 +105,11 @@ app.MapGet("/", (IConfiguration cfg, IWebHostEnvironment env) =>
     .Produces(429) // Rate limiting
     .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
 
+// Per-module health (each module's DbContext check, tagged with the module name)
+app.MapHealthChecks("/healthz", new HealthCheckOptions { ResponseWriter = WriteHealthAsync })
+    .WithName("HealthZ")
+    .WithTags("Root");
+
 // Map module endpoints
 app.MapGroup(""); // noop to ensure route builder initialized
 foreach (var module in modules)
@@ -116,6 +123,24 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Test"))
 }
 
 app.Run();
+
+static Task WriteHealthAsync(HttpContext context, HealthReport report)
+{
+    context.Response.ContentType = "application/json";
+    return context.Response.WriteAsJsonAsync(new
+    {
+        status = report.Status.ToString(),
+        totalDurationMs = report.TotalDuration.TotalMilliseconds,
+        modules = report.Entries.ToDictionary(
+            entry => entry.Key,
+            entry => new
+            {
+                status = entry.Value.Status.ToString(),
+                description = entry.Value.Description,
+                tags = entry.Value.Tags
+            })
+    });
+}
 
 static async Task WriteProblemDetailsResponseAsync(HttpContext context)
 {

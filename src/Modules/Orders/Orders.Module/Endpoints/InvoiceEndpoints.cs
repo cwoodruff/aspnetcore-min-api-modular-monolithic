@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Orders.Modules.Services;
-using SharedKernel.TrafficControl;
 
 namespace Orders.Modules.Endpoints;
 
@@ -29,8 +28,7 @@ internal static class InvoiceEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         // GET /api/orders/invoices
         group.MapGet("invoices/", [Authorize] async (
@@ -48,8 +46,7 @@ internal static class InvoiceEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         // GET /api/orders/invoices/customer/{id}
         group.MapGet("invoices/customer/{id:int}", [Authorize] async (
@@ -68,8 +65,7 @@ internal static class InvoiceEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Orders")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         // POST /api/orders/invoices/{id}/finalize
         group.MapPost("/invoices/{id:int}/finalize", [Authorize] async (
@@ -99,7 +95,6 @@ internal static class InvoiceEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status409Conflict)
             .WithTags("Orders")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
     }
 }

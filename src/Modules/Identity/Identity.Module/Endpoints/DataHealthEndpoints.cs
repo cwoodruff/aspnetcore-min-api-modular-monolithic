@@ -5,7 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using SharedKernel;
 using SharedKernel.Persistence;
-using SharedKernel.TrafficControl;
 
 namespace Identity.Modules.Endpoints;
 
@@ -47,7 +46,6 @@ internal static class IdentityDataHealthEndpoints
             .WithName("IdentityDataHealth")
             .Produces(200)
             .WithTags("Identity")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
     }
 }

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using SharedKernel.TrafficControl;
 
 namespace Catalog.Modules.Endpoints;
 
@@ -29,8 +28,7 @@ internal static class AlbumEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Catalog")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         // GET /api/catalog/albums
         group.MapGet("albums/", [Authorize] async (
@@ -48,8 +46,7 @@ internal static class AlbumEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Catalog")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
 
         //
         group.MapGet("albums/artist/{id:int}", [Authorize] async (
@@ -68,7 +65,6 @@ internal static class AlbumEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .WithTags("Catalog")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
     }
 }

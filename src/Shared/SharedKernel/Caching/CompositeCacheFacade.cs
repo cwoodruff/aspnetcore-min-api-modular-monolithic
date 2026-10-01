@@ -1,12 +1,14 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SharedKernel.Diagnostics;
 
 namespace SharedKernel.Caching;
 
 internal sealed class CompositeCacheFacade(
     IOptions<CacheOptions> options,
     IL1Cache l1,
+    ModuleMeter meter,
     ILogger<CompositeCacheFacade> logger,
     IL2Cache? l2 = null)
     : ICacheFacade
@@ -30,6 +32,7 @@ internal sealed class CompositeCacheFacade(
         var (hit1, v1) = await l1.TryGetAsync<T>(cacheKey, ct);
         if (hit1)
         {
+            meter.CacheHit();
             return v1;
         }
 
@@ -39,10 +42,13 @@ internal sealed class CompositeCacheFacade(
             var (hit2, v2) = await l2.TryGetAsync<T>(cacheKey, ct);
             if (hit2)
             {
+                meter.CacheHit();
                 await l1.SetAsync(cacheKey, v2!, EffectiveOptions(options), ct);
                 return v2;
             }
         }
+
+        meter.CacheMiss();
 
         // 3) Factory with single-flight
         var gate = _locks.GetOrAdd(cacheKey, _ => new SemaphoreSlim(1, 1));

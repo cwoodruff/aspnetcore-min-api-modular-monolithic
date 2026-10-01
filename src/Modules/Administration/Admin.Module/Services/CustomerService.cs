@@ -4,6 +4,7 @@ using Admin.Modules.Mapping;
 using Admin.Modules.Models;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Caching;
 
@@ -11,7 +12,7 @@ namespace Admin.Modules.Services;
 
 internal sealed class CustomerService(
     AdministrationDbContext db,
-    ICacheFacade cache,
+    [FromKeyedServices(AdministrationModule.ModuleName)] ICacheFacade cache,
     ICacheKeyComposer keys,
     IValidator<CustomerApiModel> validator,
     ILogger<CustomerService> logger) : ICustomerService

@@ -335,27 +335,40 @@ Dockerfile, browse http://localhost:8080/swagger.
 
 ### Rate limiting
 
-- Minimal in-app rate limiting is enabled (Option A). The API host registers a
-  named policy `global:public-anon` with a fixed window of 60 requests per 60
-  seconds and applies it to the root endpoint (`GET /`).
-- Central scaffolding still lives under `src/Shared/SharedKernel/TrafficControl`
-  for future expansion, but wiring is now active via `AddRateLimiter(...)` and
-  `UseRateLimiter()` in `Program.cs`.
-- To protect additional endpoints, add
-  `.RequireRateLimiting("global:public-anon")` (or other policies you add) to
-  the desired endpoint mapping. To exempt an endpoint, use
-  `.DisableRateLimiting()`.
-- Example:
+- Each module has its own fixed-window policy, applied once on its route group
+  in `MapEndpoints`: `catalog:api`, `orders:api`, `admin:api`, `identity:api`,
+  `reporting:api`. `global:public-anon` covers only the root endpoint (`GET /`).
+  Requests are partitioned by `PartitionKeys.FromRequest` (client id, tenant,
+  subject, then IP).
+- Limits come from `RateLimiting:Policies:<name>` (`PermitLimit`,
+  `WindowSeconds`, `QueueLimit`); the default is 60 requests per 60 seconds
+  with no queue. For example, to give Catalog more room:
 
 ```
-app.MapGet("/api/reporting/exports", Handler)
-   .RequireRateLimiting("global:public-anon");
+"RateLimiting": {
+  "Policies": {
+    "catalog:api": { "PermitLimit": 300, "WindowSeconds": 60 }
+  }
+}
 ```
+
+- Do not add `RequireRateLimiting` to individual endpoints; the architecture
+  tests expect every module endpoint to carry exactly its module's policy. See
+  [Failure domain](#failure-domain).
 
 ### Logging and observability
 
-- Uses built-in ASP.NET Core logging by default. No Serilog or OpenTelemetry is
-  wired out-of-the-box; you can add them later according to your needs.
+- Uses built-in ASP.NET Core logging by default.
+- Metrics: each module has a `System.Diagnostics.Metrics` meter named
+  `ModularMonolith.<Module>` (for example `ModularMonolith.Catalog`). Every
+  measurement is tagged `module`. Instruments: `modmono.http.requests`
+  (tagged `status_code`), `modmono.cache.hits`, `modmono.cache.misses`,
+  `modmono.outbox.published`, `modmono.outbox.dispatched`,
+  `modmono.outbox.retried`, `modmono.outbox.dead_lettered`, and
+  `modmono.work_queue.depth`. No exporter is wired; add OpenTelemetry or
+  `dotnet-counters monitor --counters ModularMonolith.Catalog` to read them.
+- Health: `GET /healthz` reports each module's database check, tagged with the
+  module name.
 
 ### Using Swagger & OpenAPI
 
@@ -648,8 +661,8 @@ through `GET /api/identity/.well-known/jwks.json`.
 - Authorization: Requires a valid JWT with the `catalog.read` permission and the
   `tenant.scoped` policy (the token's `tenant` claim must match the request's
   tenant hint when one is supplied).
-- Caching: Uses the central cache facade (ICacheFacade) with a namespaced key
-  composed by CacheKeyComposer.
+- Caching: Uses Catalog's own cache (an ICacheFacade keyed "Catalog") with a
+  namespaced key composed by CacheKeyComposer.
     - Key shape example: {env}:{app}:catalog:album:v1::::by-id:{id}
     - Default TTL: 20 minutes (with jitter to avoid stampede). Adjust via
       Caching:* configuration if needed.
@@ -688,9 +701,9 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:5043/api/catalog/albums/
 
 Notes
 
-- To change caching behavior globally or per environment, use appsettings or
-  environment variables under the Caching:* section. The cache is L1-only by
-  default; you can enable L2 (e.g., Redis) later without code changes.
+- To change caching behavior, use the Caching:* configuration section. Each
+  module's L1 cache has its own size limit (Caching:Modules:<Module>:SizeLimit);
+  L2 (e.g., Redis) is optional and shared.
 - If you later add write endpoints that mutate album data, evict the
   corresponding cache key(s) or bump the version prefix (v1→v2) to ensure
   readers don’t see stale data.
@@ -746,8 +759,14 @@ Notes
 
 ### Caching configuration
 
+- Per module: each module calls `AddModuleCache(name, sizeLimit)` in
+  `RegisterServices` and gets its own `MemoryCache` (every entry counts 1 toward
+  the limit) and its own `ICacheFacade`, which its services take with
+  `[FromKeyedServices(<Module>.ModuleName)]`. Size limits:
+  `Caching:Modules:<Module>:SizeLimit` (Catalog 1000, Orders 1000,
+  Administration 500 by default).
 - Tier: Caching:Tier can be "L1" (default, in-memory only) or "L1L2" (adds an
-  optional distributed cache if available/configured).
+  optional distributed cache, shared by every module, if available/configured).
 - Provider: Caching:Provider can be "InMemory" by default; use your own
   registration for Redis/others and the facade will detect IDistributedCache.
 - Defaults: CacheEntryOptions support AbsoluteExpirationRelativeToNow,
@@ -820,6 +839,31 @@ Administration keeps `CustomerPurchaseSummary`
 
 Configuration: `Outbox:Enabled` (default `true`) and
 `Outbox:PollIntervalSeconds` (default `1`).
+
+## Failure domain
+
+All modules run in one process. Phase 5 gives each module its own share of what
+can be split in-process ([ADR-0013](docs/adr/0013-per-module-bulkheads.md)):
+
+| A module can isolate in-process | How |
+|---|---|
+| Its request budget | Its own rate-limit policy on its route group: a burst against Catalog returns 429 from Catalog only |
+| Its cache | Its own `MemoryCache` with a size limit: filling it never evicts another module's entries |
+| Its background work | Its own bounded `ModuleWorkQueue`: a backlog makes producers wait instead of growing memory |
+| Its expensive operations | Its own `ModuleGate` concurrency cap |
+| Its visibility | Its own meter (`module` tag on every measurement) and its own `/healthz` entry |
+| Its data and failures in event handling | Its own schema, DbContext, inbox and retries (ADR-0003, ADR-0008) |
+
+| A module cannot isolate in-process | Why |
+|---|---|
+| Memory and GC pauses | One heap; a gen-2 collection stops every module |
+| The thread pool | One pool; blocking or CPU-heavy code anywhere starves everyone |
+| Crashes | An unhandled background exception, stack overflow or out-of-memory ends the process |
+| The database server | One PostgreSQL server: connections, CPU and locks are shared |
+| Deploys | One build, one release, one restart, one rollback |
+
+When one of the second list is the problem, the answer is extraction, not
+another in-process limit.
 
 ## Documentation
 

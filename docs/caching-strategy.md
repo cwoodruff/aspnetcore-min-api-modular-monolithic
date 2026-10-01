@@ -1,5 +1,13 @@
 # Central Caching Strategy for ASP.NET Core 10 Modular Monolith
 
+> **Status (phase 5):** each module now has its own L1 cache with a size limit
+> (`AddModuleCache`, [ADR-0013](adr/0013-per-module-bulkheads.md)). The
+> configuration actually bound today is `Caching:Enabled`, `Caching:Tier`,
+> `Caching:Provider`, `Caching:DefaultTTLSeconds` and
+> `Caching:Modules:<Module>:SizeLimit`. The SWR, stampede, partitioning,
+> per-module TTL and Redis option keys described below are design notes; they
+> were never read by the code and their option classes were removed.
+
 **Status: Implemented (L1 cache with L2 optional)**
 
 This document describes the central caching layer that all modules (Catalog,
@@ -18,7 +26,7 @@ The following components are implemented in `src/Shared/SharedKernel/Caching/`:
   Redis)
 - `ICacheKeyComposer`, `CacheKeyComposer` - Namespaced key composition
 - `CacheOptions` - Configuration binding
-- `CachingRegistration.AddCentralCaching()` - DI registration extension
+- `CachingRegistration.AddModuleCache(module, sizeLimit)` - per-module DI registration (phase 5): each module gets its own size-limited `MemoryCache` and an `ICacheFacade` keyed by module name
 
 Configuration keys (in `appsettings.json`):
 

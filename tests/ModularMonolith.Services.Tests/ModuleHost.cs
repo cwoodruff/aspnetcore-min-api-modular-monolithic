@@ -3,7 +3,6 @@ using Catalog.Modules;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orders.Modules;
-using SharedKernel.Caching;
 using SharedKernel.Events;
 
 namespace ModularMonolith.Services.Tests;
@@ -29,8 +28,6 @@ internal static class ModuleHost
         services.AddLogging();
         // Registered first so the modules' TryAdd keeps the test clock.
         services.AddSingleton(time);
-        services.AddSingleton<ICacheFacade>(new RecordingCache());
-        services.AddSingleton(RecordingCache.Keys());
 
         new AdministrationModule.Modules().RegisterServices(services, configuration);
         new CatalogModule.Modules().RegisterServices(services, configuration);
@@ -40,7 +37,7 @@ internal static class ModuleHost
     }
 
     public static IEventPublisher EventPublisher() =>
-        new ServiceCollection().AddEventPublisher().BuildServiceProvider().GetRequiredService<IEventPublisher>();
+        new ServiceCollection().AddEventPublisher("Orders").BuildServiceProvider().GetRequiredKeyedService<IEventPublisher>("Orders");
 }
 
 /// <summary>A clock the test moves by hand, to step through retry backoff without waiting.</summary>

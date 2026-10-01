@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using SharedKernel.Diagnostics;
 
 namespace SharedKernel.Persistence;
 
@@ -17,12 +18,13 @@ public static class ModuleDbContextOptions
     public const string HistoryTable = "__EFMigrationsHistory";
 
     /// <summary>
-    /// Registers a pooled DbContext for a module whose tables live in <paramref name="schema" />. The schema
-    /// name is also the module's key for keyed registrations (ADR-0012): the context is additionally
-    /// registered as a <see cref="DbContext" /> keyed by it, so the host can migrate every module's context
-    /// and the outbox dispatcher can find a handler's inbox without seeing the module's internal types.
+    /// Registers a pooled DbContext for module <paramref name="moduleName" /> whose tables live in
+    /// <paramref name="schema" />. The context is also registered as a <see cref="DbContext" /> keyed by the
+    /// module name, so the host can migrate every module's context and the outbox dispatcher can find a
+    /// handler's inbox without seeing the module's internal types, and it gets a health check (ADR-0013).
     /// </summary>
-    public static IServiceCollection AddModuleDbContext<TContext>(this IServiceCollection services, string schema)
+    public static IServiceCollection AddModuleDbContext<TContext>(this IServiceCollection services,
+        string moduleName, string schema)
         where TContext : DbContext
     {
         // Read from the provider rather than a captured configuration: sources added after registration —
@@ -32,7 +34,8 @@ public static class ModuleDbContextOptions
             (sp, options) => Use(options, sp.GetRequiredService<IConfiguration>().GetConnectionString(ConnectionName), schema),
             poolSize: 128);
 
-        services.AddKeyedScoped<DbContext>(schema, (sp, _) => sp.GetRequiredService<TContext>());
+        services.AddKeyedScoped<DbContext>(moduleName, (sp, _) => sp.GetRequiredService<TContext>());
+        services.AddModuleDbContextHealthCheck<TContext>(moduleName);
         return services;
     }
 

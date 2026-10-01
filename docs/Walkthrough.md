@@ -177,7 +177,7 @@ Prerequisites
 
 8. Central caching helpers (SharedKernel.Caching)
 
-- Add AddCentralCaching(IConfiguration) extension to register IMemoryCache and
+- Add a caching registration extension (today AddModuleCache(module, sizeLimit), one cache per module) to register IMemoryCache and
   optionally a level-2 cache if configured.
 
 9. Testing with WebApplicationFactory (tests/ModularMonolith.Api.Tests)

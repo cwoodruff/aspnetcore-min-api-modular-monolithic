@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using SharedKernel;
-using SharedKernel.TrafficControl;
 
 namespace Reporting.Modules.Endpoints;
 
@@ -40,7 +39,6 @@ internal static class ReportingHealthEndpoints
             .WithName("ReportingHealth")
             .Produces(200)
             .WithTags("Reporting")
-            .Produces(429) // Rate limiting
-            .RequireRateLimiting(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+            .Produces(429); // Rate limited by the module group's policy
     }
 }
