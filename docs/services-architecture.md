@@ -27,9 +27,7 @@ HTTP Request
     ↓
 Endpoint (Authorization, Rate Limiting, Model Binding)
     ↓
-Service (Validation → Cache Lookup → Repository Call → Cache Store)
-    ↓
-Repository (EF Core Query → DTO Projection)
+Service (Validation → Cache Lookup → EF Core query on the module's DbContext → Cache Store)
     ↓
 Service (Return cached/fresh data)
     ↓
@@ -40,7 +38,7 @@ HTTP Response (JSON)
 
 1. **Input Validation** - Validate incoming data using FluentValidation before persistence operations
 2. **Cache Management** - Implement cache-aside pattern with tag-based invalidation
-3. **Repository Orchestration** - Coordinate repository calls for complex operations
+3. **Data Access** - Query the module's own `DbContext` directly (there is no repository layer; see ADR-0003)
 4. **Error Handling** - Graceful degradation returning null/empty on failures
 5. **DTO Transformation** - Convert between entities and API models
 
@@ -102,8 +100,8 @@ All services follow a consistent implementation pattern:
 ### Constructor Injection
 
 ```csharp
-public sealed class CustomerService(
-    ICustomerRepository repo,          // Repository for data access
+internal sealed class CustomerService(
+    AdministrationDbContext db,         // The module's own DbContext
     ICacheFacade cache,                 // Cache facade for caching
     ICacheKeyComposer keys,             // Key composer for structured cache keys
     IValidator<CustomerApiModel> validator  // FluentValidation validator
@@ -398,7 +396,8 @@ public class CustomerServiceTests
     public async Task GetCustomerByIdAsync_ReturnsCustomer_WhenExists()
     {
         // Arrange
-        var mockRepo = new Mock<ICustomerRepository>();
+        // Services.Tests use the module's real DbContext on PostgreSQL (ModuleDatabaseFixture)
+        // rather than a mocked data layer; this sketch shows only the cache and validator doubles.
         var mockCache = new Mock<ICacheFacade>();
         var mockKeys = new Mock<ICacheKeyComposer>();
         var mockValidator = new Mock<IValidator<CustomerApiModel>>();

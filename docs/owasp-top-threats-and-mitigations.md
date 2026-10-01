@@ -137,7 +137,7 @@ solution, and highlights overlaps with the general OWASP Top 10 (2021).
     - Named permission policies enforce least-privilege per module and operation.
     - Tenant isolation via `TenantAuthorizationHandler` validates `X-Tenant-Id`
       against user claims on every tenant-scoped request.
-    - Repository-level query filters should enforce tenant boundaries so that
+    - Query filters in each module's DbContext should enforce tenant boundaries so that
       even a logic bug in a handler cannot leak cross-tenant data.
     - Negative integration tests assert `401` (no token), `403` (wrong
       permission/tenant), and correct `200` for valid requests.
@@ -276,7 +276,7 @@ solution, and highlights overlaps with the general OWASP Top 10 (2021).
       `PropertyNamingPolicy` is null (PascalCase); unknown properties are
       ignored by default but never bound to privileged fields.
     - Never deserialize untrusted data into domain entities directly — always use
-      explicit DTOs (request/response models in `SharedKernel.Persistence/ApiModels/`).
+      explicit DTOs (request/response models in each module's `Models/` folder).
     - Sign release artifacts and Docker images in production pipelines.
 
 #### A09:2021 — Security Logging and Monitoring Failures
@@ -373,7 +373,7 @@ solution, and highlights overlaps with the general OWASP Top 10 (2021).
 ### Service layer validation (implemented)
 
 - All write operations use FluentValidation before persistence
-- Validators are centralized in `SharedKernel.Persistence/Validation/`
+- Validators live in each module's `Validation/` folder
 - Validation rules include:
     - Required field checks (`NotNull()`, `NotEmpty()`)
     - Length constraints (`MaximumLength()`)

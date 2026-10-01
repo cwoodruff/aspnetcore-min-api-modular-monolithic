@@ -2,7 +2,7 @@
 
 **Status: Implemented**
 
-This document describes the validation architecture implemented in the Modular Monolith using FluentValidation. All input validation is centralized in the SharedKernel.Persistence project and consumed by service layer classes.
+This document describes the validation architecture implemented in the Modular Monolith using FluentValidation. Each module owns its validators (internal, in its `Validation/` folder) and its services consume them.
 
 ---
 
@@ -10,7 +10,7 @@ This document describes the validation architecture implemented in the Modular M
 
 The solution uses **FluentValidation** for all input validation with the following design principles:
 
-- **Centralized validators** in `SharedKernel.Persistence/Validation/`
+- **Module-owned validators** in each module's `Validation/` folder
 - **Service-layer validation** - Validators are injected into services and executed before persistence
 - **Consistent error responses** - ValidationException is caught by endpoints and converted to RFC 7807 ProblemDetails
 - **Auto-discovery registration** - Validators are registered via assembly scanning
@@ -30,7 +30,7 @@ Service Method
     ↓
 FluentValidation (IValidator<T>.ValidateAsync)
     ↓
-    ├─ Valid: Continue to Repository
+    ├─ Valid: Continue to the module's DbContext
     └─ Invalid: Throw ValidationException
             ↓
         Endpoint catches exception
@@ -53,9 +53,11 @@ FluentValidation (IValidator<T>.ValidateAsync)
 
 ### Location
 
-All validators are located in:
+Each module keeps its validators, `internal`, in its own folder:
 ```
-src/Shared/SharedKernel.Persistence/Validation/
+src/Modules/Catalog/Catalog.Module/Validation/
+src/Modules/Orders/Orders.Module/Validation/
+src/Modules/Administration/Admin.Module/Validation/
 ```
 
 ### Validator Registry
@@ -258,8 +260,8 @@ This single line registers all classes inheriting from `AbstractValidator<T>` in
 Services receive validators via constructor injection:
 
 ```csharp
-public sealed class CustomerService(
-    ICustomerRepository repo,
+internal sealed class CustomerService(
+    AdministrationDbContext db,
     ICacheFacade cache,
     ICacheKeyComposer keys,
     IValidator<CustomerApiModel> validator  // Injected validator
@@ -492,20 +494,19 @@ public class CustomerValidatorTests
 
 ### FluentValidation Package Reference
 
-In `SharedKernel.Persistence.csproj`:
+In each module's project (`Catalog.Module`, `Orders.Module`, `Admin.Module`):
 
 ```xml
-<PackageReference Include="FluentValidation" Version="11.x" />
-<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.x" />
+<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
 ```
 
 ### Service Registration
 
-In host `Program.cs` or via `PersistenceRegistration`:
+In each module's `RegisterServices`:
 
 ```csharp
-// Auto-register all validators from assembly
-services.AddValidatorsFromAssemblyContaining<CustomerValidator>();
+// Register the module's validators; they are internal, so include internal types
+services.AddValidatorsFromAssemblyContaining<CustomerValidator>(includeInternalTypes: true);
 
 // Or register individually
 services.AddScoped<IValidator<CustomerApiModel>, CustomerValidator>();
