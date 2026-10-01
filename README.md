@@ -241,10 +241,6 @@ docker build -t modular-monolith-api .
 docker run -p 8080:8080 modular-monolith-api
 ```
 
-- Current drift note: the checked-in `Dockerfile` still uses .NET 9 SDK/runtime
-  images even though the application projects target `net10.0`. Treat the file
-  as out of sync until it is updated; the local `dotnet` workflow above is the
-  authoritative path today.
 - Dev ports vs Docker ports: When running locally via launchSettings.json the
   app listens on http://localhost:5043 and https://localhost:7043. In the
   container, ASPNETCORE_URLS is set to http://+:8080, so

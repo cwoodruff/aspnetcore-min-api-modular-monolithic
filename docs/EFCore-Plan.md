@@ -244,8 +244,8 @@ Current implementation status (updated 2026-01)
     - Integration tests use `WebApplicationFactory<Program>` with SQLite.
     - Repository unit tests in `tests/ModularMonolith.Api.Tests/Repositories/`.
 - Target frameworks:
-    - Individual csproj files specify `net10.0`, overriding
-      `Directory.Build.props` which specifies `net9.0`.
+    - `Directory.Build.props` specifies `net10.0`; individual csproj files do
+      not override it.
 
 Tips and commands
 

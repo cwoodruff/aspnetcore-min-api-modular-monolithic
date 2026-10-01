@@ -45,8 +45,8 @@ Prerequisites
 2. Centralize build settings with Directory.Build.props
 
 - At the repo root, create Directory.Build.props with:
-    - TargetFramework net9.0 (note: individual csproj files may override this to
-      net10.0)
+    - TargetFramework net10.0 (the single source of truth; csproj files do not
+      override it)
     - Nullable enable, ImplicitUsings enable
     - TreatWarningsAsErrors true (optional)
     - LangVersion preview (optional)
