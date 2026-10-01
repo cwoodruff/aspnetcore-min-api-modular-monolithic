@@ -3,14 +3,14 @@ using Microsoft.Extensions.Caching.Distributed;
 
 namespace SharedKernel.Caching;
 
-internal sealed class L2DistributedCacheAdapter(IDistributedCache cache) : IL2Cache
+/// <remarks>Serializes with the app's <see cref="ModuleJson" /> options, so cached types need type information there.</remarks>
+internal sealed class L2DistributedCacheAdapter(IDistributedCache cache, JsonSerializerOptions json) : IL2Cache
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly IDistributedCache _cache = cache;
 
     public async Task SetAsync<T>(string key, T value, CacheEntryOptions options, CancellationToken ct)
     {
-        var bytes = JsonSerializer.SerializeToUtf8Bytes(value, JsonOptions);
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(value, json.TypeInfo<T>());
         var entryOptions = new DistributedCacheEntryOptions();
         if (options.AbsoluteExpirationRelativeToNow.HasValue)
         {
@@ -33,7 +33,7 @@ internal sealed class L2DistributedCacheAdapter(IDistributedCache cache) : IL2Ca
             return (false, default);
         }
 
-        var value = JsonSerializer.Deserialize<T>(bytes, JsonOptions);
+        var value = JsonSerializer.Deserialize(bytes, json.TypeInfo<T>());
         return (true, value);
     }
 

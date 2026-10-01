@@ -7,15 +7,12 @@ namespace SharedKernel.TrafficControl;
 /// </summary>
 public static class RateLimitPolicyRegistry
 {
-    public static class Names
-    {
-        /// <summary>The host's root endpoint only.</summary>
-        public const string GlobalPublicAnon = "global:public-anon";
+    /// <summary>The host's root endpoint only.</summary>
+    public const string GlobalPublicAnon = "global:public-anon";
 
-        public const string Catalog = "catalog:api";
-        public const string Orders = "orders:api";
-        public const string Administration = "admin:api";
-        public const string Identity = "identity:api";
-        public const string Reporting = "reporting:api";
-    }
+    public const string Catalog = "catalog:api";
+    public const string Orders = "orders:api";
+    public const string Administration = "admin:api";
+    public const string Identity = "identity:api";
+    public const string Reporting = "reporting:api";
 }

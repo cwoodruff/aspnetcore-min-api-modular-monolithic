@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Diagnostics;
 
@@ -14,7 +15,7 @@ public interface IEventPublisher
         where TEvent : IIntegrationEvent;
 }
 
-internal sealed class OutboxEventPublisher(TimeProvider time, ModuleMeter meter) : IEventPublisher
+internal sealed class OutboxEventPublisher(TimeProvider time, ModuleMeter meter, JsonSerializerOptions json) : IEventPublisher
 {
     public Task PublishAsync<TEvent>(TEvent integrationEvent, DbContext sameTransactionAs, CancellationToken ct)
         where TEvent : IIntegrationEvent
@@ -26,7 +27,7 @@ internal sealed class OutboxEventPublisher(TimeProvider time, ModuleMeter meter)
         {
             Id = integrationEvent.EventId,
             EventType = OutboxMessage.EventTypeName(typeof(TEvent)),
-            Payload = IntegrationEventSerializer.Serialize(integrationEvent),
+            Payload = JsonSerializer.Serialize(integrationEvent, json.TypeInfo<TEvent>()),
             OccurredAt = integrationEvent.OccurredAt,
             NextAttemptAt = time.GetUtcNow()
         });

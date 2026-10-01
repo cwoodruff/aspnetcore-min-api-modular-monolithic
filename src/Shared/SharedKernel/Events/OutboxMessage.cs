@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace SharedKernel.Events;
 
 /// <summary>
@@ -48,13 +46,4 @@ public sealed class InboxMessage
     public string HandlerName { get; set; } = string.Empty;
 
     public DateTimeOffset ProcessedAt { get; set; }
-}
-
-internal static class IntegrationEventSerializer
-{
-    private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web);
-
-    public static string Serialize<TEvent>(TEvent integrationEvent) => JsonSerializer.Serialize(integrationEvent, Options);
-
-    public static object? Deserialize(string payload, Type eventType) => JsonSerializer.Deserialize(payload, eventType, Options);
 }

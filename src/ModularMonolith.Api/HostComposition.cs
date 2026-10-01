@@ -81,7 +81,11 @@ public static class HostComposition
 
         // Rate limiting: the root endpoint's policy here; each module adds and applies its own (ADR-0013).
         // Each module also registers its own cache, meter and health check in RegisterServices.
-        services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Names.GlobalPublicAnon);
+        services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.GlobalPublicAnon);
+
+        // JSON for the outbox and the shared L2 cache. The reflection resolver is fine for this host, which
+        // is not trimmed; a Native AOT host would register source-generated type information here instead.
+        services.AddReflectionJsonSerialization();
         services.AddHealthChecks();
 
         var modules = GetModules();

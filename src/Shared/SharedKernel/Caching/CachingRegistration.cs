@@ -54,7 +54,9 @@ public static class CachingRegistration
                               ?? (options.Provider.Equals("InMemory", StringComparison.OrdinalIgnoreCase)
                                   ? new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions()))
                                   : null);
-            return distributed is null ? null : new L2DistributedCacheAdapter(distributed);
+            return distributed is null
+                ? null
+                : new L2DistributedCacheAdapter(distributed, services.GetRequiredKeyedService<System.Text.Json.JsonSerializerOptions>(ModuleJson.OptionsKey));
         }
     }
 }

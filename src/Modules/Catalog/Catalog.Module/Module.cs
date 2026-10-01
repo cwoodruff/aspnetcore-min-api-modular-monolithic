@@ -31,7 +31,7 @@ public static class CatalogModule
         {
             services.AddModuleDbContext<CatalogDbContext>(ModuleName, CatalogDbContext.Schema);
             services.AddModuleCache(ModuleName, config.GetValue($"Caching:Modules:{ModuleName}:SizeLimit", 1000));
-            services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Names.Catalog);
+            services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Catalog);
             services.AddValidatorsFromAssemblyContaining<AlbumValidator>(includeInternalTypes: true);
 
             services.AddScoped<IAlbumService, AlbumService>();
@@ -45,7 +45,7 @@ public static class CatalogModule
         public void MapEndpoints(IEndpointRouteBuilder endpoints)
         {
             var group = endpoints.MapGroup("/api/catalog")
-                .RequireRateLimiting(RateLimitPolicyRegistry.Names.Catalog)
+                .RequireRateLimiting(RateLimitPolicyRegistry.Catalog)
                 .AddModuleMetrics(ModuleName);
 
             // Delegate to endpoint classes

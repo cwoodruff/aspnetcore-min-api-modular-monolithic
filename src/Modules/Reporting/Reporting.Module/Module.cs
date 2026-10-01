@@ -33,7 +33,7 @@ public static class ReportingModule
                 connectionName: ReportingConnectionName,
                 migrationConnectionName: ModuleDbContextOptions.ConnectionName);
             services.AddModuleMeter(ModuleName);
-            services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Names.Reporting);
+            services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Reporting);
             services.AddModuleGate(ModuleName);
             services.AddModuleWorkQueue(ModuleName);
 
@@ -46,7 +46,7 @@ public static class ReportingModule
         public void MapEndpoints(IEndpointRouteBuilder endpoints)
         {
             var group = endpoints.MapGroup("/api/reporting")
-                .RequireRateLimiting(RateLimitPolicyRegistry.Names.Reporting)
+                .RequireRateLimiting(RateLimitPolicyRegistry.Reporting)
                 .AddModuleMetrics(ModuleName);
 
             // Delegate to endpoint classes

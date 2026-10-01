@@ -30,7 +30,7 @@ public static class OrdersModule
         {
             services.AddModuleDbContext<OrdersDbContext>(ModuleName, OrdersDbContext.Schema);
             services.AddModuleCache(ModuleName, config.GetValue($"Caching:Modules:{ModuleName}:SizeLimit", 1000));
-            services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Names.Orders);
+            services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Orders);
             services.AddValidatorsFromAssemblyContaining<InvoiceValidator>(includeInternalTypes: true);
 
             services.AddScoped<IInvoiceService, InvoiceService>();
@@ -44,7 +44,7 @@ public static class OrdersModule
         public void MapEndpoints(IEndpointRouteBuilder endpoints)
         {
             var group = endpoints.MapGroup("/api/orders")
-                .RequireRateLimiting(RateLimitPolicyRegistry.Names.Orders)
+                .RequireRateLimiting(RateLimitPolicyRegistry.Orders)
                 .AddModuleMetrics(ModuleName);
 
             // Delegate to endpoint classes
