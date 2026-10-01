@@ -19,4 +19,7 @@ public sealed record ModuleData(string Name, IReadOnlyList<string> MigratedSchem
         [AdministrationDbContext.Schema, CatalogDbContext.Schema, OrdersDbContext.Schema, ReportingDbContext.Schema]);
 
     public static readonly ModuleData Identity = new("Identity", []);
+
+    /// <summary>samples/Catalog.Host: Catalog's schema, and Orders' for the outbox it reads (ADR-0017).</summary>
+    public static readonly ModuleData CatalogHost = new("CatalogHost", [CatalogDbContext.Schema, OrdersDbContext.Schema]);
 }

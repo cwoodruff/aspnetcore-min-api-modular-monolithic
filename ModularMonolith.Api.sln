@@ -123,6 +123,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Identity.Contracts", "src\M
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModularMonolith.Module.Tests", "tests\ModularMonolith.Module.Tests\ModularMonolith.Module.Tests.csproj", "{8D4F24E6-B22D-48C2-A090-D9E4A0B22056}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{5D20AA90-6969-D8BD-9DCD-8634F4692FDA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Catalog.Host", "samples\Catalog.Host\Catalog.Host.csproj", "{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -301,6 +305,18 @@ Global
 		{8D4F24E6-B22D-48C2-A090-D9E4A0B22056}.Release|x64.Build.0 = Release|Any CPU
 		{8D4F24E6-B22D-48C2-A090-D9E4A0B22056}.Release|x86.ActiveCfg = Release|Any CPU
 		{8D4F24E6-B22D-48C2-A090-D9E4A0B22056}.Release|x86.Build.0 = Release|Any CPU
+		{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4}.Debug|x64.Build.0 = Debug|Any CPU
+		{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4}.Debug|x86.Build.0 = Debug|Any CPU
+		{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4}.Release|x64.ActiveCfg = Release|Any CPU
+		{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4}.Release|x64.Build.0 = Release|Any CPU
+		{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4}.Release|x86.ActiveCfg = Release|Any CPU
+		{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -330,5 +346,6 @@ Global
 		{3DBB52D4-A645-41F8-B30D-8E16B2123964} = {CBFC7D09-D20A-3BD9-57E9-57A87E6AFCC2}
 		{D2A3C4C6-3735-496E-BDC6-6C510F42984E} = {0EC62A1A-9858-3A60-8A0C-FC9AACFA2EC7}
 		{8D4F24E6-B22D-48C2-A090-D9E4A0B22056} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
 	EndGlobalSection
 EndGlobal
