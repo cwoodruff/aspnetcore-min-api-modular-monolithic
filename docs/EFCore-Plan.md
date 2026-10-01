@@ -234,7 +234,7 @@ Current implementation status (updated 2026-01)
 - SharedKernel.DataSQLite project:
     - Concrete repository implementations for all entities above.
     - `BaseRepository<T>` with common CRUD operations.
-- Host wiring (src/ModularMonolith.Api/Program.cs):
+- Host wiring (src/ModularMonolith.Api/HostComposition.cs):
     - Auto-discovers SQLite file path from
       `src/ModularMonolith.Api/data/chinook.db` or repo root `/data/chinook.db`.
     - Sets `ConnectionStrings:AppDatabase` at runtime when not provided.
@@ -244,8 +244,8 @@ Current implementation status (updated 2026-01)
     - Integration tests use `WebApplicationFactory<Program>` with SQLite.
     - Repository unit tests in `tests/ModularMonolith.Api.Tests/Repositories/`.
 - Target frameworks:
-    - Individual csproj files specify `net10.0`, overriding
-      `Directory.Build.props` which specifies `net9.0`.
+    - `Directory.Build.props` specifies `net10.0`; individual csproj files do
+      not override it.
 
 Tips and commands
 

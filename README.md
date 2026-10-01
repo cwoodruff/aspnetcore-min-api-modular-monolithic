@@ -12,6 +12,9 @@ docs/Walkthrough.md.
 ```
 /src
   /ModularMonolith.Api                     (ASP.NET Core 10 Web API host, Minimal APIs)
+    Program.cs                             (middleware pipeline and endpoint mapping)
+    HostComposition.cs                     (service registration and the explicit module list)
+    ModuleComposition.cs                   (startup checks: duplicate routes, unknown policies)
   /Modules
     /Catalog/Catalog.Module                    (Class Library)
       /Services                            (IArtistService, IAlbumService, ITrackService, IPlaylistService)
@@ -42,7 +45,8 @@ docs/Walkthrough.md.
 /tests
   /ModularMonolith.Api.Tests               (xUnit integration tests using WebApplicationFactory)
   /ModularMonolith.Services.Tests          (xUnit service-layer tests for Catalog, Orders, and Administration)
-  /ModularMonolith.Architecture.Tests      (Architecture tests, including module public-surface enforcement)
+  /ModularMonolith.Architecture.Tests      (Architecture tests: public surface, module boundaries, guardrails)
+/docs/adr                                  (Architecture decision records)
 ```
 
 ## Module contract
@@ -66,6 +70,25 @@ CatalogModule.Modules). The Identity module also exposes
 default, and `tests/ModularMonolith.Architecture.Tests/PublicSurfaceTests.cs`
 locks that boundary by asserting each module assembly exports only its intended
 composition surface.
+
+## Guardrails
+
+Module ownership is recorded in
+[ADR-0001](docs/adr/0001-module-map-and-ownership.md); every later boundary
+decision gets its own record in [docs/adr/](docs/adr/README.md). The
+following checks keep the code consistent with those records:
+
+- `GuardrailTests` (in `ModularMonolith.Architecture.Tests`):
+    - each module grants `InternalsVisibleTo` to at most one assembly, and only
+      the test project listed for it in `ArchitectureConstants`;
+    - no constructor dependency of a module's internal services resolves to a
+      type in another module or the host (the container is built with the same
+      `HostComposition.ConfigureServices` the app uses);
+    - every authorization policy an endpoint references is registered;
+    - no two endpoints share a route and HTTP method.
+- `ModuleComposition.ValidateEndpoints(app)` runs the last two checks at
+  startup in the Development and Test environments and refuses to start,
+  listing each problem, if either fails.
 
 ## Service layer architecture
 
@@ -220,6 +243,8 @@ Swagger/OpenAPI and the extra operational metadata are only exposed in
       module public-surface enforcement.
     - The host exposes a public partial Program class to support
       Microsoft.AspNetCore.Mvc.Testing’s WebApplicationFactory.
+- CI: `.github/workflows/dotnet.yml` builds and tests the solution on every
+  push to `main` and every pull request.
 
 ### Example curl commands
 
@@ -241,10 +266,6 @@ docker build -t modular-monolith-api .
 docker run -p 8080:8080 modular-monolith-api
 ```
 
-- Current drift note: the checked-in `Dockerfile` still uses .NET 9 SDK/runtime
-  images even though the application projects target `net10.0`. Treat the file
-  as out of sync until it is updated; the local `dotnet` workflow above is the
-  authoritative path today.
 - Dev ports vs Docker ports: When running locally via launchSettings.json the
   app listens on http://localhost:5043 and https://localhost:7043. In the
   container, ASPNETCORE_URLS is set to http://+:8080, so
@@ -634,8 +655,9 @@ Notes
   under the host content root. If that file is missing, the resolver walks up
   the directory tree for any data/chinook.db; the repository deliberately no
   longer keeps one at its root, because that fallback is what the test suite
-  used to end up writing to. At startup, Program.cs auto-detects the file and
-  populates ConnectionStrings:AppDatabase when not provided.
+  used to end up writing to. At startup, `HostComposition.ConfigureServices`
+  auto-detects the file and populates ConnectionStrings:AppDatabase when not
+  provided.
 
 ### DbContext pooling and Repository pattern
 
@@ -643,8 +665,8 @@ Notes
 
 - You can set the SQLite connection via appsettings (ConnectionStrings:
   AppDatabase), environment variables (ConnectionStrings__AppDatabase), or rely
-  on auto-discovery in Program.cs which sets the key at runtime when not
-  provided.
+  on auto-discovery in `HostComposition.ConfigureServices`, which sets the key
+  at runtime when not provided.
 
 ### Caching configuration
 
@@ -739,7 +761,7 @@ Notes:
 
 - Repository interfaces are in `SharedKernel.Persistence/Repositories/`
 - Repository implementations are in `SharedKernel.DataSQLite/Repositories/`
-- The host registers all repositories in Program.cs
+- The host registers all repositories in `HostComposition.ConfigureServices`
 - The host computes an absolute SQLite Data Source to data/chinook.db at startup
 
 ## Documentation
@@ -748,6 +770,10 @@ Detailed documentation is available in the `/docs` folder:
 
 ### Architecture & Implementation
 
+- [Decision records](docs/adr/README.md) - ADRs, starting with the module map
+  and entity ownership
+- [Upgrade plan](docs/upgrade-plan.md) - Phased plan for the modular monolith
+  fixes; each phase is one branch and one PR
 - [Services Architecture](docs/services-architecture.md) - Service layer
   patterns, caching integration, and validation
 - [Validation Strategy](docs/validation-strategy.md) - FluentValidation
@@ -783,7 +809,7 @@ The solution includes three test projects:
 - `tests/ModularMonolith.Services.Tests/` - service-layer tests for Catalog,
   Orders, and Administration
 - `tests/ModularMonolith.Architecture.Tests/` - architecture tests such as
-  `PublicSurfaceTests`
+  `PublicSurfaceTests` and `GuardrailTests`
 
 Representative coverage areas include:
 
@@ -795,7 +821,7 @@ Representative coverage areas include:
 | Rate limiting      | 429 response behavior tests                       |
 | Caching behavior   | Cache consistency and stampede prevention tests   |
 | Error scenarios    | Invalid JSON, validation errors, edge cases       |
-| Architecture       | Module public-surface enforcement and boundaries  |
+| Architecture       | Public surface, boundaries, DI, routes, policies  |
 
 Run tests with coverage:
 

@@ -43,4 +43,17 @@ internal static class ArchitectureConstants
         SharedKernelPersistenceAssembly,
         SharedKernelDataSQLiteAssembly
     ];
+
+    // The only test assembly each module may grant InternalsVisibleTo. Null means none.
+    // Catalog, Orders and Administration share the services test project until per-module
+    // test hosts arrive (upgrade plan phase 8); tighten this map then, never loosen it.
+    public static readonly IReadOnlyDictionary<string, string?> AllowedInternalsVisibleTo =
+        new Dictionary<string, string?>
+        {
+            [CatalogAssembly] = "ModularMonolith.Services.Tests",
+            [OrdersAssembly] = "ModularMonolith.Services.Tests",
+            [AdminAssembly] = "ModularMonolith.Services.Tests",
+            [IdentityAssembly] = "ModularMonolith.Api.Tests",
+            [ReportingAssembly] = null
+        };
 }
