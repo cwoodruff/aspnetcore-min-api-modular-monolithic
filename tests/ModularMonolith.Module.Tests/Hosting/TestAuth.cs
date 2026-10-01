@@ -96,16 +96,16 @@ public sealed record TestUser(string[] Permissions, string[] Roles, string Tenan
 {
     /// <summary>The tenant user the full-host tests used by default: catalog.read and orders.read.</summary>
     public static TestUser TenantUser(string tenant = "tenant-123", string[]? permissions = null, string[]? roles = null) =>
-        new(permissions ?? [Identity.Contracts.Permissions.CatalogRead, Identity.Contracts.Permissions.OrdersRead],
+        new(permissions ?? [global::Identity.Contracts.Permissions.CatalogRead, global::Identity.Contracts.Permissions.OrdersRead],
             roles ?? ["User"], tenant);
 
     /// <summary>An administrator with the administration permissions.</summary>
     public static TestUser Admin(string tenant = "tenant-123", string[]? permissions = null) =>
         new(permissions ??
             [
-                Identity.Contracts.Permissions.CatalogRead, Identity.Contracts.Permissions.OrdersRead,
-                Identity.Contracts.Permissions.AdminUsersManage, Identity.Contracts.Permissions.AdministrationRead,
-                Identity.Contracts.Permissions.AdministrationWrite
+                global::Identity.Contracts.Permissions.CatalogRead, global::Identity.Contracts.Permissions.OrdersRead,
+                global::Identity.Contracts.Permissions.AdminUsersManage, global::Identity.Contracts.Permissions.AdministrationRead,
+                global::Identity.Contracts.Permissions.AdministrationWrite
             ],
             ["Admin"], tenant);
 }
