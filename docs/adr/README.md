@@ -32,3 +32,5 @@ record that supersedes the old one and update the old one's Status line.
 | [0011](0011-authorization-names-are-compiled-contracts.md) | Authorization names are compiled constants | Accepted |
 | [0012](0012-shared-kernel-budget.md) | Shared kernel budget and dependency fences | Accepted |
 | [0013](0013-per-module-bulkheads.md) | Per-module bulkheads inside one process | Accepted |
+| [0014](0014-reporting-read-model-as-views.md) | Reporting reads across modules through views, as a read-only role | Accepted |
+| [0015](0015-orphan-detection.md) | Detect orphaned cross-module references; do not repair them | Accepted |

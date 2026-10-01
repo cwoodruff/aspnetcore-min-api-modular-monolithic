@@ -12,8 +12,8 @@ public static class DbSeeder
     public const string SeedScriptRelativePath = "data/chinook-postgres-seed.sql";
 
     // Schemas in migration order. Each module's history table lives in its own schema (ADR-0003).
-    // Reporting joins this list in phase 6.
-    private static readonly string[] MigrationOrder = ["administration", "catalog", "orders"];
+    // Reporting is last: its views read the other three schemas (ADR-0014).
+    private static readonly string[] MigrationOrder = ["administration", "catalog", "orders", "reporting"];
 
     public static async Task MigrateAndSeedAsync(IServiceProvider services, string seedScriptPath,
         CancellationToken ct = default)

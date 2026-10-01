@@ -23,18 +23,37 @@ public static class ModuleDbContextOptions
     /// module name, so the host can migrate every module's context and the outbox dispatcher can find a
     /// handler's inbox without seeing the module's internal types, and it gets a health check (ADR-0013).
     /// </summary>
+    /// <param name="connectionName">The connection string the module's services use.</param>
+    /// <param name="migrationConnectionName">
+    /// When set, the keyed <see cref="DbContext" /> (what the host migrates) uses this connection instead:
+    /// for a module whose runtime login may not change the schema, such as Reporting's read-only role
+    /// (ADR-0014).
+    /// </param>
     public static IServiceCollection AddModuleDbContext<TContext>(this IServiceCollection services,
-        string moduleName, string schema)
+        string moduleName, string schema, string connectionName = ConnectionName, string? migrationConnectionName = null)
         where TContext : DbContext
     {
         // Read from the provider rather than a captured configuration: sources added after registration —
         // WebApplicationFactory.ConfigureAppConfiguration, which is how the tests point the host at their
         // own database — reach only the built host's configuration.
         services.AddDbContextPool<TContext>(
-            (sp, options) => Use(options, sp.GetRequiredService<IConfiguration>().GetConnectionString(ConnectionName), schema),
+            (sp, options) => Use(options, sp.GetRequiredService<IConfiguration>().GetConnectionString(connectionName), schema),
             poolSize: 128);
 
-        services.AddKeyedScoped<DbContext>(moduleName, (sp, _) => sp.GetRequiredService<TContext>());
+        if (migrationConnectionName is null || migrationConnectionName == connectionName)
+        {
+            services.AddKeyedScoped<DbContext>(moduleName, (sp, _) => sp.GetRequiredService<TContext>());
+        }
+        else
+        {
+            services.AddKeyedScoped<DbContext>(moduleName, (sp, _) =>
+            {
+                var options = new DbContextOptionsBuilder<TContext>();
+                Use(options, sp.GetRequiredService<IConfiguration>().GetConnectionString(migrationConnectionName), schema);
+                return ActivatorUtilities.CreateInstance<TContext>(sp, options.Options);
+            });
+        }
+
         services.AddModuleDbContextHealthCheck<TContext>(moduleName);
         return services;
     }

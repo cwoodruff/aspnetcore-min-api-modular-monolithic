@@ -3,22 +3,24 @@ using Catalog.Modules;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orders.Modules;
+using Reporting.Modules;
 using SharedKernel.Events;
 
 namespace ModularMonolith.Services.Tests;
 
 /// <summary>
-///     The three data modules registered into one container, as the host registers them, without the
+///     The four data modules registered into one container, as the host registers them, without the
 ///     web host. The outbox dispatcher is not started; tests call it directly.
 /// </summary>
 internal static class ModuleHost
 {
-    public static ServiceProvider Build(string connectionString, TimeProvider time)
+    public static ServiceProvider Build(string connectionString, TimeProvider time, string? readerConnectionString = null)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:AppDatabase"] = connectionString,
+                ["ConnectionStrings:Reporting"] = readerConnectionString ?? connectionString,
                 ["Outbox:Enabled"] = "false"
             })
             .Build();
@@ -32,6 +34,7 @@ internal static class ModuleHost
         new AdministrationModule.Modules().RegisterServices(services, configuration);
         new CatalogModule.Modules().RegisterServices(services, configuration);
         new OrdersModule.Modules().RegisterServices(services, configuration);
+        new ReportingModule.Modules().RegisterServices(services, configuration);
 
         return services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
     }

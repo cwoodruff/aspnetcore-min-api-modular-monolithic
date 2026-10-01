@@ -3,6 +3,7 @@ using Catalog.Modules.Data;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Orders.Modules.Data;
+using Reporting.Modules.Data;
 using Respawn;
 using SharedKernel.Persistence;
 using Testcontainers.PostgreSql;
@@ -23,7 +24,11 @@ public sealed class ModuleDatabaseDefinition : ICollectionFixture<ModuleDatabase
 public sealed class ModuleDatabaseFixture : IAsyncLifetime
 {
     private static readonly string[] ModuleSchemas =
-        [AdministrationDbContext.Schema, CatalogDbContext.Schema, OrdersDbContext.Schema];
+        [AdministrationDbContext.Schema, CatalogDbContext.Schema, OrdersDbContext.Schema, ReportingDbContext.Schema];
+
+    // A login in the read-only reporting_reader role the Reporting migration grants to (ADR-0014).
+    private const string ReaderLogin = "reporting_test";
+    private const string ReaderPassword = "reporting_test";
 
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:17-alpine")
         .WithCommand("-c", "fsync=off", "-c", "synchronous_commit=off", "-c", "full_page_writes=off")
@@ -32,6 +37,13 @@ public sealed class ModuleDatabaseFixture : IAsyncLifetime
     private Respawner? _respawner;
 
     internal string ConnectionString => _container.GetConnectionString();
+
+    /// <summary>The same database as the read-only reporting login.</summary>
+    internal string ReaderConnectionString => new NpgsqlConnectionStringBuilder(ConnectionString)
+    {
+        Username = ReaderLogin,
+        Password = ReaderPassword
+    }.ToString();
 
     public async Task InitializeAsync()
     {
@@ -53,8 +65,20 @@ public sealed class ModuleDatabaseFixture : IAsyncLifetime
             await orders.Database.MigrateAsync();
         }
 
+        // Reporting migrates as the owner; its runtime login only reads (ADR-0014).
+        await using (var reporting = new ReportingDbContext(Options<ReportingDbContext>(ReportingDbContext.Schema)))
+        {
+            await reporting.Database.MigrateAsync();
+        }
+
         await using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
+        await using (var login = new NpgsqlCommand(
+                         $"CREATE ROLE {ReaderLogin} LOGIN PASSWORD '{ReaderPassword}' IN ROLE reporting_reader", connection))
+        {
+            await login.ExecuteNonQueryAsync();
+        }
+
         _respawner = await Respawner.CreateAsync(connection, new RespawnerOptions
         {
             SchemasToInclude = ModuleSchemas,
@@ -84,6 +108,14 @@ public sealed class ModuleDatabaseFixture : IAsyncLifetime
 
     internal CatalogDbContext CreateCatalogContext() =>
         new(Options<CatalogDbContext>(CatalogDbContext.Schema));
+
+    /// <summary>Reporting's context as the module uses it at runtime: connected as the read-only login.</summary>
+    internal ReportingDbContext CreateReportingContext()
+    {
+        var builder = new DbContextOptionsBuilder<ReportingDbContext>();
+        ModuleDbContextOptions.Use(builder, ReaderConnectionString, ReportingDbContext.Schema);
+        return new ReportingDbContext(builder.Options);
+    }
 
     internal OrdersDbContext CreateOrdersContext() =>
         new(Options<OrdersDbContext>(OrdersDbContext.Schema));

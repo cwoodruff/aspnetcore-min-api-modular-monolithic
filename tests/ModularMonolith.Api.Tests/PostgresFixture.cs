@@ -20,6 +20,8 @@ namespace ModularMonolith.Api.Tests;
 public static class PostgresFixture
 {
     private const string TemplateDatabase = "chinook_template";
+    private const string ReaderLogin = "reporting";
+    private const string ReaderPassword = "reporting";
 
     private static readonly Lazy<Task<PostgreSqlContainer>> Container = new(StartAsync);
 
@@ -30,6 +32,10 @@ public static class PostgresFixture
 
     /// <summary>A new database holding the full Chinook seed.</summary>
     public static string CreateSeededDatabase() => RunSync(() => CloneAsync(TemplateDatabase));
+
+    /// <summary>The same database as the read-only reporting login.</summary>
+    public static string AsReportingReader(string connectionString) =>
+        new NpgsqlConnectionStringBuilder(connectionString) { Username = ReaderLogin, Password = ReaderPassword }.ToString();
 
     private static async Task<PostgreSqlContainer> StartAsync()
     {
@@ -43,6 +49,11 @@ public static class PostgresFixture
         await ExecuteAsync(container, $"CREATE DATABASE {TemplateDatabase}").ConfigureAwait(false);
         await MigrateAndSeedAsync(ConnectionString(container, TemplateDatabase, pooling: false)).ConfigureAwait(false);
 
+        // The Reporting migration created the read-only reporting_reader role; this is the login hosts use
+        // for ConnectionStrings:Reporting (ADR-0014). Roles are server-wide, so every clone sees it.
+        await ExecuteAsync(container,
+            $"CREATE ROLE {ReaderLogin} LOGIN PASSWORD '{ReaderPassword}' IN ROLE reporting_reader").ConfigureAwait(false);
+
         return container;
     }
 
@@ -52,6 +63,7 @@ public static class PostgresFixture
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = Environments.Development });
         builder.Configuration["ConnectionStrings:AppDatabase"] = connectionString;
+        builder.Configuration["ConnectionStrings:Reporting"] = connectionString;
         HostComposition.ConfigureServices(builder);
 
         await using var provider = builder.Services.BuildServiceProvider();

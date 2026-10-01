@@ -1,4 +1,3 @@
-#pragma warning disable CA1861 // Generated migration code
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 

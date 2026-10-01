@@ -14,7 +14,7 @@ references).
 | Orders | `OrdersDbContext` | `orders` | Invoice, InvoiceLine |
 | Administration | `AdministrationDbContext` | `administration` | Customer, Employee, Genre, MediaType |
 | Identity | none | | |
-| Reporting | none yet (a read-only context in phase 6) | | |
+| Reporting | `ReportingDbContext` | `reporting` | IntegrityFinding; keyless views `sales_by_genre`, `invoice_lines_with_names` over the other schemas (ADR-0014) |
 
 Each module keeps, all `internal`:
 
@@ -125,8 +125,11 @@ In Development and Test, when `Database:MigrateAndSeedOnStartup` is true, the
 host's `DbSeeder` (`src/ModularMonolith.Api/DbSeeder.cs`):
 
 1. resolves every module context registered as `DbContext`;
-2. migrates them in order: Administration, Catalog, Orders (Reporting joins in
-   phase 6), and fails on a context with no place in that order;
+2. migrates them in order: Administration, Catalog, Orders, Reporting (whose
+   views read the other three), and fails on a context with no place in that
+   order. Reporting's keyed context uses the owner connection for this; its
+   services use `ConnectionStrings:Reporting`, a login in the read-only
+   `reporting_reader` role the migration creates and grants;
 3. loads `data/chinook-postgres-seed.sql` in one transaction if
    `catalog."Track"` is empty.
 
@@ -135,8 +138,8 @@ Other environments apply migrations as a deployment step.
 ## Health checks
 
 Catalog, Orders and Administration report `connected` from their own
-context's `Database.CanConnectAsync`. Identity and Reporting own no tables
-yet; their data-health endpoints call `ModuleDbContextOptions.CanConnectAsync`,
+context's `Database.CanConnectAsync` (Reporting's as its read-only login). Identity owns no tables
+yet; its data-health endpoint calls `ModuleDbContextOptions.CanConnectAsync`,
 which only opens a connection.
 
 ## Tests

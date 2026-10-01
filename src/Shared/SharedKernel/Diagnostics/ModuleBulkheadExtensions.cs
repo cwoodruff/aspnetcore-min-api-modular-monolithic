@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Concurrency;
 
@@ -37,7 +38,9 @@ public static class ModuleBulkheadExtensions
             sp.GetRequiredKeyedService<ModuleMeter>(moduleName).ObserveQueueDepth(() => queue.Count);
             return queue;
         });
-        services.AddHostedService(sp => sp.GetRequiredKeyedService<ModuleWorkQueue>(moduleName));
+        // Not AddHostedService: it de-duplicates by implementation type, which would start only the first
+        // module's queue. Each module's queue is its own hosted service.
+        services.AddSingleton<IHostedService>(sp => sp.GetRequiredKeyedService<ModuleWorkQueue>(moduleName));
         return services;
     }
 

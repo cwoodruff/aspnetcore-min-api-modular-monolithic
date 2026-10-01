@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using SharedKernel;
-using SharedKernel.Persistence;
+using Reporting.Modules.Data;
 
 namespace Reporting.Modules.Endpoints;
 
@@ -13,10 +13,18 @@ internal static class ReportingDataHealthEndpoints
     public static void MapReportingDataHealthEndpoints(this IEndpointRouteBuilder group)
     {
         group.MapGet("/data-health",
-                async (IHostEnvironment env, IConfiguration cfg, CancellationToken ct) =>
+                async (ReportingDbContext db, IHostEnvironment env, IConfiguration cfg, CancellationToken ct) =>
                 {
-                    // No tables of its own yet; report whether the shared database is reachable.
-                    var canConnect = await ModuleDbContextOptions.CanConnectAsync(cfg, ct);
+                    // Connects as the read-only reporting role, as the module's queries do.
+                    bool canConnect;
+                    try
+                    {
+                        canConnect = await db.Database.CanConnectAsync(ct);
+                    }
+                    catch
+                    {
+                        canConnect = false;
+                    }
 
                     var timestampUtc = DateTime.UtcNow.ToString("O");
                     var status = canConnect ? "Data-Healthy" : "Degraded";

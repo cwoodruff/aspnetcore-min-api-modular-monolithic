@@ -54,4 +54,18 @@ public class BulkheadTests(ApiFactory factory) : IClassFixture<ApiFactory>
         measurement.Tags["module"].Should().Be("Catalog");
         measurement.Tags["status_code"].Should().Be(200);
     }
+
+    [Fact]
+    public void EveryModulesWorkQueue_IsAStartedHostedService()
+    {
+        // AddHostedService de-duplicates by type; a second module's queue was once silently dropped.
+        var host = factory.WithWebHostBuilder(_ => { });
+
+        var queues = host.Services.GetServices<Microsoft.Extensions.Hosting.IHostedService>()
+            .OfType<SharedKernel.Concurrency.ModuleWorkQueue>()
+            .Select(queue => queue.Module)
+            .Order(StringComparer.Ordinal);
+
+        queues.Should().Equal("Orders", "Reporting");
+    }
 }

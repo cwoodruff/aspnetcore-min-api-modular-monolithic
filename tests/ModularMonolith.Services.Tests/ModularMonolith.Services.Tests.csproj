@@ -28,6 +28,7 @@
     <ProjectReference Include="..\..\src\Modules\Administration\Admin.Module\Admin.Module.csproj" />
     <ProjectReference Include="..\..\src\Modules\Catalog\Catalog.Module\Catalog.Module.csproj" />
     <ProjectReference Include="..\..\src\Modules\Orders\Orders.Module\Orders.Module.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Module\Reporting.Module.csproj" />
     <ProjectReference Include="..\..\src\Shared\SharedKernel\SharedKernel.csproj" />
   </ItemGroup>
 

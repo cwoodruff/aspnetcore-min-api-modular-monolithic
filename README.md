@@ -30,7 +30,8 @@ docs/Walkthrough.md.
       /Administration.Contracts
       /Admin.Module                        (Customer, Employee, Genre, MediaType; AdministrationDbContext,
                                             schema "administration")
-    /Reporting/Reporting.Module            (health endpoints only; owns a read model from phase 6)
+    /Reporting/Reporting.Module            (ReportingDbContext, schema "reporting": cross-module views,
+                                            integrity findings; read-only role; no Contracts project)
     /Identity
       /Identity.Contracts
       /Identity.Module                     (tokens, users, authorization policies, key management)
@@ -255,6 +256,19 @@ Swagger/OpenAPI and the extra operational metadata are only exposed in
 - `GET /api/orders/outbox/dead-letters` and
   `POST /api/orders/outbox/dead-letters/{id}/retry` (`role.admin`): outbox
   messages whose delivery failed six times, and a way to send one again.
+
+### Reporting
+
+- `GET /api/reporting/sales-by-genre` and `GET /api/reporting/invoices/{id}/lines`
+  (`report.view`, `tenant.scoped`): read through views over the Catalog,
+  Orders and Administration schemas, as the read-only `reporting_reader`
+  role ([ADR-0014](docs/adr/0014-reporting-read-model-as-views.md)). At most
+  4 run at once (`Concurrency:Reporting:MaxConcurrentExpensive`).
+- `POST /api/reporting/integrity/run` and `GET /api/reporting/integrity/findings`
+  (`role.admin`): runs, and lists, the orphan checks for the four removed
+  cross-module foreign keys
+  ([ADR-0015](docs/adr/0015-orphan-detection.md)). The job also runs daily at
+  `Reporting:Integrity:RunAtUtc` (default 02:00 UTC). It never repairs data.
 
 The two read models are eventually consistent and count only invoices
 finalized through the endpoint; the seeded invoices start as `Draft`. See
@@ -745,6 +759,14 @@ Notes
   when `catalog."Track"` is empty. Turn it off with
   `Database:MigrateAndSeedOnStartup=false`. Other environments apply
   migrations as a deployment step.
+- Reporting connects with its own login, `ConnectionStrings:Reporting`, in the
+  read-only `reporting_reader` role that its migration creates and grants
+  (`SELECT` on the other three schemas, writes only to
+  `reporting.IntegrityFinding`). `appsettings.Development.json` points it at
+  the `reporting` login, which `docker/postgres-init` creates when the compose
+  volume is first made. On an older volume, create it once:
+  `docker exec -i modular-monolith-postgres psql -U chinook -d chinook < docker/postgres-init/01-reporting-login.sql`.
+  Other environments must provide a login in that role.
 - Upgrading a local database from phase 1: the history tables moved into the
   module schemas, so a phase 1 compose volume cannot be migrated in place. Run
   `docker compose down -v` once; the next `dotnet run` recreates and seeds it.

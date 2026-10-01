@@ -114,7 +114,7 @@ public class ModuleBoundaryTests
         using var scope = provider.CreateScope();
 
         var contexts = scope.ServiceProvider.GetKeyedServices<DbContext>(KeyedService.AnyKey).ToArray();
-        Assert.Equal(3, contexts.Length);
+        Assert.Equal(4, contexts.Length);
 
         // The one exception is the outbox/inbox plumbing SharedKernel defines for every module to map
         // into its own schema (ADR-0008); nothing domain-shaped lives in SharedKernel.
