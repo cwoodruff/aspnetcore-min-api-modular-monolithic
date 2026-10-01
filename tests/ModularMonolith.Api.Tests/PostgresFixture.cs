@@ -13,8 +13,8 @@ namespace ModularMonolith.Api.Tests;
 ///     Every host a test boots gets its own <c>CREATE DATABASE ... TEMPLATE</c> clone, so tests can
 ///     write freely and test classes keep running in parallel (the per-host isolation the copied
 ///     SQLite file used to give). The template is migrated and seeded by the host's own composition
-///     and <see cref="DbSeeder" />, so it has exactly the schema the app runs with. Service-level
-///     database tests live in ModularMonolith.Services.Tests. The container is removed by the
+///     and <see cref="DbSeeder" />, so it has exactly the schema the app runs with. Single-module
+///     tests live in ModularMonolith.Module.Tests, on hosts of their own. The container is removed by the
 ///     Testcontainers resource reaper when the test process exits.
 /// </remarks>
 public static class PostgresFixture
