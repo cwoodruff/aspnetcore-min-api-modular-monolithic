@@ -1,0 +1,22 @@
+# Local development database. Credentials are for this container only.
+# The API applies migrations and loads data/chinook-postgres-seed.sql on first start in Development.
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: modular-monolith-postgres
+    environment:
+      POSTGRES_DB: chinook
+      POSTGRES_USER: chinook
+      POSTGRES_PASSWORD: chinook
+    ports:
+      - "5432:5432"
+    volumes:
+      - chinook-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chinook -d chinook"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  chinook-data:
