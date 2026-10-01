@@ -81,11 +81,25 @@ following checks keep the code consistent with those records:
     - no constructor dependency of a module's internal services resolves to a
       type in another module or the host (the container is built with the same
       `HostComposition.ConfigureServices` the app uses);
-    - every authorization policy an endpoint references is registered;
-    - no two endpoints share a route and HTTP method.
-- `ModuleComposition.ValidateEndpoints(app)` runs the last two checks at
-  startup in the Development and Test environments and refuses to start,
+    - every authorization policy an endpoint references is registered, and
+      is a constant from `Identity.Contracts`
+      ([ADR-0011](docs/adr/0011-authorization-names-are-compiled-contracts.md));
+      no `RequireAuthorization("...")` literal exists in `src/`;
+    - no two endpoints share a route and HTTP method;
+    - integration event handlers are registered only as keyed services, and a
+      module's key resolves only that module's handlers.
+- `ModuleComposition.ValidateEndpoints(app)` runs the route and policy checks
+  at startup in the Development and Test environments and refuses to start,
   listing each problem, if either fails.
+- `ModuleBoundaryTests` and `SharedKernelDependencyTests` (ArchUnitNET): no
+  module depends on another module, no Contracts project or SharedKernel
+  depends on a module, `InvoiceFinalized` handlers know Orders only through
+  `Orders.Contracts`, and each module's `DbContext` maps only its own entities.
+- `FenceTests` ([ADR-0012](docs/adr/0012-shared-kernel-budget.md)): Contracts
+  projects hold only interfaces, enums, records and constants, and grant no
+  `InternalsVisibleTo`; `SharedKernel` exports at most 30 public types,
+  references no FluentValidation, module or Contracts assembly, and uses
+  Npgsql only from `SharedKernel.Persistence`.
 
 ## Service layer architecture
 
