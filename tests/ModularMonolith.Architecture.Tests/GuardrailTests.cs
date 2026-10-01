@@ -3,16 +3,22 @@ using System.Runtime.CompilerServices;
 using Admin.Modules;
 using Catalog.Modules;
 using Identity.Modules;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using ModularMonolith.Api;
 using Orders.Modules;
 using Reporting.Modules;
 
 namespace ModularMonolith.Architecture.Tests;
 
-public class GuardrailTests
+public class GuardrailTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
 {
     public static TheoryData<Type> ModuleTypes() =>
     [
@@ -104,5 +110,59 @@ public class GuardrailTests
                || name.StartsWith(ArchitectureConstants.SharedKernelAssembly, StringComparison.Ordinal)
                || name.EndsWith(".Contracts", StringComparison.Ordinal)
                || !firstParty.Contains(implementation);
+    }
+
+    [Fact]
+    public void Every_Authorization_Policy_Referenced_By_An_Endpoint_Is_Registered()
+    {
+        var endpoints = factory.Services.GetRequiredService<EndpointDataSource>().Endpoints;
+        var policyProvider = factory.Services.GetRequiredService<IAuthorizationPolicyProvider>();
+
+        Assert.Contains(endpoints, endpoint => endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>().Any(data => data.Policy is not null));
+        Assert.Empty(ModuleComposition.FindUnknownPolicies(endpoints, policyProvider));
+    }
+
+    [Fact]
+    public void No_Two_Endpoints_Share_Route_And_Method()
+    {
+        var endpoints = factory.Services.GetRequiredService<EndpointDataSource>().Endpoints;
+
+        Assert.NotEmpty(endpoints);
+        Assert.Empty(ModuleComposition.FindDuplicateRoutes(endpoints));
+    }
+
+    [Fact]
+    public void Endpoint_Validation_Reports_Duplicate_Routes_And_Unknown_Policies()
+    {
+        Endpoint[] endpoints =
+        [
+            FakeEndpoint("/api/catalog/albums", "GET", "first"),
+            FakeEndpoint("/API/Catalog/Albums/", "GET", "second"),
+            FakeEndpoint("/api/catalog/albums", "POST", "third", "music.write")
+        ];
+        var policyProvider = new DefaultAuthorizationPolicyProvider(Options.Create(new AuthorizationOptions()));
+
+        var duplicate = Assert.Single(ModuleComposition.FindDuplicateRoutes(endpoints));
+        Assert.Contains("first", duplicate, StringComparison.Ordinal);
+        Assert.Contains("second", duplicate, StringComparison.Ordinal);
+
+        var unknown = Assert.Single(ModuleComposition.FindUnknownPolicies(endpoints, policyProvider));
+        Assert.Contains("'music.write'", unknown, StringComparison.Ordinal);
+    }
+
+    private static RouteEndpoint FakeEndpoint(string route, string method, string name, string? policy = null)
+    {
+        var metadata = new List<object> { new HttpMethodMetadata([method]) };
+        if (policy is not null)
+        {
+            metadata.Add(new AuthorizeAttribute(policy));
+        }
+
+        return new RouteEndpoint(
+            _ => Task.CompletedTask,
+            RoutePatternFactory.Parse(route),
+            order: 0,
+            new EndpointMetadataCollection(metadata),
+            name);
     }
 }

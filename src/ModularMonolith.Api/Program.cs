@@ -101,6 +101,11 @@ foreach (var module in modules)
     module.MapEndpoints(app);
 }
 
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Test"))
+{
+    ModuleComposition.ValidateEndpoints(app);
+}
+
 app.Run();
 
 static async Task WriteProblemDetailsResponseAsync(HttpContext context)
