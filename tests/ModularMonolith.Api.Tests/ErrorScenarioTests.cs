@@ -11,8 +11,8 @@ namespace ModularMonolith.Api.Tests;
 /// <summary>
 ///     Tests for error scenarios including invalid JSON, validation errors, and edge cases.
 /// </summary>
-public class ErrorScenarioTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public class ErrorScenarioTests(ApiFactory factory)
+    : IClassFixture<ApiFactory>
 {
     private readonly WebApplicationFactory<Program> _factory = factory.WithWebHostBuilder(_ => { });
 

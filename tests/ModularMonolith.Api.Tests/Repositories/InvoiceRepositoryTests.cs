@@ -3,12 +3,13 @@ using SharedKernel.DataSQLite.Repositories;
 
 namespace ModularMonolith.Api.Tests.Repositories;
 
-public class InvoiceRepositoryTests
+[Collection(RepositoryDatabaseDefinition.Name)]
+public class InvoiceRepositoryTests(RepositoryDatabaseFixture database)
 {
     [Fact]
     public async Task GetByCustomerId_ShouldReturnInvoicesForCustomer()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new InvoiceRepository(ctx);
 
@@ -20,7 +21,7 @@ public class InvoiceRepositoryTests
     [Fact]
     public async Task UnknownIds_ShouldReturnEmpty()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new InvoiceRepository(ctx);
 

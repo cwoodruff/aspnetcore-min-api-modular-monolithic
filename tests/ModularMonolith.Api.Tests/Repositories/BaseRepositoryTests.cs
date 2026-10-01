@@ -4,12 +4,13 @@ using SharedKernel.Persistence.Entities;
 
 namespace ModularMonolith.Api.Tests.Repositories;
 
-public class BaseRepositoryTests
+[Collection(RepositoryDatabaseDefinition.Name)]
+public class BaseRepositoryTests(RepositoryDatabaseFixture database)
 {
     [Fact]
     public async Task EntityExists_ShouldReturnTrueForExistingAndFalseForMissing()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new GenreRepository(ctx);
 
@@ -20,7 +21,7 @@ public class BaseRepositoryTests
     [Fact]
     public async Task GetAll_ShouldReturnSeededEntities()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new GenreRepository(ctx);
 
@@ -32,7 +33,7 @@ public class BaseRepositoryTests
     [Fact]
     public async Task GetById_ShouldReturnExistingEntity()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new GenreRepository(ctx);
 
@@ -44,7 +45,7 @@ public class BaseRepositoryTests
     [Fact]
     public async Task Add_Update_Delete_ShouldWork()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new GenreRepository(ctx);
 
@@ -71,9 +72,9 @@ public class BaseRepositoryTests
     }
 
     [Fact]
-    public void GetByCondition_ShouldFilterEntities()
+    public async Task GetByCondition_ShouldFilterEntities()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new GenreRepository(ctx);
 

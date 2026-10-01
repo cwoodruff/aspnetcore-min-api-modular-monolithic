@@ -9,8 +9,8 @@ namespace ModularMonolith.Api.Tests;
 ///     Tests for rate limiting behavior (429 responses).
 ///     The default policy is 60 requests per 60 seconds per IP.
 /// </summary>
-public class RateLimitingTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public class RateLimitingTests(ApiFactory factory)
+    : IClassFixture<ApiFactory>
 {
     private readonly WebApplicationFactory<Program> _factory = factory.WithWebHostBuilder(_ => { });
 

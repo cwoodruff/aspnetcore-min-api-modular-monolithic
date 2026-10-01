@@ -71,7 +71,6 @@ public static class TestAuthHelpers
             builder.UseEnvironment("Development");
             builder.ConfigureAppConfiguration((_, config) =>
             {
-                config.AddInMemoryCollection(BuildPersistenceConfiguration());
                 config.AddInMemoryCollection(BuildIdentityUserConfiguration(users));
             });
             builder.ConfigureServices(services =>
@@ -96,7 +95,6 @@ public static class TestAuthHelpers
             builder.UseEnvironment("Production");
             builder.ConfigureAppConfiguration((_, config) =>
             {
-                config.AddInMemoryCollection(BuildPersistenceConfiguration());
                 config.AddInMemoryCollection(BuildIdentityUserConfiguration(users));
             });
         });
@@ -112,7 +110,6 @@ public static class TestAuthHelpers
             builder.UseEnvironment("Development");
             builder.ConfigureAppConfiguration((_, config) =>
             {
-                config.AddInMemoryCollection(BuildPersistenceConfiguration());
                 config.AddInMemoryCollection(BuildIdentityUserConfiguration(users));
             });
         });
@@ -128,7 +125,6 @@ public static class TestAuthHelpers
         {
             builder.ConfigureAppConfiguration((_, config) =>
             {
-                config.AddInMemoryCollection(BuildPersistenceConfiguration());
             });
             builder.ConfigureServices(services =>
             {
@@ -310,42 +306,5 @@ public static class TestAuthHelpers
         }
 
         return configuration;
-    }
-
-    private static Dictionary<string, string?> BuildPersistenceConfiguration()
-    {
-        var root = FindRepositoryRoot();
-        var sourceDbPath = Path.Combine(root, "src", "ModularMonolith.Api", "data", "chinook.db");
-        var testDataDirectory = Path.Combine(AppContext.BaseDirectory, "TestData");
-        Directory.CreateDirectory(testDataDirectory);
-
-        var dbPath = Path.Combine(testDataDirectory, $"chinook-{Guid.NewGuid():N}.db");
-        using (var source = new FileStream(sourceDbPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-        using (var destination = new FileStream(dbPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-        {
-            source.CopyTo(destination);
-        }
-
-        return new Dictionary<string, string?>
-        {
-            ["ConnectionStrings:AppDatabase"] = $"Data Source={dbPath}"
-        };
-    }
-
-    private static string FindRepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "ModularMonolith.Api.sln")))
-            {
-                return current.FullName;
-            }
-
-            current = current.Parent;
-        }
-
-        throw new InvalidOperationException("Could not locate repository root for test database configuration.");
     }
 }

@@ -3,12 +3,13 @@ using SharedKernel.DataSQLite.Repositories;
 
 namespace ModularMonolith.Api.Tests.Repositories;
 
-public class AlbumRepositoryTests
+[Collection(RepositoryDatabaseDefinition.Name)]
+public class AlbumRepositoryTests(RepositoryDatabaseFixture database)
 {
     [Fact]
     public async Task GetByArtistId_ShouldReturnAlbumsForArtist()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new AlbumRepository(ctx);
 
@@ -20,7 +21,7 @@ public class AlbumRepositoryTests
     [Fact]
     public async Task GetByArtistId_ShouldReturnEmptyWhenNoAlbums()
     {
-        using var ctx = TestDbHelpers.CreateInMemoryContext(Guid.NewGuid().ToString());
+        await using var ctx = await database.CreateCleanContextAsync();
         TestDbHelpers.SeedMinimalGraph(ctx);
         var repo = new AlbumRepository(ctx);
 

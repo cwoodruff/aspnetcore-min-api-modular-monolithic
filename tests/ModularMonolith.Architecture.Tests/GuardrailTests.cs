@@ -5,10 +5,12 @@ using Catalog.Modules;
 using Identity.Modules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Patterns;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -18,7 +20,7 @@ using Reporting.Modules;
 
 namespace ModularMonolith.Architecture.Tests;
 
-public class GuardrailTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class GuardrailTests(HostWithoutDatabaseFactory factory) : IClassFixture<HostWithoutDatabaseFactory>
 {
     public static TheoryData<Type> ModuleTypes() =>
     [
@@ -164,5 +166,21 @@ public class GuardrailTests(WebApplicationFactory<Program> factory) : IClassFixt
             order: 0,
             new EndpointMetadataCollection(metadata),
             name);
+    }
+}
+
+/// <summary>
+/// The real host with startup migration and seeding switched off. These tests read the composed
+/// endpoints and services only, so they need no database.
+/// </summary>
+public sealed class HostWithoutDatabaseFactory : WebApplicationFactory<Program>
+{
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.ConfigureAppConfiguration((_, config) =>
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Database:MigrateAndSeedOnStartup"] = "false"
+            }));
     }
 }

@@ -9,8 +9,8 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace ModularMonolith.Api.Tests;
 
-public class HealthEndpointsTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public class HealthEndpointsTests(ApiFactory factory)
+    : IClassFixture<ApiFactory>
 {
     private static readonly string[] HealthyStatuses = ["Healthy"];
     private static readonly string[] DataHealthyStatuses = ["Data-Healthy", "Degraded"];

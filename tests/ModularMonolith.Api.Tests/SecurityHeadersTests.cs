@@ -9,8 +9,8 @@ namespace ModularMonolith.Api.Tests;
 ///     The OWASP security headers must be present on every response, including the ones
 ///     written by the exception handler (which clears the response before writing).
 /// </summary>
-public class SecurityHeadersTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public class SecurityHeadersTests(ApiFactory factory)
+    : IClassFixture<ApiFactory>
 {
     private static readonly string[] SecurityHeaders =
     [

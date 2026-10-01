@@ -40,7 +40,7 @@ docs/Walkthrough.md.
       /ApiModels                           (AlbumApiModel, ArtistApiModel, etc.)
       /Repositories                        (IAlbumRepository, IArtistRepository, etc.)
       /Validation                          (FluentValidation validators)
-    /SharedKernel.DataSQLite               (Class Library for SQLite repository implementations)
+    /SharedKernel.DataSQLite               (Class Library for EF Core repository implementations; name predates PostgreSQL)
       /Repositories                        (AlbumRepository, ArtistRepository, BaseRepository<T>)
 /tests
   /ModularMonolith.Api.Tests               (xUnit integration tests using WebApplicationFactory)
@@ -227,13 +227,31 @@ For `data-health`, the `status` value is `Data-Healthy` or `Degraded`.
 Swagger/OpenAPI and the extra operational metadata are only exposed in
 `Development` or `Demo`.
 
+## Run it
+
+The app needs PostgreSQL 17. Start the local database, then run the API:
+
+```
+docker compose up -d
+dotnet run --project src/ModularMonolith.Api
+```
+
+In Development the API applies migrations and loads the Chinook seed
+(`data/chinook-postgres-seed.sql`) on first start, then serves
+http://localhost:5043. Check it with
+`curl http://localhost:5043/api/catalog/data-health`, which should report
+`"connected": true`. `docker compose down -v` deletes the database volume, and
+the next start seeds it again.
+
 ## Build, run, and test
 
 - Build: `dotnet build ModularMonolith.Api.sln`
-- Run: `dotnet run --project src/ModularMonolith.Api`
+- Run: see [Run it](#run-it)
 - Swagger UI (Development/Demo only): http://localhost:5043/swagger (or the
   https port from launch settings)
-- Tests: `dotnet test ModularMonolith.Api.sln`
+- Tests: `dotnet test ModularMonolith.Api.sln` (needs Docker; the integration
+  tests start their own PostgreSQL container with Testcontainers, so the compose
+  database does not have to be running)
     - Solution-level runs include `ModularMonolith.Api.Tests`,
       `ModularMonolith.Services.Tests`, and
       `ModularMonolith.Architecture.Tests`.
@@ -263,8 +281,14 @@ Build and run the container:
 
 ```
 docker build -t modular-monolith-api .
-docker run -p 8080:8080 modular-monolith-api
+docker run -p 8080:8080 \
+  -e ConnectionStrings__AppDatabase="Host=host.docker.internal;Port=5432;Database=chinook;Username=chinook;Password=chinook" \
+  modular-monolith-api
 ```
+
+- The container needs a connection string. Outside Development it does not
+  migrate or seed, so point it at a database that already has the schema and
+  data, such as the compose database after one `dotnet run` in Development.
 
 - Dev ports vs Docker ports: When running locally via launchSettings.json the
   app listens on http://localhost:5043 and https://localhost:7043. In the
@@ -596,7 +620,7 @@ through `GET /api/identity/.well-known/jwks.json`.
     - Key shape example: {env}:{app}:catalog:album:v1::::by-id:{id}
     - Default TTL: 20 minutes (with jitter to avoid stampede). Adjust via
       Caching:* configuration if needed.
-- Data source: SQLite (chinook.db) via AppDbContext; includes Artist info.
+- Data source: PostgreSQL (`catalog` schema) via AppDbContext; includes Artist info.
 
 How it works
 
@@ -649,24 +673,31 @@ Notes
 
 ## Data and persistence
 
-- EF Core plan (single SQLite DbContext shared by all modules): see
-  docs/EFCore-Plan.md
-- Database file location: The app uses src/ModularMonolith.Api/data/chinook.db,
-  under the host content root. If that file is missing, the resolver walks up
-  the directory tree for any data/chinook.db; the repository deliberately no
-  longer keeps one at its root, because that fallback is what the test suite
-  used to end up writing to. At startup, `HostComposition.ConfigureServices`
-  auto-detects the file and populates ConnectionStrings:AppDatabase when not
-  provided.
+- Engine: PostgreSQL 17, one `AppDbContext` shared by all modules for now. See
+  [ADR-0002](docs/adr/0002-database-engine.md) and docs/EFCore-Plan.md.
+- Schemas: each table lives in the schema of the module that owns it
+  (`catalog`, `orders`, `administration`; see
+  [ADR-0001](docs/adr/0001-module-map-and-ownership.md)).
+- Migrations: `src/Shared/SharedKernel.Persistence/Migrations`. The `dotnet-ef`
+  tool is pinned in `dotnet-tools.json`; run `dotnet tool restore` once, then
+  for example
+  `dotnet ef migrations list --project src/Shared/SharedKernel.Persistence`.
+  The design-time factory reads `ConnectionStrings__AppDatabase` and falls back
+  to the compose database.
+- Seed: `data/chinook-postgres-seed.sql`, loaded by `DbSeeder` in Development
+  and Test when `catalog."Track"` is empty. Turn it off with
+  `Database:MigrateAndSeedOnStartup=false`. Other environments apply
+  migrations as a deployment step.
 
 ### DbContext pooling and Repository pattern
 
 #### Connection string configuration
 
-- You can set the SQLite connection via appsettings (ConnectionStrings:
-  AppDatabase), environment variables (ConnectionStrings__AppDatabase), or rely
-  on auto-discovery in `HostComposition.ConfigureServices`, which sets the key
-  at runtime when not provided.
+- Set the PostgreSQL connection via appsettings (ConnectionStrings:
+  AppDatabase), user secrets, or the environment variable
+  ConnectionStrings__AppDatabase. `appsettings.Development.json` points at the
+  compose database; `appsettings.json` has no default, and the app refuses to
+  create a DbContext without one.
 
 ### Caching configuration
 
@@ -762,7 +793,7 @@ Notes:
 - Repository interfaces are in `SharedKernel.Persistence/Repositories/`
 - Repository implementations are in `SharedKernel.DataSQLite/Repositories/`
 - The host registers all repositories in `HostComposition.ConfigureServices`
-- The host computes an absolute SQLite Data Source to data/chinook.db at startup
+- The host reads the PostgreSQL connection string from ConnectionStrings:AppDatabase
 
 ## Documentation
 
@@ -805,7 +836,10 @@ Detailed documentation is available in the `/docs` folder:
 The solution includes three test projects:
 
 - `tests/ModularMonolith.Api.Tests/` - integration tests using
-  `WebApplicationFactory`
+  `WebApplicationFactory`, against PostgreSQL in a Testcontainers container.
+  Each test host gets its own clone of a seeded template database, so test
+  classes run in parallel; repository tests share an empty database reset with
+  Respawn (`PostgresFixture`, `ApiFactory`, `RepositoryDatabaseFixture`)
 - `tests/ModularMonolith.Services.Tests/` - service-layer tests for Catalog,
   Orders, and Administration
 - `tests/ModularMonolith.Architecture.Tests/` - architecture tests such as

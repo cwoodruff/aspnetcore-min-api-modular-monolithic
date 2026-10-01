@@ -1,5 +1,12 @@
 ### EF Core plan for the modular monolith (SQLite, single DbContext)
 
+> **Provider note (phase 1):** the database is now PostgreSQL 17, with each table in
+> its owning module's schema, an EF Core `InitialSchema` migration, and the
+> Chinook seed in `data/chinook-postgres-seed.sql`. See
+> [ADR-0002](adr/0002-database-engine.md). The SQLite details below are out of
+> date; this document is rewritten for the per-module `DbContext` shape in
+> phase 2 of [the upgrade plan](upgrade-plan.md).
+
 **Status: Implemented**
 
 This document outlines how Entity Framework Core is integrated into this modular

@@ -1,5 +1,4 @@
 using FluentValidation;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,7 +8,7 @@ namespace SharedKernel.Persistence;
 
 public static class PersistenceRegistration
 {
-    private const string ConnectionName = "AppDatabase";
+    public const string ConnectionName = "AppDatabase";
 
     public static IServiceCollection AddKernelPersistence(this IServiceCollection services,
         IConfiguration configuration)
@@ -19,16 +18,11 @@ public static class PersistenceRegistration
             {
                 // Read from the provider rather than the captured configuration: sources added after
                 // registration — WebApplicationFactory.ConfigureAppConfiguration, which is how the
-                // tests point the host at their own copy — reach only the built host's configuration.
+                // tests point the host at their own database — reach only the built host's configuration.
                 var hostConfiguration = sp.GetService<IConfiguration>() ?? configuration;
-                var connectionString =
-                    ResolveConnectionString(hostConfiguration.GetConnectionString(ConnectionName));
-
-                options.UseSqlite(connectionString,
-                    sqlite => { sqlite.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName); });
+                UseAppDatabase(options, hostConfiguration.GetConnectionString(ConnectionName));
             }, 128);
 
-        // services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
         // Register FluentValidation validators
@@ -37,49 +31,19 @@ public static class PersistenceRegistration
         return services;
     }
 
-    private static string ResolveConnectionString(string? configuredConnectionString)
+    /// <summary>
+    /// The single place the provider is chosen, shared by the host, the design-time factory and tests.
+    /// </summary>
+    public static DbContextOptionsBuilder UseAppDatabase(DbContextOptionsBuilder options, string? connectionString)
     {
-        if (!string.IsNullOrWhiteSpace(configuredConnectionString))
+        if (string.IsNullOrWhiteSpace(connectionString))
         {
-            var builder = new SqliteConnectionStringBuilder(configuredConnectionString);
-            if (!string.IsNullOrWhiteSpace(builder.DataSource))
-            {
-                var candidatePath = Path.IsPathRooted(builder.DataSource)
-                    ? builder.DataSource
-                    : Path.GetFullPath(builder.DataSource, AppContext.BaseDirectory);
-
-                if (HasUsableDb(candidatePath))
-                {
-                    builder.DataSource = candidatePath;
-                    return builder.ToString();
-                }
-            }
+            throw new InvalidOperationException(
+                $"ConnectionStrings:{ConnectionName} is not configured. For local development run " +
+                "'docker compose up -d' and use the Development environment, or set ConnectionStrings__AppDatabase.");
         }
 
-        var dbPath = FindUsableDatabasePath() ?? Path.Combine(AppContext.BaseDirectory, "data", "chinook.db");
-        Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
-        return new SqliteConnectionStringBuilder { DataSource = dbPath }.ToString();
-    }
-
-    private static string? FindUsableDatabasePath()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            var candidate = Path.Combine(current.FullName, "data", "chinook.db");
-            if (HasUsableDb(candidate))
-            {
-                return candidate;
-            }
-
-            current = current.Parent;
-        }
-
-        return null;
-    }
-
-    private static bool HasUsableDb(string path)
-    {
-        return File.Exists(path) && new FileInfo(path).Length > 0;
+        return options.UseNpgsql(connectionString,
+            npgsql => npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName));
     }
 }

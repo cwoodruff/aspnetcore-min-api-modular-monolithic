@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace ModularMonolith.Api.Tests;
 
-public class AuthorizationPipelineTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public class AuthorizationPipelineTests(ApiFactory factory)
+    : IClassFixture<ApiFactory>
 {
     private readonly WebApplicationFactory<Program> _factory = factory.WithConfiguredIdentityUsersInDevelopment();
 

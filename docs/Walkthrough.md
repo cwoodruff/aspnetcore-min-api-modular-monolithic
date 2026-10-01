@@ -1,5 +1,9 @@
 ### Step-by-step walkthrough: Recreate this Modular Monolith solution from scratch
 
+> **Provider note (phase 1):** the steps below build the original SQLite
+> version. The repository now uses PostgreSQL; see
+> [ADR-0002](adr/0002-database-engine.md) and the "Run it" section of the README.
+
 This guide shows a developer how to build this solution from nothing using the
 .NET SDK and the same architectural choices found in this repo.
 

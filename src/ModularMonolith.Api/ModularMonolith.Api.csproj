@@ -11,6 +11,11 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Include="..\..\data\chinook-postgres-seed.sql" Link="data\chinook-postgres-seed.sql"
+              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\Shared\SharedKernel.DataSQLite\SharedKernel.DataSQLite.csproj"/>
         <ProjectReference Include="..\Shared\SharedKernel\SharedKernel.csproj"/>
         <ProjectReference Include="..\Shared\SharedKernel.Persistence\SharedKernel.Persistence.csproj"/>
