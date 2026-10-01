@@ -49,7 +49,8 @@ public sealed class CatalogHostTests : IAsyncLifetime
     {
         var health = await (await _host.CreateClient().GetAsync("/api/catalog/health")).ReadAsync(HttpStatusCode.OK);
 
-        health.ToString().Should().Contain("Catalog");
+        health.GetProperty("module").GetString().Should().Be("Catalog");
+        health.GetProperty("service").GetString().Should().Be("Catalog.Host");
     }
 
     [Fact]
