@@ -399,8 +399,11 @@ http://localhost:8080/swagger.
   Requests are partitioned by `PartitionKeys.FromRequest` (client id, tenant,
   subject, then IP).
 - Limits come from `RateLimiting:Policies:<name>` (`PermitLimit`,
-  `WindowSeconds`, `QueueLimit`); the default is 60 requests per 60 seconds
-  with no queue. For example, to give Catalog more room:
+  `WindowSeconds`, `QueueLimit`); `appsettings.json` sets every policy to 60
+  requests per 60 seconds with no queue, alongside each module's cache size
+  (`Caching:Modules:<module>:SizeLimit`) and queue and gate sizes
+  (`Concurrency:<module>:*`). `ConfigurationTests` fails if a module or policy
+  has no entry there. For example, to give Catalog more room:
 
 ```
 "RateLimiting": {
