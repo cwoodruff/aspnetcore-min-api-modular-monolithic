@@ -15,6 +15,8 @@ using NSubstitute;
 using Orders.Modules.Endpoints;
 using Orders.Modules.Services;
 using Reporting.Modules.Data;
+using Reporting.Modules.Domain;
+using Reporting.Modules.Services;
 using Reporting.Modules.Endpoints;
 using SharedKernel.Persistence;
 using GenreApiModel = Admin.Modules.Models.GenreApiModel;
@@ -24,7 +26,8 @@ namespace ModularMonolith.Module.Tests.Handlers;
 
 /// <summary>
 ///     Endpoint handlers are plain static methods, so they can be called directly: no host, no HTTP, a
-///     substituted service. Two per module (Identity's are in Api.Tests, which has its InternalsVisibleTo).
+///     hand-written fake service. At least two handlers per module (Identity's are in Api.Tests, which has
+///     its InternalsVisibleTo).
 /// </summary>
 public sealed class HandlerTests
 {
@@ -48,6 +51,16 @@ public sealed class HandlerTests
         var result = await AlbumHandlers.GetAlbumById(9, new FakeAlbumService(), Ct);
 
         result.Result.Should().BeOfType<NotFound>();
+    }
+
+    [Fact]
+    public async Task Catalog_GetTrackSales_ReturnsOkOrNotFound()
+    {
+        var service = new FakeTrackService { Sales = new TrackSalesApiModel(3, 2, null) };
+
+        (await TrackHandlers.GetTrackSales(3, service, Ct)).Result.Should().BeOfType<Ok<TrackSalesApiModel>>()
+            .Which.Value!.TimesSold.Should().Be(2);
+        (await TrackHandlers.GetTrackSales(4, service, Ct)).Result.Should().BeOfType<NotFound>();
     }
 
     // Orders
@@ -104,6 +117,26 @@ public sealed class HandlerTests
     // Reporting
 
     [Fact]
+    public async Task Reporting_InvoiceLines_ReturnsTheRows_OrNotFoundWhenThereAreNone()
+    {
+        var service = new FakeReportingService { Lines = [new InvoiceLineWithNamesRow { InvoiceLineId = 1, InvoiceId = 5, TrackName = "Song" }] };
+
+        (await ReportingHandlers.InvoiceLines(5, service, Ct)).Result.Should().BeOfType<Ok<IReadOnlyList<InvoiceLineWithNamesRow>>>()
+            .Which.Value.Should().ContainSingle().Which.TrackName.Should().Be("Song");
+        (await ReportingHandlers.InvoiceLines(6, service, Ct)).Result.Should().BeOfType<NotFound>();
+    }
+
+    [Fact]
+    public async Task Reporting_SalesByGenre_ReturnsTheServicesRows()
+    {
+        var service = new FakeReportingService { Sales = [new SalesByGenreRow { GenreId = 1, GenreName = "Rock", UnitsSold = 3 }] };
+
+        var result = await ReportingHandlers.SalesByGenre(service, Ct);
+
+        result.Value.Should().ContainSingle().Which.UnitsSold.Should().Be(3);
+    }
+
+    [Fact]
     public async Task Reporting_Health_ReturnsTheMinimalBody_OutsideDevelopment()
     {
         var result = ReportingHealthHandlers.Health(Environment("Production"), new ConfigurationBuilder().Build());
@@ -157,6 +190,33 @@ public sealed class HandlerTests
         public Task<IReadOnlyList<AlbumApiModel>> GetAlbumsByArtistIdAsync(int id, CancellationToken ct) => throw new NotSupportedException();
         public Task<AlbumApiModel?> CreateAlbumAsync(AlbumApiModel model, CancellationToken ct) => throw new NotSupportedException();
         public Task<bool> UpdateAlbumAsync(AlbumApiModel model, CancellationToken ct) => throw new NotSupportedException();
+    }
+
+    private sealed class FakeTrackService : ITrackService
+    {
+        public TrackSalesApiModel? Sales { get; init; }
+
+        public Task<TrackSalesApiModel?> GetTrackSalesAsync(int id, CancellationToken ct) => Task.FromResult(Sales?.TrackId == id ? Sales : null);
+        public Task<TrackApiModel?> GetTrackByIdAsync(int id, CancellationToken ct) => throw new NotSupportedException();
+        public Task<IReadOnlyList<TrackApiModel>> GetAllTracksAsync(CancellationToken ct) => throw new NotSupportedException();
+        public Task<IReadOnlyList<TrackApiModel>> GetTracksByArtistIdAsync(int id, CancellationToken ct) => throw new NotSupportedException();
+        public Task<IReadOnlyList<TrackApiModel>> GetTracksByPlaylistIdAsync(int id, CancellationToken ct) => throw new NotSupportedException();
+        public Task<IReadOnlyList<TrackApiModel>> GetTracksByAlbumIdAsync(int id, CancellationToken ct) => throw new NotSupportedException();
+        public Task<IReadOnlyList<TrackApiModel>> GetTracksByGenreIdAsync(int id, CancellationToken ct) => throw new NotSupportedException();
+        public Task<IReadOnlyList<TrackApiModel>> GetTracksByMediaTypeIdAsync(int id, CancellationToken ct) => throw new NotSupportedException();
+        public Task<TrackApiModel?> CreateTrackAsync(TrackApiModel model, CancellationToken ct) => throw new NotSupportedException();
+        public Task<bool> UpdateTrackAsync(TrackApiModel model, CancellationToken ct) => throw new NotSupportedException();
+    }
+
+    private sealed class FakeReportingService : IReportingService
+    {
+        public IReadOnlyList<SalesByGenreRow> Sales { get; init; } = [];
+        public IReadOnlyList<InvoiceLineWithNamesRow> Lines { get; init; } = [];
+
+        public Task<IReadOnlyList<SalesByGenreRow>> SalesByGenreAsync(CancellationToken ct) => Task.FromResult(Sales);
+        public Task<IReadOnlyList<InvoiceLineWithNamesRow>> InvoiceLinesAsync(int invoiceId, CancellationToken ct) =>
+            Task.FromResult<IReadOnlyList<InvoiceLineWithNamesRow>>([.. Lines.Where(line => line.InvoiceId == invoiceId)]);
+        public Task<IReadOnlyList<IntegrityFinding>> OpenFindingsAsync(CancellationToken ct) => throw new NotSupportedException();
     }
 
     private sealed class FakeInvoiceService : IInvoiceService

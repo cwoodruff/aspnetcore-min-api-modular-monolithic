@@ -84,6 +84,63 @@ public sealed class AdministrationEndpointsTests(SeededAdministrationFixture adm
         (await Admin.GetAsync("/api/admin/employees/999999/reports-to")).StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Theory]
+    [InlineData("""{"other": "value"}""")]
+    [InlineData("""{"name": null}""")]
+    [InlineData("""{"name": "   "}""")]
+    public async Task CreateGenre_Returns400_WithTheNameError_ForAMissingNullOrBlankName(string body)
+    {
+        var response = await Admin.PostAsync("/api/admin/genres", new StringContent(body, System.Text.Encoding.UTF8, "application/json"));
+
+        var problem = await response.ReadAsync(HttpStatusCode.BadRequest);
+        problem.GetProperty("title").GetString().Should().Be("Request validation failed.");
+        problem.GetProperty("traceId").GetString().Should().NotBeNullOrEmpty();
+        problem.GetProperty("errors").EnumerateObject().Select(error => error.Name).Should().Equal("Name");
+    }
+
+    [Fact]
+    public async Task UpdateGenre_Returns400_WithTheNameError_WhenTheNameIsTooLong()
+    {
+        var problem = await (await Admin.PutAsync("/api/admin/genres/1", Json.Body(new { name = new string('X', 200) })))
+            .ReadAsync(HttpStatusCode.BadRequest);
+
+        problem.GetProperty("errors").EnumerateObject().Select(error => error.Name).Should().Equal("Name");
+    }
+
+    [Fact]
+    public async Task CreateGenre_AcceptsAJsonContentTypeWithACharset()
+    {
+        var content = Json.Body(new { name = $"Charset {Guid.NewGuid():N}"[..20] });
+        content.Headers.ContentType!.CharSet = "utf-8";
+
+        (await Admin.PostAsync("/api/admin/genres", content)).StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+
+    [Fact]
+    public async Task ConcurrentCreates_AllSucceed_WithDistinctIds()
+    {
+        var client = Admin;
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 5).Select(i =>
+            client.PostAsync("/api/admin/genres", Json.Body(new { name = $"Concurrent {i} {Guid.NewGuid():N}"[..24] }))));
+
+        var ids = new List<int>();
+        foreach (var response in responses)
+        {
+            ids.Add((await response.ReadAsync(HttpStatusCode.Created)).GetProperty("Id").GetInt32());
+        }
+
+        ids.Should().OnlyHaveUniqueItems();
+    }
+
+    [Theory]
+    [InlineData("-1")]
+    [InlineData("0")]
+    [InlineData("2147483647")]
+    [InlineData("abc")] // does not match {id:int}, so no endpoint
+    public async Task GetGenre_Returns404_ForAnIdWithNoRow(string id) =>
+        (await Admin.GetAsync($"/api/admin/genres/{id}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+
     [Fact]
     public async Task ARepeatedRead_ReturnsTheSameBody()
     {
