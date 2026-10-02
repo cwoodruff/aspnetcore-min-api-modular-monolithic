@@ -24,22 +24,25 @@ docs/Walkthrough.md.
         /Models, /Mapping, /Validation     (API models, entity<->model mapping, FluentValidation)
         /Services, /Endpoints              (ArtistService, AlbumService, TrackService, PlaylistService)
     /Orders
-      /Orders.Contracts
+      /Orders.Contracts                    (InvoiceFinalized, the event Catalog and Administration consume)
       /Orders.Module                       (Invoice, InvoiceLine; OrdersDbContext, schema "orders")
     /Administration
-      /Administration.Contracts
+      /Administration.Contracts            (empty for now)
       /Admin.Module                        (Customer, Employee, Genre, MediaType; AdministrationDbContext,
                                             schema "administration")
     /Reporting/Reporting.Module            (ReportingDbContext, schema "reporting": cross-module views,
                                             integrity findings; read-only role; no Contracts project)
     /Identity
-      /Identity.Contracts
+      /Identity.Contracts                  (permission and policy names every module applies)
       /Identity.Module                     (tokens, users, authorization policies, key management)
   /Shared
     /SharedKernel                          (cross-cutting primitives only; nothing domain-shaped)
       /Caching                             (ICacheFacade, CacheKeyComposer, CompositeCacheFacade)
       /TrafficControl                      (RateLimitPolicyRegistry, PartitionKeys)
       /Persistence                         (ModuleDbContextOptions: UseNpgsql with schema + history table)
+      /Events                              (integration events, outbox publisher and dispatcher, inbox guard)
+      /Concurrency, /Diagnostics           (ModuleWorkQueue, ModuleGate; ModuleMeter, health checks)
+      /Validation                          (ValidationFilter<T>, IRequestValidator<T>)
 /tests
   /ModularMonolith.Api.Tests               (whole-host tests: cross-module flows, pipeline, Identity)
   /ModularMonolith.Module.Tests            (each module on a host of its own: services, handlers, endpoints)
@@ -74,7 +77,7 @@ composition surface.
 ## Guardrails
 
 Module ownership is recorded in
-[ADR-0001](docs/adr/0001-module-map-and-ownership.md); every later boundary
+[ADR-0018](docs/adr/0018-module-map-after-the-upgrade.md) (superseding ADR-0001); every later boundary
 decision gets its own record in [docs/adr/](docs/adr/README.md). The
 following checks keep the code consistent with those records:
 
@@ -170,8 +173,9 @@ internal sealed class CustomerService(
 | Module         | Services                                                         |
 |----------------|------------------------------------------------------------------|
 | Administration | CustomerService, EmployeeService, GenreService, MediaTypeService |
-| Catalog          | ArtistService, AlbumService, TrackService, PlaylistService       |
-| Orders         | InvoiceService, InvoiceLineService                               |
+| Catalog        | ArtistService, AlbumService, TrackService, PlaylistService       |
+| Orders         | InvoiceService, InvoiceLineService, DeadLetterService            |
+| Reporting      | ReportingService (views and integrity findings), IntegrityCheckJob |
 | Identity       | TokenService, InMemoryUserStore, InMemoryRefreshTokenStore       |
 
 ## Validation with FluentValidation
@@ -382,8 +386,8 @@ docker run -p 8080:8080 \
   container, ASPNETCORE_URLS is set to http://+:8080, so
   expose/browse http://localhost:8080.
 
-If you do run the container in `Development` or `Demo` after aligning the
-Dockerfile, browse http://localhost:8080/swagger.
+If you run the container in `Development` or `Demo`, browse
+http://localhost:8080/swagger.
 
 ## Notes
 
@@ -777,13 +781,16 @@ Notes
 
 - Engine: PostgreSQL 17 ([ADR-0002](docs/adr/0002-database-engine.md)).
 - One `DbContext` per module ([ADR-0003](docs/adr/0003-one-dbcontext-per-module.md)):
-  `CatalogDbContext`, `OrdersDbContext` and `AdministrationDbContext`. Each maps
-  only its own module's entities, uses its own schema (`catalog`, `orders`,
-  `administration`; see [ADR-0001](docs/adr/0001-module-map-and-ownership.md))
-  and keeps its migration history in `<schema>.__EFMigrationsHistory`. Each
-  module registers its context in `RegisterServices` with
-  `ModuleDbContextOptions.AddModuleDbContext<T>(schema)`; the host registers
-  none. Contexts are pooled (`AddDbContextPool`, 128 per module).
+  `AdministrationDbContext`, `CatalogDbContext`, `OrdersDbContext` and
+  `ReportingDbContext`. Each maps only its own module's entities, uses its own
+  schema (`administration`, `catalog`, `orders`, `reporting`; see
+  [ADR-0001](docs/adr/0001-module-map-and-ownership.md) and
+  [ADR-0018](docs/adr/0018-module-map-after-the-upgrade.md)) and keeps its
+  migration history in `<schema>.__EFMigrationsHistory`. Each module registers
+  its context in `RegisterServices` with
+  `ModuleDbContextOptions.AddModuleDbContext<T>(moduleName, schema)`
+  (Reporting also passes its read-only connection and the connection to
+  migrate with, ADR-0014); the host registers none. Contexts are pooled (`AddDbContextPool`, 128 per module).
 - No navigation property or foreign key crosses a module line. `Invoice.CustomerId`,
   `InvoiceLine.TrackId`, `Track.GenreId` and `Track.MediaTypeId` are plain,
   indexed ids; ADR-0004 to ADR-0007 record what that means for each.
@@ -797,7 +804,7 @@ Notes
   Each module's design-time factory reads `ConnectionStrings__AppDatabase` and
   falls back to the compose database.
 - Seed: `data/chinook-postgres-seed.sql`. In Development and Test the host's
-  `DbSeeder` migrates Administration, Catalog, then Orders, and loads the seed
+  `DbSeeder` migrates Administration, Catalog, Orders, then Reporting, and loads the seed
   when `catalog."Track"` is empty. Turn it off with
   `Database:MigrateAndSeedOnStartup=false`. Other environments apply
   migrations as a deployment step.

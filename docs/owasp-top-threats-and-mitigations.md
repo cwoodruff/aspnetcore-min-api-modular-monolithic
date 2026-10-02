@@ -23,7 +23,7 @@ solution, and highlights overlaps with the general OWASP Top 10 (2021).
       claims on `HttpContext.User` against the entity’s owner/tenant before
       returning data.
     - Avoid exposing sequential IDs externally; prefer opaque IDs/UUIDs/ULIDs.
-    - Add repository/EF query filters by `tenant` and (when applicable) owner
+    - Add EF Core global query filters by `tenant` and (when applicable) owner
       id.
     - Negative tests for cross‑tenant/object access: expect `403`.
 
@@ -147,8 +147,8 @@ solution, and highlights overlaps with the general OWASP Top 10 (2021).
 #### A02:2021 — Cryptographic Failures
 
 - What: Weak or missing encryption exposes sensitive data in transit or at rest.
-- Relevance: JWT signing keys, password hashing, TLS configuration, and SQLite
-  database storage.
+- Relevance: JWT signing keys, password hashing, TLS configuration, and
+  PostgreSQL storage.
 - Mitigations:
     - TLS 1.2+ enforced; HSTS enabled in production (see
       `docs/https-enforcement-plan.md`).
@@ -158,8 +158,9 @@ solution, and highlights overlaps with the general OWASP Top 10 (2021).
       pinning prevents key confusion attacks.
     - Password hashing via PBKDF2/Argon2/bcrypt with sufficient iterations; no
       custom cryptographic implementations.
-    - SQLite database file permissions restricted; consider SQLCipher or
-      filesystem encryption for sensitive deployments.
+    - PostgreSQL connections use TLS outside local development; encryption at
+      rest comes from the managed service or volume encryption. The Reporting
+      module connects as a read-only role (ADR-0014).
     - No secrets (connection strings, API keys, tokens) in `appsettings.json` for
       production; use `dotnet user-secrets` locally and Key Vault in deployed
       environments.

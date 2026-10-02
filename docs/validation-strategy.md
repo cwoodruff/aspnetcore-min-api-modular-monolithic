@@ -8,12 +8,16 @@ This document describes the validation architecture implemented in the Modular M
 
 ## 1) Executive Summary
 
-The solution uses **FluentValidation** for all input validation with the following design principles:
+Validation happens in two places, with one error shape:
 
-- **Module-owned validators** in each module's `Validation/` folder
-- **Service-layer validation** - Validators are injected into services and executed before persistence
-- **Consistent error responses** - ValidationException is caught by endpoints and converted to RFC 7807 ProblemDetails
-- **Auto-discovery registration** - Validators are registered via assembly scanning
+- **Module-owned validators** in each module's `Validation/` folder. Catalog, Orders and Administration use
+  FluentValidation; Identity's three request bodies use small hand-written validators.
+- **Endpoint filter first** - write endpoints with a body add `ValidationFilter<T>` (SharedKernel), which runs
+  the module's `IRequestValidator<T>` before the handler and answers 400 if it fails (phase 7).
+- **Service-layer validation as the fallback** - services still validate their models and throw
+  `ValidationException`; the host's exception handler turns it into the same 400.
+- **One error shape** - RFC 7807 validation problem: `title` "Request validation failed.", `detail`,
+  `type`, `errors` by property, and `traceId`, whichever path caught it.
 
 ---
 
@@ -22,30 +26,28 @@ The solution uses **FluentValidation** for all input validation with the followi
 ### Validation Flow
 
 ```
-HTTP Request (JSON body)
+HTTP request (JSON body)
     ↓
-Endpoint (Model Binding)
+Model binding (malformed JSON → 400 "Malformed request.")
     ↓
-Service Method
+ValidationFilter<T>  ── invalid → 400 validation problem (handler never runs)
+    ↓ valid
+Handler (static method on XHandlers)
     ↓
-FluentValidation (IValidator<T>.ValidateAsync)
-    ↓
-    ├─ Valid: Continue to the module's DbContext
-    └─ Invalid: Throw ValidationException
-            ↓
-        Endpoint catches exception
-            ↓
-        Results.ValidationProblem (HTTP 400)
+Service method → IValidator<T>.ValidateAsync
+    ├─ valid: continue to the module's DbContext
+    └─ invalid: throw ValidationException → host exception handler → same 400 validation problem
 ```
 
 ### Component Responsibilities
 
 | Component | Responsibility |
 |-----------|----------------|
-| **Validators** | Define validation rules for API models |
-| **Services** | Execute validation before persistence operations |
-| **Endpoints** | Catch ValidationException and return HTTP 400 |
-| **PersistenceRegistration** | Register validators via assembly scanning |
+| **Validators** | Define the rules for a module's request and API models |
+| **`IRequestValidator<T>`** | SharedKernel's library-neutral interface the filter calls; a module adapts its validators to it (Administration: `FluentRequestValidator<T>`) |
+| **`ValidationFilter<T>`** | Rejects an invalid body before the handler runs; fails closed if no validator is registered |
+| **Services** | Validate again before persistence, so a call that bypasses the filter is still checked |
+| **Host** (`Program.WriteProblemDetailsResponseAsync`) | Maps `ValidationException` to the same 400 body the filter writes |
 
 ---
 
@@ -230,26 +232,19 @@ public class InvoiceValidator : AbstractValidator<InvoiceApiModel>
 
 ## 6) Validator Registration
 
-Validators are registered automatically via assembly scanning in `PersistenceRegistration.cs`:
+Each module registers its own validators in `RegisterServices`; the host registers none:
 
 ```csharp
-public static class PersistenceRegistration
-{
-    public static IServiceCollection AddKernelPersistence(
-        this IServiceCollection services,
-        IConfiguration configuration)
-    {
-        // ... DbContext registration ...
+// Catalog.Module/Module.cs
+services.AddValidatorsFromAssemblyContaining<AlbumValidator>(includeInternalTypes: true);
 
-        // Register all validators from the assembly
-        services.AddValidatorsFromAssemblyContaining<CustomerValidator>();
-
-        return services;
-    }
-}
+// Admin.Module/Module.cs: also adapts its FluentValidation validators for ValidationFilter<T>
+services.AddValidatorsFromAssemblyContaining<CustomerValidator>(includeInternalTypes: true);
+services.AddScoped(typeof(IRequestValidator<>), typeof(FluentRequestValidator<>));
 ```
 
-This single line registers all classes inheriting from `AbstractValidator<T>` in the assembly.
+Validators are `internal`, hence `includeInternalTypes: true`. Identity registers its hand-written
+`AuthRequestValidators` as `IRequestValidator<LoginRequest>`, `<RefreshRequest>` and `<LogoutRequest>`.
 
 ---
 
@@ -292,10 +287,11 @@ public async Task<CustomerApiModel?> CreateCustomerAsync(
     }
 
     // 4. Proceed with persistence only if valid
-    var entity = model.Convert();
-    var created = await repo.Add(entity);
+    var entity = model.ToEntity();
+    db.Customers.Add(entity);
+    await db.SaveChangesAsync(ct);
 
-    return created?.Convert();
+    return entity.ToApiModel();
 }
 ```
 
@@ -303,46 +299,36 @@ public async Task<CustomerApiModel?> CreateCustomerAsync(
 
 ## 8) Error Response Handling
 
-### Endpoint Exception Handling
-
-Endpoints catch `ValidationException` and convert to HTTP 400 with ProblemDetails:
+### Before the handler: `ValidationFilter<T>`
 
 ```csharp
-group.MapPost("/customers", [Authorize] async (
-    CustomerApiModel model,
-    ICustomerService service,
-    CancellationToken ct) =>
-{
-    try
-    {
-        var created = await service.CreateCustomerAsync(model, ct);
-        return created is not null
-            ? Results.Created($"/api/admin/customers/{created.Id}", created)
-            : Results.BadRequest();
-    }
-    catch (ValidationException ex)
-    {
-        // Convert to RFC 7807 ValidationProblem response
-        return Results.ValidationProblem(
-            ex.Errors.ToDictionary(
-                e => e.PropertyName,
-                e => new[] { e.ErrorMessage }));
-    }
-});
+// Admin.Module/Endpoints/GenreEndpoints.cs
+group.MapPost("/genres", GenreHandlers.CreateGenre)
+    .AddEndpointFilter<ValidationFilter<CreateGenreRequest>>()
+    .RequireAdministrationWriteAccess();
 ```
+
+The filter resolves `IRequestValidator<CreateGenreRequest>`, and on failure returns
+`TypedResults.ValidationProblem(...)` with the title, detail and type constants it defines, plus `traceId`.
+
+### After the handler: the host's exception handler
+
+Handlers do not catch `ValidationException`. The host's exception handler
+(`Program.WriteProblemDetailsResponseAsync`) maps it to the same body, so a service-level failure looks
+exactly like a filter rejection. `EndpointFilterTests` checks the shape once for both paths.
 
 ### Example Error Response
 
 ```json
 {
-    "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-    "title": "One or more validation errors occurred.",
+    "type": "https://www.rfc-editor.org/rfc/rfc9110#section-15.5.1",
+    "title": "Request validation failed.",
     "status": 400,
+    "detail": "One or more validation errors occurred.",
     "errors": {
-        "FirstName": ["'First Name' must not be empty."],
-        "Email": ["'Email' is not a valid email address."],
-        "Phone": ["'Phone' is not in the correct format."]
-    }
+        "Name": ["'Name' must not be empty."]
+    },
+    "traceId": "00-..."
 }
 ```
 
@@ -407,7 +393,7 @@ RuleFor(x => x.OrderDate)
 
 ### DO
 
-1. **Validate at service layer** - Not at endpoint or repository level
+1. **Add `ValidationFilter<T>` to write endpoints with a body** - and keep the service-level check as the fallback
 2. **Use async validation** - `ValidateAsync` for consistency
 3. **Include all errors** - Don't short-circuit; return all validation errors
 4. **Use descriptive messages** - Help users understand what's wrong
@@ -416,10 +402,10 @@ RuleFor(x => x.OrderDate)
 
 ### DON'T
 
-1. **Don't validate at multiple layers** - Avoid duplication
+1. **Don't write a second set of rules** - the filter and the service use the same validator
 2. **Don't use DataAnnotations** - Stick to FluentValidation for consistency
-3. **Don't catch ValidationException in services** - Let it bubble to endpoints
-4. **Don't validate in repositories** - Repositories handle persistence only
+3. **Don't catch ValidationException in services or handlers** - let it reach the host's exception handler
+4. **Don't validate against another module's data** - a module validates only what it owns
 5. **Don't mix validation with business logic** - Keep validators pure
 
 ---

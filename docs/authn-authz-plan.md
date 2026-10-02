@@ -128,7 +128,7 @@ authorization across modules.
 - Services focus on:
     - Input validation (FluentValidation)
     - Cache management (ICacheFacade)
-    - Data access (repositories)
+    - Data access (the module's own `DbContext`)
 - This separation allows services to be reused across different authorization
   contexts
 
