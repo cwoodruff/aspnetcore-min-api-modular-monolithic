@@ -141,9 +141,13 @@ internal sealed class EmployeeService(
         return updated;
     }
 
-    private async Task<Employee> LoadReportsToAsync(int id, CancellationToken ct)
+    // The employee's manager; null when the employee does not exist or reports to no one.
+    private async Task<Employee?> LoadReportsToAsync(int id, CancellationToken ct)
     {
-        return (await db.Employees.FindAsync([id], ct))!;
+        return await db.Employees
+            .AsNoTracking()
+            .Where(manager => db.Employees.Any(e => e.Id == id && e.ReportsTo == manager.Id))
+            .SingleOrDefaultAsync(ct);
     }
 
     private async Task<List<Employee>> LoadDirectReportsAsync(int id, CancellationToken ct)

@@ -73,6 +73,18 @@ public sealed class AdministrationEndpointsTests(SeededAdministrationFixture adm
     }
 
     [Fact]
+    public async Task ReportsTo_ReturnsTheManager_And404sAtTheTop()
+    {
+        var manager = await (await Admin.GetAsync("/api/admin/employees/3/reports-to")).ReadAsync(HttpStatusCode.OK);
+
+        manager.GetProperty("Id").GetInt32().Should().Be(2, "Jane Peacock reports to Nancy Edwards");
+        manager.GetProperty("FirstName").GetString().Should().Be("Nancy");
+        (await Admin.GetAsync("/api/admin/employees/1/reports-to")).StatusCode.Should().Be(HttpStatusCode.NotFound,
+            "the general manager reports to no one");
+        (await Admin.GetAsync("/api/admin/employees/999999/reports-to")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task ARepeatedRead_ReturnsTheSameBody()
     {
         var first = await Admin.GetStringAsync("/api/admin/genres/");
