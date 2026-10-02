@@ -4,6 +4,7 @@ using Identity.Modules;
 using Identity.Modules.Extensions;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Http.Metadata;
+using Microsoft.Extensions.Configuration.EnvironmentVariables;
 using Microsoft.OpenApi;
 using Orders.Modules;
 using Reporting.Modules;
@@ -18,6 +19,9 @@ namespace ModularMonolith.Api;
 /// </summary>
 public static class HostComposition
 {
+    /// <summary>The demo environment: Development's conveniences, with its own appsettings.Demo.json.</summary>
+    public const string DemoEnvironment = "Demo";
+
     /// <summary>
     /// Registers host services, then every module's services, and returns the modules in
     /// registration order so the caller can map their endpoints.
@@ -26,6 +30,14 @@ public static class HostComposition
     {
         var services = builder.Services;
         var configuration = builder.Configuration;
+
+        // Demo behaves like Development (in-memory logins, Swagger), but CreateBuilder loads user secrets in
+        // Development only. Load them in Demo too, where Development has them: after appsettings.{env}.json,
+        // before environment variables, so an environment variable still wins.
+        if (builder.Environment.IsEnvironment(DemoEnvironment))
+        {
+            AddUserSecretsBeforeEnvironmentVariables(configuration);
+        }
 
         // Configuration
         services.Configure<JsonOptions>(options =>
@@ -143,5 +155,20 @@ public static class HostComposition
             "http://localhost:3000", "http://localhost:4200", "http://localhost:5173",
             "https://localhost:3000", "https://localhost:4200", "https://localhost:5173"
         ];
+    }
+
+    private static void AddUserSecretsBeforeEnvironmentVariables(ConfigurationManager configuration)
+    {
+        configuration.AddUserSecrets(typeof(HostComposition).Assembly, optional: true);
+        var secrets = configuration.Sources[^1];
+        // The unprefixed environment variables CreateBuilder adds after the appsettings files, not the
+        // ASPNETCORE_/DOTNET_ ones it adds first for the host.
+        var environmentVariables = configuration.Sources.ToList().FindLastIndex(source =>
+            source is EnvironmentVariablesConfigurationSource { Prefix: null or "" });
+        if (environmentVariables >= 0)
+        {
+            configuration.Sources.RemoveAt(configuration.Sources.Count - 1);
+            configuration.Sources.Insert(environmentVariables, secrets);
+        }
     }
 }
