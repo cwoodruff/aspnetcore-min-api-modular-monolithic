@@ -89,6 +89,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "adrs", "adrs", "{44E9EAD3-A
 		docs\adr\0016-a-test-host-per-module.md = docs\adr\0016-a-test-host-per-module.md
 		docs\adr\0017-catalog-host-reads-orders-outbox-by-cursor.md = docs\adr\0017-catalog-host-reads-orders-outbox-by-cursor.md
 		docs\adr\0018-module-map-after-the-upgrade.md = docs\adr\0018-module-map-after-the-upgrade.md
+		docs\adr\0019-dependencies-added-outside-the-phase-lists.md = docs\adr\0019-dependencies-added-outside-the-phase-lists.md
+		docs\adr\0020-catalog-host-validates-identitys-tokens-over-http.md = docs\adr\0020-catalog-host-validates-identitys-tokens-over-http.md
 		docs\adr\README.md = docs\adr\README.md
 	EndProjectSection
 EndProject

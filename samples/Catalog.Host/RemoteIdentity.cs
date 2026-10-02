@@ -13,7 +13,7 @@ namespace Catalog.Host;
 ///     Identity seen from outside the monolith: tokens are validated against the keys Identity publishes at
 ///     /api/identity/.well-known/jwks.json, and the policies Identity.Contracts names are registered here
 ///     with Identity's rules. Once Catalog leaves, these copies are what must track Identity
-///     (docs/extraction-playbook.md).
+///     (ADR-0020, docs/extraction-playbook.md).
 /// </summary>
 internal static class RemoteIdentity
 {

@@ -149,7 +149,7 @@ Either way `DbSeeder`'s check moves to Catalog's own seeding.
 - The per-module rate limits, metrics and health checks (ADR-0013) become the
   service's own, plus the network's: timeouts and retries on the gateway, and
   the consumer lag as a health signal.
-- The policy copies in `Catalog.Host` (`RemoteIdentity`) must track
+- The policy copies in `Catalog.Host` (`RemoteIdentity`, [ADR-0020](adr/0020-catalog-host-validates-identitys-tokens-over-http.md)) must track
   Identity's rules; add a contract test against a token Identity issues.
 
 About eight weeks in all. The code work is small; most of it is weeks 3 and

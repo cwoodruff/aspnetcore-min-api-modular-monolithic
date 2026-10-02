@@ -37,3 +37,5 @@ record that supersedes the old one and update the old one's Status line.
 | [0016](0016-a-test-host-per-module.md) | Test each module on a host of its own | Accepted |
 | [0017](0017-catalog-host-reads-orders-outbox-by-cursor.md) | Catalog.Host reads Orders' outbox as a log, by cursor | Accepted |
 | [0018](0018-module-map-after-the-upgrade.md) | Module map and entity ownership after the upgrade | Accepted |
+| [0019](0019-dependencies-added-outside-the-phase-lists.md) | Dependencies added during the upgrade that no phase listed | Accepted |
+| [0020](0020-catalog-host-validates-identitys-tokens-over-http.md) | Catalog.Host validates Identity's tokens over HTTP and keeps its own policy copies | Accepted |
