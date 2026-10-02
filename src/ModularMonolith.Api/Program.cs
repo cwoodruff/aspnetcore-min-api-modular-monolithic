@@ -15,7 +15,8 @@ var modules = HostComposition.ConfigureServices(builder);
 
 var app = builder.Build();
 
-if ((app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Test"))
+if ((app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Test")
+     || app.Environment.IsEnvironment(HostComposition.DemoEnvironment))
     && app.Configuration.GetValue<bool>("Database:MigrateAndSeedOnStartup"))
 {
     await using var scope = app.Services.CreateAsyncScope();

@@ -470,6 +470,10 @@ calling `POST /api/identity/login`.
 > In-memory login only works when the app runs in the `Development` or `Demo`
 > environment. If you launch the API outside the default `dotnet run` launch
 > profile, set `ASPNETCORE_ENVIRONMENT=Development` (or `Demo`) yourself.
+> User secrets load in both: ASP.NET Core adds them in Development, and the host
+> adds them in Demo at the same precedence (after `appsettings.Demo.json`,
+> before environment variables). Demo also gets the compose database from
+> `appsettings.Demo.json` and migrates and seeds it on startup, like Development.
 > Also note that each `Identity:InMemoryUsers:<index>` entry must include
 > `Username`, `Password`, and `UserId`; entries missing any of those fields are
 > ignored.
@@ -638,6 +642,16 @@ dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUser
 
 Other things to confirm when login returns 401:
 
+- The store is not empty. If `dotnet user-secrets ... list` prints `No secrets
+  configured for this application.`, nothing is configured on this machine:
+  secrets live in your user profile
+  (`~/.microsoft/usersecrets/<UserSecretsId>/secrets.json` on macOS and Linux,
+  `%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json` on Windows),
+  not in the repository, so a fresh clone, another machine or a
+  `dotnet user-secrets clear` starts empty. Run the `set` commands again. The
+  startup log says the same: `... no Identity:InMemoryUsers entries are
+  configured.`
+
 - The app is running with `ASPNETCORE_ENVIRONMENT` set to `Development` or
   `Demo`. Outside those environments the in-memory store is replaced by a
   disabled store that rejects every credential, and the startup log warns that
@@ -658,6 +672,9 @@ Other things to confirm when login returns 401:
   entries are usable` when none did.
 - The app was restarted after the secrets changed. User secrets are read at
   startup only.
+- In `Demo`, the app is this version or later: before it, user secrets were
+  loaded in Development only, so Demo started with no accounts and no database
+  connection string.
 
 ##### Security model
 

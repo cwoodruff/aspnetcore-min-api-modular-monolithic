@@ -5,7 +5,7 @@ namespace ModularMonolith.Api;
 
 /// <summary>
 /// Applies every module's migrations, then loads the Chinook seed into an empty database. The host
-/// calls it in Development and Test only; other environments apply migrations as a deployment step.
+/// calls it in Development, Demo and Test only; other environments apply migrations as a deployment step.
 /// </summary>
 public static class DbSeeder
 {
