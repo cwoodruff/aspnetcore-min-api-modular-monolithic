@@ -1083,3 +1083,21 @@ The single-test cost is the container start and building the migrated,
 seeded template database, paid once per run. The per-test rise is each host
 getting its own clone and talking to a real server instead of a local
 file.
+
+### Simplicity baseline
+
+`.simplicity-baseline.json` is the [SimplicityTools](https://www.nuget.org/packages/SimplicityTools.Cli)
+snapshot that `dotnet simplicity diff ModularMonolith.Api.sln` compares against; re-capture it with
+`dotnet simplicity baseline ModularMonolith.Api.sln` after an intended change.
+
+It reports 2 of the 9 external dependencies as unused. Both are false positives, used through extension
+methods whose namespaces the tool does not match to the package:
+
+- `Swashbuckle.AspNetCore`: `AddSwaggerGen`, `SwaggerDoc` and `DocInclusionPredicate` in
+  `HostComposition`, `UseSwaggerUI` in `Program` (one OpenAPI document per module).
+- `Microsoft.EntityFrameworkCore.Relational`: `FromSqlRaw`, `ExecuteSqlRawAsync`, `SqlQueryRaw`,
+  `HasDefaultSchema`, `MigrationsHistoryTable` and `ToView`, used by every module's context, the outbox
+  and inbox, and `DbSeeder`. The explicit reference pins its version (ADR-0019).
+
+`simplicity.json` (tool 0.8.0) has no setting to ignore a dependency, and rejects unknown keys, so the
+count stays at 2 in the baseline; `diff` flags a change only if it moves.
