@@ -5,6 +5,13 @@
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
         <NoWarn>$(NoWarn);CA1707</NoWarn>
+        <!--
+            WebApplicationFactory starts each host synchronously, and the database clone runs inside a
+            synchronous configuration callback, so every host start blocks a pool thread. With the default
+            minimum (one thread per core) parallel test classes starve the pool on small machines, and the
+            pool adds threads only slowly: on a 4-vCPU CI runner this more than doubled the run.
+        -->
+        <ThreadPoolMinThreads>64</ThreadPoolMinThreads>
     </PropertyGroup>
 
     <ItemGroup>
