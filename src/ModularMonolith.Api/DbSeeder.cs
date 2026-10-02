@@ -15,20 +15,24 @@ public static class DbSeeder
     // Reporting is last: its views read the other three schemas (ADR-0014).
     private static readonly string[] MigrationOrder = ["administration", "catalog", "orders", "reporting"];
 
-    public static async Task MigrateAndSeedAsync(IServiceProvider services, string seedScriptPath,
-        CancellationToken ct = default)
+    /// <summary>Every module's context, in the order their migrations must run; throws on a schema it does not know.</summary>
+    public static IReadOnlyList<DbContext> InMigrationOrder(IEnumerable<DbContext> contexts)
     {
-        var contexts = services.GetKeyedServices<DbContext>(KeyedService.AnyKey)
-            .OrderBy(context => Array.IndexOf(MigrationOrder, context.Model.GetDefaultSchema()))
-            .ToArray();
-
-        var unknown = contexts.Where(context => !MigrationOrder.Contains(context.Model.GetDefaultSchema())).ToArray();
+        var all = contexts.ToArray();
+        var unknown = all.Where(context => !MigrationOrder.Contains(context.Model.GetDefaultSchema())).ToArray();
         if (unknown.Length > 0)
         {
             throw new InvalidOperationException(
                 "No migration order for: " + string.Join(", ", unknown.Select(context => context.GetType().Name)));
         }
 
+        return [.. all.OrderBy(context => Array.IndexOf(MigrationOrder, context.Model.GetDefaultSchema()))];
+    }
+
+    public static async Task MigrateAndSeedAsync(IServiceProvider services, string seedScriptPath,
+        CancellationToken ct = default)
+    {
+        var contexts = InMigrationOrder(services.GetKeyedServices<DbContext>(KeyedService.AnyKey));
         foreach (var context in contexts)
         {
             await context.Database.MigrateAsync(ct);
