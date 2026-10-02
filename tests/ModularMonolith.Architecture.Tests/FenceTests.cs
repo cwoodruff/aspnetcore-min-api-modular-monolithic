@@ -27,6 +27,21 @@ public class FenceTests
 
     public static TheoryData<string> ContractsAssemblies() => [.. ArchitectureConstants.AllContractsAssemblies];
 
+    public static TheoryData<string> AotCompatibleAssemblies() =>
+        [.. ArchitectureConstants.AllContractsAssemblies, ArchitectureConstants.SharedKernelAssembly];
+
+    [Theory]
+    [MemberData(nameof(AotCompatibleAssemblies))]
+    public void Contracts_And_SharedKernel_Are_Built_AotCompatible(string assembly)
+    {
+        // IsAotCompatible turns on the trim and AOT analyzers and stamps the assembly as trimmable (phase 7).
+        // Orders.Contracts once went without it unnoticed; this makes a missing flag a failing test.
+        var trimmable = Assembly.Load(assembly).GetCustomAttributes<AssemblyMetadataAttribute>()
+            .SingleOrDefault(attribute => attribute.Key == "IsTrimmable")?.Value;
+
+        Assert.True(trimmable == "True", $"{assembly} must set <IsAotCompatible>true</IsAotCompatible> in its csproj.");
+    }
+
     [Theory]
     [MemberData(nameof(ContractsAssemblies))]
     public void Contracts_Contain_Only_Interfaces_Enums_Records_And_Constant_Holders(string contractsAssembly)
@@ -84,7 +99,8 @@ public class FenceTests
             .Should()
             .NotDependOnAnyTypesThat()
             .ResideInNamespaceMatching("^Npgsql")
-            .OrShould()
+            // AndShould: a type must avoid both. OrShould let a type through if it avoided either one.
+            .AndShould()
             .NotDependOnAnyTypesThat()
             .HaveFullNameMatching("^Microsoft\\.EntityFrameworkCore\\.Npgsql")
             .Because("only SharedKernel.Persistence may depend on Npgsql");

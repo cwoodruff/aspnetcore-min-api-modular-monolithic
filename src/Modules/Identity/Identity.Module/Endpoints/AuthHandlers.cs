@@ -2,28 +2,29 @@ using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Identity.Modules.KeyManagement;
 using Identity.Modules.Services;
+using Identity.Modules.Validation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Logging;
+using SharedKernel.Validation;
 
 namespace Identity.Modules.Endpoints;
 
 /// <summary>The identity endpoints' handlers: static, typed results, testable without a host.</summary>
 internal static partial class AuthHandlers
 {
-    public static async Task<Results<Ok<TokenResponse>, ProblemHttpResult, UnauthorizedHttpResult>> Login(
+    public static async Task<Results<Ok<TokenResponse>, ValidationProblem, UnauthorizedHttpResult>> Login(
         LoginRequest req, IUserStore users, ITokenService tokens, ILoggerFactory loggerFactory, CancellationToken ct)
     {
         var logger = loggerFactory.CreateLogger("Identity.Auth");
 
-        // OWASP A07: Validate login input before processing
-        if (string.IsNullOrWhiteSpace(req.Username) || string.IsNullOrWhiteSpace(req.Password))
+        // OWASP A07: Validate login input before processing. ValidationFilter rejects a blank body first; this is
+        // the fallback for a direct call, with the same shape.
+        var errors = AuthRequestValidators.Errors(("username", req.Username), ("password", req.Password));
+        if (errors.Count > 0)
         {
-            return TypedResults.Problem(
-                title: "Invalid request",
-                detail: "Username and password are required.",
-                statusCode: StatusCodes.Status400BadRequest);
+            return Invalid(errors);
         }
 
         var result = await users.ValidateCredentialsAsync(req.Username, req.Password, ct);
@@ -41,17 +42,15 @@ internal static partial class AuthHandlers
         return TypedResults.Ok(TokenResponse.From(pair));
     }
 
-    public static async Task<Results<Ok<TokenResponse>, ProblemHttpResult, UnauthorizedHttpResult>> Refresh(
+    public static async Task<Results<Ok<TokenResponse>, ValidationProblem, UnauthorizedHttpResult>> Refresh(
         RefreshRequest req, ITokenService tokens, ILoggerFactory loggerFactory, CancellationToken ct)
     {
         var logger = loggerFactory.CreateLogger("Identity.Auth");
 
-        if (string.IsNullOrWhiteSpace(req.UserId) || string.IsNullOrWhiteSpace(req.RefreshToken))
+        var errors = AuthRequestValidators.Errors(("userId", req.UserId), ("refreshToken", req.RefreshToken));
+        if (errors.Count > 0)
         {
-            return TypedResults.Problem(
-                title: "Invalid request",
-                detail: "UserId and refreshToken are required.",
-                statusCode: StatusCodes.Status400BadRequest);
+            return Invalid(errors);
         }
 
         var pair = await tokens.RefreshAsync(req.UserId, req.RefreshToken, ct);
@@ -97,6 +96,11 @@ internal static partial class AuthHandlers
     }
 
     public static Ok<object> Jwks(IKeyMaterialService keys) => TypedResults.Ok(keys.GetJwksDocument());
+
+    // The same body ValidationFilter writes, so a blank field looks the same however it is caught.
+    private static ValidationProblem Invalid(IDictionary<string, string[]> errors) =>
+        TypedResults.ValidationProblem(errors, detail: ValidationFilter<object>.Detail,
+            title: ValidationFilter<object>.Title, type: ValidationFilter<object>.Type);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Failed login attempt for user '{Username}'")]
     private static partial void LogFailedLogin(ILogger logger, string username);

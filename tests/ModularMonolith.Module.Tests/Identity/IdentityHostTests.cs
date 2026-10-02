@@ -50,6 +50,18 @@ public sealed class IdentityHostTests : IAsyncLifetime
         (await _host.CreateClient().PostAsync("/api/identity/login", Json.Body(new { username = "reader", password = "wrong" })))
             .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 
+    [Theory]
+    [InlineData("/api/identity/login", "username", "password")]
+    [InlineData("/api/identity/refresh", "userId", "refreshToken")]
+    public async Task ABlankBody_IsRejectedByTheValidationFilter_WithTheSharedProblemShape(string url, string first, string second)
+    {
+        var response = await _host.CreateClient().PostAsync(url, Json.Body(new Dictionary<string, string> { [first] = " ", [second] = "" }));
+
+        var problem = await response.ReadAsync(HttpStatusCode.BadRequest);
+        problem.GetProperty("title").GetString().Should().Be(SharedKernel.Validation.ValidationFilter<object>.Title);
+        problem.GetProperty("errors").EnumerateObject().Select(error => error.Name).Should().BeEquivalentTo(first, second);
+    }
+
     [Fact]
     public async Task TheSigningKeys_ArePublished()
     {

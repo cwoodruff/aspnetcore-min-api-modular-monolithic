@@ -105,8 +105,7 @@ public class GuardrailTests(HostWithoutDatabaseFactory factory) : IClassFixture<
         Assert.Empty(violations);
     }
 
-    // Allowed: the module itself, the shared kernel (SharedKernel.* until phase 2 removes the
-    // persistence assemblies), any *.Contracts assembly, and anything outside the solution.
+    // Allowed: the module itself, SharedKernel, any *.Contracts assembly, and anything outside the solution.
     private static bool IsAllowedDependency(Assembly implementation, Assembly consumer, HashSet<Assembly> firstParty)
     {
         var name = implementation.GetName().Name ?? string.Empty;

@@ -91,14 +91,8 @@ public async Task<CustomerApiModel?> GetCustomerByIdAsync(int id, CancellationTo
     // 2. Cache-aside: check cache, fetch on miss, store result
     return await cache.GetOrAddAsync<CustomerApiModel?>(key, async _ =>
     {
-        try
-        {
-            return await repo.GetById(id);
-        }
-        catch
-        {
-            return null;  // Graceful degradation
-        }
+        var entity = await db.Customers.AsNoTracking().SingleOrDefaultAsync(e => e.Id == id, ct);
+        return entity?.ToApiModel();
     }, new CacheEntryOptions
     {
         AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -122,8 +116,8 @@ public async Task<IEnumerable<CustomerApiModel>> GetAllCustomersAsync(Cancellati
 
     return await cache.GetOrAddAsync<IEnumerable<CustomerApiModel>>(key, async _ =>
     {
-        var entities = await repo.GetAll();
-        return entities.ConvertAll();
+        var entities = await db.Customers.AsNoTracking().ToListAsync(ct);
+        return entities.ToApiModels();
     }, new CacheEntryOptions
     {
         AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -147,13 +141,14 @@ public async Task<CustomerApiModel?> CreateCustomerAsync(CustomerApiModel model,
         throw new ValidationException(result.Errors);
 
     // Persist
-    var entity = model.Convert();
-    var created = await repo.Add(entity);
+    var entity = model.ToEntity();
+    db.Customers.Add(entity);
+    await db.SaveChangesAsync(ct);
 
     // Invalidate all customer cache entries by tag
     await cache.RemoveByTagAsync(CustomerTags[0], ct);  // "administration:customer"
 
-    return created?.Convert();
+    return entity.ToApiModel();
 }
 ```
 
@@ -168,11 +163,14 @@ public async Task<bool> UpdateCustomerAsync(CustomerApiModel model, Cancellation
         throw new ValidationException(result.Errors);
 
     // Persist
-    var entity = model.Convert();
-    var updated = await repo.Update(entity);
+    var entity = model.ToEntity();
+    var updated = await db.Customers.AnyAsync(e => e.Id == entity.Id, ct);
 
     if (updated)
     {
+        db.Customers.Update(entity);
+        await db.SaveChangesAsync(ct);
+
         // Invalidate by tag (bulk)
         await cache.RemoveByTagAsync(CustomerTags[0], ct);
 
@@ -194,7 +192,7 @@ public async Task<bool> UpdateCustomerAsync(CustomerApiModel model, Cancellation
 ```csharp
 public async Task<bool> DeleteGenreAsync(int id, CancellationToken ct)
 {
-    var deleted = await repo.Delete(id);
+    var deleted = await db.Genres.Where(g => g.Id == id).ExecuteDeleteAsync(ct) > 0;
 
     if (deleted)
     {

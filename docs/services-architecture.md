@@ -2,7 +2,7 @@
 
 **Status: Implemented**
 
-This document describes the service layer architecture implemented across all modules in the Modular Monolith. Services provide a clean abstraction between endpoints and repositories, encapsulating business logic, validation, and caching.
+This document describes the service layer architecture implemented across all modules in the Modular Monolith. Services sit between the endpoint handlers and the module's own `DbContext`, encapsulating business logic, validation, and caching. There is no repository layer: EF Core is the repository (ADR-0003).
 
 ---
 
@@ -39,7 +39,7 @@ HTTP Response (JSON)
 1. **Input Validation** - Validate incoming data using FluentValidation before persistence operations
 2. **Cache Management** - Implement cache-aside pattern with tag-based invalidation
 3. **Data Access** - Query the module's own `DbContext` directly (there is no repository layer; see ADR-0003)
-4. **Error Handling** - Graceful degradation returning null/empty on failures
+4. **Error Handling** - A missing row is `null` (the handler answers 404); infrastructure failures are not caught and reach the host's exception handler
 5. **DTO Transformation** - Convert between entities and API models
 
 ---
@@ -128,14 +128,8 @@ public async Task<CustomerApiModel?> GetCustomerByIdAsync(int id, CancellationTo
     // 2. Cache-aside pattern with GetOrAddAsync
     return await cache.GetOrAddAsync<CustomerApiModel?>(key, async _ =>
     {
-        try
-        {
-            return await repo.GetById(id);
-        }
-        catch
-        {
-            return null;  // Graceful degradation
-        }
+        var entity = await db.Customers.AsNoTracking().SingleOrDefaultAsync(e => e.Id == id, ct);
+        return entity?.ToApiModel();
     }, new CacheEntryOptions
     {
         AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20),
@@ -156,15 +150,16 @@ public async Task<CustomerApiModel?> CreateCustomerAsync(CustomerApiModel model,
         throw new ValidationException(result.Errors);
     }
 
-    // 2. Convert to entity and persist
-    var entity = model.Convert();
-    var created = await repo.Add(entity);
+    // 2. Map to the entity and persist through the module's DbContext
+    var entity = model.ToEntity();
+    db.Customers.Add(entity);
+    await db.SaveChangesAsync(ct);
 
     // 3. Invalidate related cache entries by tag
     await cache.RemoveByTagAsync(CustomerTags[0], ct);
 
     // 4. Return created model
-    return created?.Convert();
+    return entity.ToApiModel();
 }
 
 public async Task<bool> UpdateCustomerAsync(CustomerApiModel model, CancellationToken ct)
@@ -176,13 +171,15 @@ public async Task<bool> UpdateCustomerAsync(CustomerApiModel model, Cancellation
         throw new ValidationException(result.Errors);
     }
 
-    // 2. Convert and update
-    var entity = model.Convert();
-    var updated = await repo.Update(entity);
+    // 2. Map, and update only if the row exists
+    var entity = model.ToEntity();
+    var updated = await db.Customers.AnyAsync(e => e.Id == entity.Id, ct);
 
-    // 3. Invalidate caches on success
+    // 3. Persist and invalidate caches on success
     if (updated)
     {
+        db.Customers.Update(entity);
+        await db.SaveChangesAsync(ct);
         await cache.RemoveByTagAsync(CustomerTags[0], ct);  // Bulk invalidate
         var key = keys.Compose(
             moduleName: "administration",
@@ -431,7 +428,7 @@ public class CustomerServiceTests
 3. **Consistent Naming** - `Get*Async`, `Create*Async`, `Update*Async`, `Delete*Async`
 4. **Validation First** - Always validate before persistence operations
 5. **Cache Invalidation** - Invalidate affected cache entries after writes
-6. **Graceful Degradation** - Return null/empty rather than throwing on read failures
+6. **Not Found Is Null** - Return `null` for a missing row; let real failures throw
 7. **Structured Cache Keys** - Use `ICacheKeyComposer` for consistent key composition
 8. **Tag-Based Invalidation** - Use tags for efficient bulk cache clearing
 
@@ -440,8 +437,7 @@ public class CustomerServiceTests
 ## 13) Future Considerations
 
 - **Unit of Work Pattern** - Consider adding `IUnitOfWork` for complex multi-entity transactions
-- **Domain Events** - Add domain event publishing for cross-module notifications
-- **Mediator Pattern** - Consider MediatR for decoupling endpoint handlers from services
+- **Domain Events** - Integration events between modules already exist (outbox and inbox, ADR-0008); in-module domain events would be separate
 - **Read/Write Segregation** - Split read and write services for CQRS-style architecture
 - **Specification Pattern** - Add specifications for complex query filtering
 
@@ -451,5 +447,5 @@ public class CustomerServiceTests
 
 - [Validation Strategy](validation-strategy.md) - FluentValidation implementation details
 - [Caching Strategy](caching-strategy.md) - Cache configuration and patterns
-- [EF Core Plan](EFCore-Plan.md) - Database and repository architecture
+- [EF Core Plan](EFCore-Plan.md) - Per-module DbContexts, schemas and migrations
 - [Authentication & Authorization](authn-authz-plan.md) - Security implementation

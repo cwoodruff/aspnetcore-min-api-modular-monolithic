@@ -1,4 +1,5 @@
 using Identity.Modules.Endpoints;
+using Identity.Modules.Validation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SharedKernel;
 using SharedKernel.Diagnostics;
 using SharedKernel.TrafficControl;
+using SharedKernel.Validation;
 
 namespace Identity.Modules;
 
@@ -22,6 +24,12 @@ public static class IdentityModule
         {
             services.AddModuleMeter(ModuleName);
             services.AddModuleRateLimitPolicy(RateLimitPolicyRegistry.Identity);
+
+            // Request bodies are checked by ValidationFilter before the handlers run.
+            services.AddSingleton<AuthRequestValidators>();
+            services.AddSingleton<IRequestValidator<AuthHandlers.LoginRequest>>(sp => sp.GetRequiredService<AuthRequestValidators>());
+            services.AddSingleton<IRequestValidator<AuthHandlers.RefreshRequest>>(sp => sp.GetRequiredService<AuthRequestValidators>());
+            services.AddSingleton<IRequestValidator<AuthHandlers.LogoutRequest>>(sp => sp.GetRequiredService<AuthRequestValidators>());
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)

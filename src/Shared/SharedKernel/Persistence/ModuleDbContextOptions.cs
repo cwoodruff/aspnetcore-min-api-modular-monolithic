@@ -79,7 +79,7 @@ public static class ModuleDbContextOptions
     }
 
     /// <summary>
-    /// Connectivity check for modules that own no tables yet (Identity, Reporting).
+    /// Connectivity check for a module that owns no tables (Identity).
     /// </summary>
     public static async Task<bool> CanConnectAsync(IConfiguration configuration, CancellationToken ct)
     {

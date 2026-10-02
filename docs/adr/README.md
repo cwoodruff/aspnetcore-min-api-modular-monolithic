@@ -19,7 +19,7 @@ record that supersedes the old one and update the old one's Status line.
 
 | ADR | Title | Status |
 |---|---|---|
-| [0001](0001-module-map-and-ownership.md) | Module map and entity ownership | Accepted |
+| [0001](0001-module-map-and-ownership.md) | Module map and entity ownership | Superseded by 0018 |
 | [0002](0002-database-engine.md) | PostgreSQL, one schema per owning module | Accepted |
 | [0003](0003-one-dbcontext-per-module.md) | One DbContext, schema and migration history per module | Accepted |
 | [0004](0004-orders-to-administration-customer.md) | Orders refers to Customer by id only | Accepted |
@@ -36,3 +36,4 @@ record that supersedes the old one and update the old one's Status line.
 | [0015](0015-orphan-detection.md) | Detect orphaned cross-module references; do not repair them | Accepted |
 | [0016](0016-a-test-host-per-module.md) | Test each module on a host of its own | Accepted |
 | [0017](0017-catalog-host-reads-orders-outbox-by-cursor.md) | Catalog.Host reads Orders' outbox as a log, by cursor | Accepted |
+| [0018](0018-module-map-after-the-upgrade.md) | Module map and entity ownership after the upgrade | Accepted |

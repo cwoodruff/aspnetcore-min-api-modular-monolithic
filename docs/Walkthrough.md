@@ -242,14 +242,19 @@ Where to look in this repository for concrete references
   src/Modules/Identity/Identity.Module/Extensions/IdentityAuthExtensions.cs
 - Authorization examples: src/Modules/Identity/Identity.Module/Authorization/*
 - Health endpoints patterns: all modules' Endpoints folders
-- Persistence bootstrap: src/Shared/SharedKernel.Persistence/* and HostComposition.cs
-  connection string resolution
+- Persistence bootstrap: each module's Data/ folder (its DbContext and migrations),
+  src/Shared/SharedKernel/Persistence/ModuleDbContextOptions.cs, and
+  src/ModularMonolith.Api/DbSeeder.cs
 
 FAQ
 
 - Why Minimal APIs? Small surface, quick composition across modules, and simple
   testing.
-- Why SQLite? For demo and local dev. Replace with SQL Server or PostgreSQL in
-  production; the registration extension abstracts that.
-- How do modules communicate? Via shared kernel abstractions or direct calls
-  within the same process; keep boundaries clean even in-process.
+- Why PostgreSQL? Schemas give each module its own tables and migration
+  history in one database; see [ADR-0002](adr/0002-database-engine.md). The
+  steps above use SQLite only because they rebuild the original version.
+- How do modules communicate? Through integration events written to the
+  publisher's outbox and delivered to each consumer's inbox
+  ([ADR-0008](adr/0008-integration-events-and-outbox.md)), and through the
+  constants and events in `*.Contracts` projects. No module calls another
+  module's types.

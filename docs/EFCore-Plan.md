@@ -38,7 +38,7 @@ methods in the service that needs them.
 Each module registers its own context and validators in `RegisterServices`:
 
 ```csharp
-services.AddModuleDbContext<CatalogDbContext>(CatalogDbContext.Schema);
+services.AddModuleDbContext<CatalogDbContext>(ModuleName, CatalogDbContext.Schema);
 services.AddValidatorsFromAssemblyContaining<AlbumValidator>(includeInternalTypes: true);
 ```
 
@@ -69,9 +69,12 @@ are plain ids with an index (for the `by-customer`, `by-track`, `by-genre` and
 | `catalog.Track.GenreId` | `administration.Genre` | 0006 |
 | `catalog.Track.MediaTypeId` | `administration.MediaType` | 0007 |
 
-Validators require these ids to be present; nothing yet checks that the row
-exists. Phase 3 adds read contracts in the owning module's `*.Contracts`
-project, and phase 6 adds an orphan check. Within a module, relationships and
+Validators require these ids to be present; nothing checks at write time that
+the row exists. Reporting's `IntegrityCheckJob` finds ids whose row has gone
+and records them as findings, without repairing anything
+([ADR-0015](adr/0015-orphan-detection.md)). No module reads another's data
+through a read contract; where a response needs another module's data it
+carries the id. Within a module, relationships and
 foreign keys stay as they were (Album to Artist, Track to Album, Playlist to
 Track, InvoiceLine to Invoice, Customer to Employee, Employee to Employee).
 
@@ -92,8 +95,9 @@ its own schema ([ADR-0008](adr/0008-integration-events-and-outbox.md)):
 | `administration.CustomerPurchaseSummary` | Administration | Read model fed by `InvoiceFinalized` (ADR-0010) |
 
 `OutboxMessage` and `InboxMessage` are the only entity types a module context
-may map from outside its own assembly; `ModuleBoundaryTests` allows them and
-nothing else.
+maps from outside its own assembly. `ModuleBoundaryTests` allows types from
+SharedKernel, which holds nothing domain-shaped ([ADR-0012](adr/0012-shared-kernel-budget.md)),
+and from the context's own module; nothing else.
 
 ## Migrations
 

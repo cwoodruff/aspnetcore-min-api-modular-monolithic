@@ -13,7 +13,7 @@ internal static class ArchitectureConstants
                 typeof(Identity.Modules.IdentityModule).Assembly,
                 typeof(Reporting.Modules.ReportingModule).Assembly,
                 typeof(SharedKernel.IModule).Assembly,
-                // Contracts assemblies hold no types yet, so they are loaded by name.
+                // Loaded by name: Catalog.Contracts and Administration.Contracts have no type to take typeof() of.
                 System.Reflection.Assembly.Load(CatalogContractsAssembly),
                 System.Reflection.Assembly.Load(OrdersContractsAssembly),
                 System.Reflection.Assembly.Load(AdministrationContractsAssembly),

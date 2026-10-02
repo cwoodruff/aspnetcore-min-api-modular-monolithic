@@ -111,7 +111,7 @@ internal class ArtistService(
             .Include(ar => ar.Albums)
             .ThenInclude(al => al.Tracks)
             .AsNoTracking()
-            .AsSplitQuery() // important on SQLite for large graphs
+            .AsSplitQuery() // one query per collection, not a cartesian join of albums x tracks
             .SingleOrDefaultAsync(ct);
 
         if (artistEntity is null)
