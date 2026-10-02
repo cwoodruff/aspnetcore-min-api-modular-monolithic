@@ -49,6 +49,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{F8C887DB-8
 		docs\owasp-top-threats-and-mitigations.md = docs\owasp-top-threats-and-mitigations.md
 		docs\Walkthrough.md = docs\Walkthrough.md
 		docs\upgrade-plan.md = docs\upgrade-plan.md
+		docs\modular-monolith-repo-upgrade-plan.md = docs\modular-monolith-repo-upgrade-plan.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{C82539F3-3484-4BB1-80DA-906793C55F4C}"
@@ -126,6 +127,29 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{5D20AA90-6969-D8BD-9DCD-8634F4692FDA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Catalog.Host", "samples\Catalog.Host\Catalog.Host.csproj", "{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "adrs", "adrs", "{44E9EAD3-AA9E-4CDC-B92A-939736CA0B02}"
+	ProjectSection(SolutionItems) = preProject
+		docs\adr\0000-template.md = docs\adr\0000-template.md
+		docs\adr\0001-module-map-and-ownership.md = docs\adr\0001-module-map-and-ownership.md
+		docs\adr\0002-database-engine.md = docs\adr\0002-database-engine.md
+		docs\adr\0003-one-dbcontext-per-module.md = docs\adr\0003-one-dbcontext-per-module.md
+		docs\adr\0004-orders-to-administration-customer.md = docs\adr\0004-orders-to-administration-customer.md
+		docs\adr\0005-orders-to-catalog-track.md = docs\adr\0005-orders-to-catalog-track.md
+		docs\adr\0006-catalog-to-administration-genre.md = docs\adr\0006-catalog-to-administration-genre.md
+		docs\adr\0007-catalog-to-administration-mediatype.md = docs\adr\0007-catalog-to-administration-mediatype.md
+		docs\adr\0008-integration-events-and-outbox.md = docs\adr\0008-integration-events-and-outbox.md
+		docs\adr\0009-orders-to-catalog-track-sales.md = docs\adr\0009-orders-to-catalog-track-sales.md
+		docs\adr\0010-orders-to-administration-purchase-summary.md = docs\adr\0010-orders-to-administration-purchase-summary.md
+		docs\adr\0011-authorization-names-are-compiled-contracts.md = docs\adr\0011-authorization-names-are-compiled-contracts.md
+		docs\adr\0012-shared-kernel-budget.md = docs\adr\0012-shared-kernel-budget.md
+		docs\adr\0013-per-module-bulkheads.md = docs\adr\0013-per-module-bulkheads.md
+		docs\adr\0014-reporting-read-model-as-views.md = docs\adr\0014-reporting-read-model-as-views.md
+		docs\adr\0015-orphan-detection.md = docs\adr\0015-orphan-detection.md
+		docs\adr\0016-a-test-host-per-module.md = docs\adr\0016-a-test-host-per-module.md
+		docs\adr\0017-catalog-host-reads-orders-outbox-by-cursor.md = docs\adr\0017-catalog-host-reads-orders-outbox-by-cursor.md
+		docs\adr\README.md = docs\adr\README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -347,5 +371,6 @@ Global
 		{D2A3C4C6-3735-496E-BDC6-6C510F42984E} = {0EC62A1A-9858-3A60-8A0C-FC9AACFA2EC7}
 		{8D4F24E6-B22D-48C2-A090-D9E4A0B22056} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{5D9EF1D4-A1FB-44E3-89EB-64F426505AE4} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{44E9EAD3-AA9E-4CDC-B92A-939736CA0B02} = {F8C887DB-8A89-43B4-B7F6-2973FE96C62F}
 	EndGlobalSection
 EndGlobal
