@@ -84,14 +84,17 @@ public sealed class EmployeeServiceTests(AdministrationFixture database) : IClas
     }
 
     [Fact]
-    public async Task GetReportsToAsync_ReturnsTheEmployeeWithTheGivenId()
+    public async Task GetReportsToAsync_ReturnsTheEmployeesManager()
     {
-        // Current behaviour, unchanged by the phase 2 refactor: the lookup finds the employee whose id
-        // was passed, not that employee's manager. The mocked test this replaces asserted the manager,
-        // which the real query never returned.
         var result = await _service.GetReportsToAsync(TestData.Rep, CancellationToken.None);
 
         result.Should().NotBeNull();
-        result!.Id.Should().Be(TestData.Rep);
+        result!.Id.Should().Be(TestData.Manager);
     }
+
+    [Theory]
+    [InlineData(TestData.Manager)] // reports to no one
+    [InlineData(TestData.Unknown)]
+    public async Task GetReportsToAsync_ReturnsNull_WithoutAManager(int id) =>
+        (await _service.GetReportsToAsync(id, CancellationToken.None)).Should().BeNull();
 }

@@ -40,6 +40,7 @@ internal static class EmployeeEndpoints
         group.MapGet("employees/{id:int}/reports-to", EmployeeHandlers.GetEmployeeReportsTo)
             .RequireAdministrationReadAccess()
             .WithName("GetEmployeeReportsTo")
+            .WithDescription("The employee's manager. 404 when the employee does not exist or reports to no one.")
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
             .WithTags("Administration")
