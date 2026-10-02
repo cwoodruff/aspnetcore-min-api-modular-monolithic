@@ -1057,6 +1057,19 @@ Before phase 8 the same machine measured Services.Tests at 83 tests in
 Api.Tests at 201 tests in 27.82 s (138 ms per test): moving the single-module
 endpoint tests cut the two database projects from 33.6 s to 21.5 s, for 282
 tests against 284 (several old ones are now one theory each, with exact
-statuses where they accepted any of several). Phase 1's
-switch from SQLite to PostgreSQL was not timed at the time; these are the
-first recorded numbers.
+statuses where they accepted any of several).
+
+Phase 1 moved the tests from a copied SQLite file to PostgreSQL in a
+Testcontainers container. Api.Tests on the same machine, median of three
+runs (`dotnet test` reported duration):
+
+| Api.Tests            | SQLite, before phase 1 | PostgreSQL, phase 1 |
+|----------------------|-----------------------:|--------------------:|
+| Full run             |                 13.1 s |                20 s |
+| One test on its own  |                 0.89 s |                ~3 s |
+| Median per test      |                 524 ms |              786 ms |
+
+The single-test cost is the container start and building the migrated,
+seeded template database, paid once per run. The per-test rise is each host
+getting its own clone and talking to a real server instead of a local
+file.
