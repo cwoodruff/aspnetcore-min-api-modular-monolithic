@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using SharedKernel.Validation;
 
 namespace Identity.Modules.Endpoints;
 
@@ -10,6 +11,8 @@ internal static class AuthEndpoints
     {
         // POST /api/identity/login
         group.MapPost("/login", AuthHandlers.Login)
+            .AddEndpointFilter<ValidationFilter<AuthHandlers.LoginRequest>>()
+            .Produces(StatusCodes.Status400BadRequest)
             .AllowAnonymous()
             .WithTags("Identity")
             .WithName("IdentityLogin")
@@ -17,6 +20,8 @@ internal static class AuthEndpoints
 
         // POST /api/identity/refresh
         group.MapPost("/refresh", AuthHandlers.Refresh)
+            .AddEndpointFilter<ValidationFilter<AuthHandlers.RefreshRequest>>()
+            .Produces(StatusCodes.Status400BadRequest)
             .AllowAnonymous()
             .WithTags("Identity")
             .WithName("IdentityRefresh")
@@ -24,6 +29,8 @@ internal static class AuthEndpoints
 
         // POST /api/identity/logout
         group.MapPost("/logout", AuthHandlers.Logout)
+            .AddEndpointFilter<ValidationFilter<AuthHandlers.LogoutRequest>>()
+            .Produces(StatusCodes.Status400BadRequest)
             .RequireAuthorization()
             .WithTags("Identity")
             .WithName("IdentityLogout")

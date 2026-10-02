@@ -20,12 +20,15 @@ public class IdentityHandlerTests
     }
 
     [Fact]
-    public async Task Login_WithBlankInput_ReturnsAProblem()
+    public async Task Login_WithBlankInput_ReturnsTheValidationProblemShape()
     {
         var result = await AuthHandlers.Login(new AuthHandlers.LoginRequest(" ", ""), new RejectingUserStore(),
             new UnusedTokenService(), NullLoggerFactory.Instance, CancellationToken.None);
 
-        result.Result.Should().BeOfType<ProblemHttpResult>().Which.StatusCode.Should().Be(400);
+        var problem = result.Result.Should().BeOfType<ValidationProblem>().Subject;
+        problem.StatusCode.Should().Be(400);
+        problem.ProblemDetails.Title.Should().Be(SharedKernel.Validation.ValidationFilter<object>.Title);
+        problem.ProblemDetails.Errors.Keys.Should().BeEquivalentTo("username", "password");
     }
 
     [Fact]
