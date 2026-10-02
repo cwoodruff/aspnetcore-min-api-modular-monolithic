@@ -1,10 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk"><!--
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <!-- Native AOT readiness: trimming and AOT analyzers run on every build (phase 7). -->
+        <IsAotCompatible>true</IsAotCompatible>
+    </PropertyGroup>
+
+    <!--
         Public surface other modules may depend on: integration events, read DTOs and names.
         It must not reference any *.Module assembly (ModuleBoundaryTests).
     -->
 
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Shared\SharedKernel\SharedKernel.csproj" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Shared\SharedKernel\SharedKernel.csproj" />
-  </ItemGroup>
 </Project>
