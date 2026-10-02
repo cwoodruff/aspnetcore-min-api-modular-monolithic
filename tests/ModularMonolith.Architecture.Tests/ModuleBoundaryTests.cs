@@ -98,7 +98,7 @@ public class ModuleBoundaryTests
             .NotDependOnAnyTypesThat()
             .ResideInAssembly(ArchitectureConstants.FullName(moduleAssembly))
             .Because($"{contractsAssembly} is a public contract and must not reference {moduleAssembly}")
-            // Catalog.Contracts and Administration.Contracts hold no types yet.
+            // Catalog.Contracts and Administration.Contracts are still empty.
             .WithoutRequiringPositiveResults();
 
         rule.Check(Architecture);

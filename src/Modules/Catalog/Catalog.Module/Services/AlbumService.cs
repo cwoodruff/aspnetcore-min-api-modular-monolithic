@@ -140,7 +140,7 @@ internal class AlbumService(
             .Include(a => a.Artist)
             .Include(a => a.Tracks)
             .AsNoTracking()
-            .AsSplitQuery() // important on SQLite to avoid cartesian explosion
+            .AsSplitQuery() // one query per collection, not a cartesian join of artist x tracks
             .SingleOrDefaultAsync(ct);
 
         if (albumEntity is null)
