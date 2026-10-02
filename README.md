@@ -44,6 +44,8 @@ docs/Walkthrough.md.
   /ModularMonolith.Api.Tests               (whole-host tests: cross-module flows, pipeline, Identity)
   /ModularMonolith.Module.Tests            (each module on a host of its own: services, handlers, endpoints)
   /ModularMonolith.Architecture.Tests      (Architecture tests: public surface, module boundaries, guardrails)
+/samples
+  /Catalog.Host                            (Catalog alone in its own process; built, tested, not deployed)
 /docs/adr                                  (Architecture decision records)
 ```
 
@@ -103,6 +105,12 @@ following checks keep the code consistent with those records:
   `InternalsVisibleTo`; `SharedKernel` exports at most 30 public types,
   references no FluentValidation, module or Contracts assembly, and uses
   Npgsql only from `SharedKernel.Persistence`.
+- `ExtractionReadinessTests`: `Catalog.Module` references only `SharedKernel`
+  and the Catalog, Orders and Identity contracts; `Catalog.Contracts` and
+  `Orders.Contracts` reference nothing but `SharedKernel`; and
+  `samples/Catalog.Host` references only `Catalog.Module` and `SharedKernel`.
+  The sample building is the check that Catalog has no hidden dependency
+  ([extraction playbook](docs/extraction-playbook.md)).
 
 ## Service layer architecture
 
@@ -937,7 +945,13 @@ can be split in-process ([ADR-0013](docs/adr/0013-per-module-bulkheads.md)):
 | Deploys | One build, one release, one restart, one rollback |
 
 When one of the second list is the problem, the answer is extraction, not
-another in-process limit.
+another in-process limit. [docs/extraction-playbook.md](docs/extraction-playbook.md)
+walks through it for Catalog, and `samples/Catalog.Host` runs Catalog on its
+own: `dotnet run --project samples/Catalog.Host` serves it on
+http://localhost:5143 against the compose database, accepting tokens from the
+monolith on port 5043, and reads `InvoiceFinalized` from Orders' outbox by
+cursor without taking rows from Orders' dispatcher
+([ADR-0017](docs/adr/0017-catalog-host-reads-orders-outbox-by-cursor.md)).
 
 ## Documentation
 
@@ -950,6 +964,8 @@ Detailed documentation is available in the `/docs` folder:
   covers integration events and the outbox
 - [Upgrade plan](docs/upgrade-plan.md) - Phased plan for the modular monolith
   fixes; each phase is one branch and one PR
+- [Extraction playbook](docs/extraction-playbook.md) - What taking Catalog out
+  of the process would involve, week by week
 - [Services Architecture](docs/services-architecture.md) - Service layer
   patterns, caching integration, and validation
 - [Validation Strategy](docs/validation-strategy.md) - FluentValidation
@@ -988,7 +1004,9 @@ The solution includes three test projects:
   A header-based test scheme stands in for Identity, published events are
   recorded, and `DeliverAsync` feeds the module's event handlers through its
   inbox. Services, handlers and endpoints are tested per module; the outbox
-  dispatcher is tested once, in `Kernel/`, with test contexts
+  dispatcher is tested once, in `Kernel/`, with test contexts.
+  `Samples/CatalogHostTests` boots `samples/Catalog.Host` and checks its
+  outbox feed
 - `tests/ModularMonolith.Api.Tests/` - the whole host through
   `WebApplicationFactory`, for what needs more than one module: an invoice
   finalized in Orders reaching Catalog and Administration, the
