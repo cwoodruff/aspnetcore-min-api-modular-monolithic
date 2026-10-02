@@ -1,3 +1,5 @@
+using System.Reflection;
+using System.Text.RegularExpressions;
 using Catalog.Modules.Domain;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -120,16 +122,28 @@ public sealed class ReportingTests(ReportingFixture database) : IClassFixture<Re
     public void EveryColumnReportingReads_StillExistsInItsOwnersModel()
     {
         // Reporting's views and checks name other modules' tables and columns in SQL. If a module renames
-        // one, this fails here, in Reporting's tests, instead of at the next deploy (ADR-0014).
+        // one, this fails here, in Reporting's tests, instead of at the next deploy (ADR-0014). The views'
+        // columns come from their SQL, every Create*V<n> constant, so editing a view cannot leave this behind.
         using var catalog = database.CreateCatalogContext();
         using var orders = database.CreateOrdersContext();
         using var administration = database.CreateAdministrationContext();
+        IReadOnlyList<IModel> models = [catalog.Model, orders.Model, administration.Model];
 
-        var missing = MissingColumns([catalog.Model, orders.Model, administration.Model], ReportingSql.References);
+        var viewSql = typeof(ReportingSql).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(field => field.IsLiteral && field.Name.StartsWith("Create", StringComparison.Ordinal))
+            .Select(field => (string)field.GetRawConstantValue()!)
+            .ToList();
+        viewSql.Should().HaveCount(2, "sales_by_genre and invoice_lines_with_names, version 1");
+        var viewColumns = viewSql.SelectMany(ViewColumnReader.Read).ToList();
 
-        missing.Should().BeEmpty();
-        MissingColumns([catalog.Model], [new ColumnReference("catalog", "Track", "Title")])
-            .Should().ContainSingle("the check itself must notice a column that does not exist");
+        MissingColumns(models, [.. viewColumns, .. ReportingSql.OrphanCheckReferences]).Should().BeEmpty();
+
+        // The checks must be able to fail: the reader finds the columns, and a missing one is noticed.
+        viewColumns.Should().Contain(new ColumnReference("catalog", "Track", "Name"))
+            .And.Contain(new ColumnReference("administration", "Customer", "LastName"))
+            .And.HaveCount(18);
+        MissingColumns(models, ViewColumnReader.Read("""SELECT t."Title" FROM catalog."Track" t"""))
+            .Should().Equal("catalog.Track.Title");
     }
 
     private IntegrityCheckJob Job => database.Host.Services.GetRequiredService<IntegrityCheckJob>();
@@ -153,4 +167,42 @@ public sealed class ReportingTests(ReportingFixture database) : IClassFixture<Re
             .Distinct()
             .ToList();
     }
+}
+
+/// <summary>
+///     Reads the other modules' columns a view's SQL names: each <c>FROM</c>/<c>JOIN</c> of
+///     <c>schema."Table" alias</c>, then every <c>alias."Column"</c>. Small on purpose; it understands the
+///     shape Reporting's views are written in and throws on a qualifier it cannot resolve.
+/// </summary>
+internal static partial class ViewColumnReader
+{
+    private static readonly HashSet<string> Schemas = ["reporting", "catalog", "orders", "administration"];
+
+    public static IReadOnlyList<ColumnReference> Read(string sql)
+    {
+        var tables = TableAlias().Matches(sql).ToDictionary(
+            match => match.Groups["alias"].Value,
+            match => (Schema: match.Groups["schema"].Value, Table: match.Groups["table"].Value));
+        var columns = new List<ColumnReference>();
+        foreach (Match match in QualifiedColumn().Matches(sql))
+        {
+            var qualifier = match.Groups["qualifier"].Value;
+            if (tables.TryGetValue(qualifier, out var table))
+            {
+                columns.Add(new ColumnReference(table.Schema, table.Table, match.Groups["column"].Value));
+            }
+            else if (!Schemas.Contains(qualifier))
+            {
+                throw new InvalidOperationException($"Cannot resolve '{match.Value}': no FROM or JOIN gives the alias '{qualifier}'.");
+            }
+        }
+
+        return [.. columns.Distinct()];
+    }
+
+    [GeneratedRegex("""\b(?:FROM|JOIN)\s+(?<schema>\w+)\."(?<table>\w+)"\s+(?<alias>\w+)""", RegexOptions.IgnoreCase)]
+    private static partial Regex TableAlias();
+
+    [GeneratedRegex(@"\b(?<qualifier>\w+)\.""(?<column>\w+)""")]
+    private static partial Regex QualifiedColumn();
 }

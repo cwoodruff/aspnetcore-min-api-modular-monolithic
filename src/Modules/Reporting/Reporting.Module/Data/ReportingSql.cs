@@ -2,9 +2,9 @@ namespace Reporting.Modules.Data;
 
 /// <summary>
 /// Everything Reporting knows about other modules' tables, in one place (ADR-0014, ADR-0015): the SQL of
-/// its two views and the four orphan checks, plus every (schema, table, column) they reference. A test
-/// checks those references against the current models of the Catalog, Orders and Administration
-/// contexts, so a rename in another module fails Reporting's tests before it breaks a deploy.
+/// its two views and the four orphan checks. A test reads the columns the view SQL names, plus the ones the
+/// orphan checks are built from, and checks them against the current models of the Catalog, Orders and
+/// Administration contexts, so a rename in another module fails Reporting's tests before it breaks a deploy.
 /// </summary>
 internal static class ReportingSql
 {
@@ -52,23 +52,12 @@ internal static class ReportingSql
         new("track-media-type", "catalog", "Track", "MediaTypeId", "administration", "MediaType")
     ];
 
-    /// <summary>Every other module's column the views and checks read.</summary>
-    public static readonly IReadOnlyList<ColumnReference> References =
+    /// <summary>
+    /// The other modules' columns the orphan checks read. IntegrityCheckJob builds its SQL from
+    /// <see cref="OrphanChecks" />, so these cannot drift from it; the views' columns are read from their SQL.
+    /// </summary>
+    public static readonly IReadOnlyList<ColumnReference> OrphanCheckReferences =
     [
-        // sales_by_genre
-        new("administration", "Genre", "Id"), new("administration", "Genre", "Name"),
-        new("catalog", "Track", "Id"), new("catalog", "Track", "GenreId"),
-        new("catalog", "TrackSales", "TrackId"), new("catalog", "TrackSales", "TimesSold"),
-
-        // invoice_lines_with_names
-        new("orders", "InvoiceLine", "Id"), new("orders", "InvoiceLine", "InvoiceId"),
-        new("orders", "InvoiceLine", "TrackId"), new("orders", "InvoiceLine", "UnitPrice"),
-        new("orders", "InvoiceLine", "Quantity"), new("orders", "Invoice", "Id"),
-        new("orders", "Invoice", "CustomerId"), new("catalog", "Track", "Name"),
-        new("administration", "Customer", "Id"), new("administration", "Customer", "FirstName"),
-        new("administration", "Customer", "LastName"),
-
-        // orphan checks: source id and reference column, target id
         .. OrphanChecks.SelectMany(check => new ColumnReference[]
         {
             new(check.SourceSchema, check.SourceTable, "Id"),
