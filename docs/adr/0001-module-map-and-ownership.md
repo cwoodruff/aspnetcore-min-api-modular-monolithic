@@ -1,6 +1,6 @@
 # 0001. Record the module map and entity ownership
 
-- Status: Accepted
+- Status: Superseded by [0018](0018-module-map-after-the-upgrade.md)
 - Date: 2026-09-30
 - Phase: 0 (see `docs/upgrade-plan.md`)
 
