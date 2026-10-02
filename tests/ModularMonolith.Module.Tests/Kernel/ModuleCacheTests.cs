@@ -10,7 +10,10 @@ namespace ModularMonolith.Module.Tests.Kernel;
 /// <summary>Each module's cache is its own MemoryCache with its own size limit (ADR-0013).</summary>
 public sealed class ModuleCacheTests : IDisposable
 {
-    private const int Limit = 10;
+    // MemoryCache compacts a full cache down to SizeLimit x (1 - CompactionPercentage), default 5%, rounding
+    // the excess down to whole entries. Below 20 that excess rounds to zero and a full cache only ever refuses
+    // new entries; the modules' limits (500 and 1000) evict 25 to 50 entries per compaction.
+    private const int Limit = 100;
     private readonly ServiceProvider _services;
 
     public ModuleCacheTests()
@@ -27,25 +30,54 @@ public sealed class ModuleCacheTests : IDisposable
     public void Dispose() => _services.Dispose();
 
     [Fact]
-    public async Task FillingOneModulesCachePastItsLimit_StaysWithinTheLimit_AndLeavesTheOtherModuleAlone()
+    public async Task GoingPastOneModulesLimit_EvictsInThatModule_AndLeavesTheOtherModuleAlone()
     {
         var catalog = _services.GetRequiredKeyedService<ICacheFacade>("Catalog");
         var administration = _services.GetRequiredKeyedService<ICacheFacade>("Administration");
+        var catalogMemory = (MemoryCache)_services.GetRequiredKeyedService<IMemoryCache>("Catalog");
+        var administrationMemory = (MemoryCache)_services.GetRequiredKeyedService<IMemoryCache>("Administration");
 
         for (var i = 0; i < 5; i++)
         {
             await administration.SetAsync(Key("administration", i), $"admin-{i}");
         }
 
-        for (var i = 0; i < Limit * 5; i++)
+        for (var i = 0; i < Limit; i++)
         {
             await catalog.SetAsync(Key("catalog", i), $"catalog-{i}");
         }
 
-        var catalogMemory = (MemoryCache)_services.GetRequiredKeyedService<IMemoryCache>("Catalog");
-        catalogMemory.Count.Should().BeLessThanOrEqualTo(Limit, "the module's cache never holds more than its limit");
+        catalogMemory.Count.Should().Be(Limit);
 
-        // Every Administration entry is still served from its cache: the factory never runs.
+        // One past the limit: MemoryCache refuses the entry and compacts in the background, evicting
+        // existing Catalog entries to get back under the limit.
+        await catalog.SetAsync(Key("catalog", Limit), "over the limit");
+        catalogMemory.Count.Should().BeLessThanOrEqualTo(Limit, "the module's cache never holds more than its limit");
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (catalogMemory.Count >= Limit && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(10);
+        }
+
+        catalogMemory.Count.Should().BeLessThan(Limit, "compaction evicted at least one existing Catalog entry");
+        var evicted = 0;
+        for (var i = 0; i < Limit; i++)
+        {
+            if (!catalogMemory.TryGetValue(Key("catalog", i).ToString(), out _))
+            {
+                evicted++;
+            }
+        }
+
+        evicted.Should().BePositive();
+
+        // With room again, a new entry is cached.
+        await catalog.SetAsync(Key("catalog", Limit + 1), "after eviction");
+        (await catalog.GetOrAddAsync<string>(Key("catalog", Limit + 1), _ => Task.FromResult<string?>("reloaded")))
+            .Should().Be("after eviction");
+
+        // Administration lost nothing: every entry is still served from its own cache.
+        administrationMemory.Count.Should().Be(5);
         for (var i = 0; i < 5; i++)
         {
             var loaded = false;
@@ -57,8 +89,6 @@ public sealed class ModuleCacheTests : IDisposable
             value.Should().Be($"admin-{i}");
             loaded.Should().BeFalse();
         }
-
-        ((MemoryCache)_services.GetRequiredKeyedService<IMemoryCache>("Administration")).Count.Should().Be(5);
     }
 
     private static CacheKey Key(string module, int i) =>
