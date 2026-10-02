@@ -16,9 +16,16 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # The image both database test projects start with Testcontainers (PostgresFixture, PostgresServer).
+      POSTGRES_IMAGE: postgres:17-alpine
 
     steps:
       - uses: actions/checkout@v4
+
+      # Pull while restore and build run; the test step would otherwise start with the download.
+      - name: Pull PostgreSQL image in the background
+        run: nohup docker pull "$POSTGRES_IMAGE" > /tmp/postgres-pull.log 2>&1 &
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -29,6 +36,10 @@ jobs:
 
       - name: Build
         run: dotnet build ModularMonolith.Api.sln --no-restore --configuration Release
+
+      # Waits for the background pull if it is still running (Docker shares one pull per image).
+      - name: Wait for PostgreSQL image
+        run: docker pull "$POSTGRES_IMAGE"
 
       - name: Test
         run: dotnet test ModularMonolith.Api.sln --no-build --configuration Release --logger "trx" --results-directory TestResults
