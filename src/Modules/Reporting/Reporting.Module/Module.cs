@@ -40,7 +40,7 @@ public static class ReportingModule
             services.TryAddSingleton(TimeProvider.System);
             services.AddSingleton<IntegrityCheckJob>();
             services.AddHostedService(sp => sp.GetRequiredService<IntegrityCheckJob>());
-            services.AddScoped<ReportingService>();
+            services.AddScoped<IReportingService, ReportingService>();
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)

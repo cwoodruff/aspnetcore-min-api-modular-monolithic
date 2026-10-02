@@ -11,7 +11,7 @@ namespace Reporting.Modules.Endpoints;
 internal static class ReportingHandlers
 {
     [Authorize]
-    public static async Task<Ok<IReadOnlyList<SalesByGenreRow>>> SalesByGenre(ReportingService service, CancellationToken ct)
+    public static async Task<Ok<IReadOnlyList<SalesByGenreRow>>> SalesByGenre(IReportingService service, CancellationToken ct)
     {
         return TypedResults.Ok(await service.SalesByGenreAsync(ct));
     }
@@ -23,14 +23,14 @@ internal static class ReportingHandlers
     }
 
     [Authorize]
-    public static async Task<Ok<IReadOnlyList<IntegrityFinding>>> IntegrityFindings(ReportingService service, CancellationToken ct)
+    public static async Task<Ok<IReadOnlyList<IntegrityFinding>>> IntegrityFindings(IReportingService service, CancellationToken ct)
     {
         return TypedResults.Ok(await service.OpenFindingsAsync(ct));
     }
 
     [Authorize]
     public static async Task<Results<Ok<IReadOnlyList<InvoiceLineWithNamesRow>>, NotFound>> InvoiceLines(
-        int id, ReportingService service, CancellationToken ct)
+        int id, IReportingService service, CancellationToken ct)
     {
         var lines = await service.InvoiceLinesAsync(id, ct);
         return lines.Count > 0 ? TypedResults.Ok(lines) : TypedResults.NotFound();

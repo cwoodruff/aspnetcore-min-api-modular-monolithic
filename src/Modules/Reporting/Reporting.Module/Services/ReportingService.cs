@@ -12,7 +12,7 @@ namespace Reporting.Modules.Services;
 /// </summary>
 internal sealed class ReportingService(
     ReportingDbContext db,
-    [FromKeyedServices(ReportingModule.ModuleName)] ModuleGate gate)
+    [FromKeyedServices(ReportingModule.ModuleName)] ModuleGate gate) : IReportingService
 {
     public async Task<IReadOnlyList<SalesByGenreRow>> SalesByGenreAsync(CancellationToken ct)
     {
