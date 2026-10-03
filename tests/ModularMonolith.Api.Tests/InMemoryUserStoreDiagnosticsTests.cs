@@ -18,6 +18,7 @@ public class InMemoryUserStoreDiagnosticsTests
     private const int IgnoredIncompleteSummaryEventId = 2004;
     private const int NoValidEntriesEventId = 2003;
     private const int EffectiveUserEventId = 2007;
+    private const int SuspiciousPasswordEventId = 2008;
 
     [Fact]
     public async Task StartAsync_ShouldWarnWithIndexAndMissingField_WhenEntryIsIncomplete()
@@ -116,6 +117,31 @@ public class InMemoryUserStoreDiagnosticsTests
             new InMemoryUserRecord { Username = "broken", UserId = "user-2" });
 
         logger.Records.Should().NotContain(record => record.EventId == IncompleteEntryEventId);
+    }
+
+    [Theory]
+    [InlineData("hunter2dotnet user-secrets --project src/ModularMonolith.Api set Identity:InMemoryUsers:0:Username admin-demo", "contains command text ('user-secrets')")]
+    [InlineData("hunter2 extra", "contains 1 whitespace character(s)")]
+    public async Task StartAsync_ShouldWarnWithoutThePassword_WhenAPasswordLooksLikeAPastedCommand(string password, string reason)
+    {
+        var user = CompleteUser("admin-demo", "user-admin-1");
+        user.Password = password;
+
+        var logger = await RunDiagnosticsAsync("Development", user);
+
+        var warning = logger.Records.Single(record => record.EventId == SuspiciousPasswordEventId);
+        warning.Level.Should().Be(LogLevel.Warning);
+        warning.Message.Should().Contain("Identity:InMemoryUsers:0").And.Contain($"({password.Length} characters)").And.Contain(reason);
+        warning.Message.Should().NotContain("hunter2", "the password itself is never logged");
+        logger.Records.Should().Contain(record => record.EventId == EffectiveUserEventId, "the entry still loads");
+    }
+
+    [Fact]
+    public async Task StartAsync_ShouldNotWarnAboutThePassword_WhenItIsOneToken()
+    {
+        var logger = await RunDiagnosticsAsync("Development", CompleteUser("admin-demo", "user-admin-1"));
+
+        logger.Records.Should().NotContain(record => record.EventId == SuspiciousPasswordEventId);
     }
 
     private static async Task<CapturingLogger<InMemoryUserStoreDiagnosticsHostedService>> RunDiagnosticsAsync(
