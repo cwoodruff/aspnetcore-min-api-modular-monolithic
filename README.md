@@ -554,10 +554,16 @@ credentials.
 
 The following creates two development/demo accounts. The first can read Catalog
 data in `tenant-1`; the second is an admin-oriented account in `tenant-admin`.
+Run the commands from the repository root.
+
+> [!TIP]
+> Put each password in **single quotes**. Inside double quotes the shell still
+> expands `$` (and, in bash, `!`), so a password containing them is stored
+> altered and login returns 401.
 
 ```bash
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Username" "demo"
-dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Password" "<choose-a-strong-password>"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Password" '<choose-a-strong-password>'
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:UserId" "user-1"
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:DisplayName" "Demo User"
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Roles:0" "User"
@@ -566,7 +572,7 @@ dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUser
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Tenant" "tenant-1"
 
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:Username" "admin-demo"
-dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:Password" "<choose-another-strong-password>"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:Password" '<choose-another-strong-password>'
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:UserId" "user-2"
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:DisplayName" "Admin Demo"
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:1:Roles:0" "Admin"
@@ -582,7 +588,7 @@ index, for example:
 
 ```bash
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Username" "admin-demo"
-dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Password" "<choose-a-strong-password>"
+dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Password" '<choose-a-strong-password>'
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:UserId" "user-admin-1"
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:DisplayName" "Admin Demo"
 dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUsers:0:Roles:0" "Admin"
@@ -595,6 +601,30 @@ dotnet user-secrets --project src/ModularMonolith.Api set "Identity:InMemoryUser
 
 If you are repurposing an existing index, update or remove every stale key
 under that same index before testing again.
+
+After setting the accounts:
+
+1. **Check what was stored.** Pasting a whole block can join one command onto
+   the end of the previous value, most harmfully a password. If that happens,
+   re-run the affected line on its own.
+
+   ```bash
+   dotnet user-secrets --project src/ModularMonolith.Api list
+   ```
+
+2. **Restart the app.** Accounts are read once, at startup; changing a secret
+   while the app runs has no effect until it restarts.
+3. **Read the startup log.** Each account logs one line, with the password's
+   length but never its value:
+
+   ```text
+   Effective Identity:InMemoryUsers:0 => Username='admin-demo', UserId='user-admin-1', Roles='Admin', Permissions='administration.read, administration.write, admin.users.manage', Tenant='tenant-admin', PasswordLength=10.
+   ```
+
+   `PasswordLength` should match the password you will type. A warning that
+   the password "contains command text" or whitespace means a paste joined
+   something to it; see
+   [Troubleshooting 401 responses](#troubleshooting-401-responses-from-apiidentitylogin).
 
 To add more accounts, increment the array index (`0`, `1`, `2`, ...). Nested
 arrays use the same pattern for multi-value fields such as roles and
