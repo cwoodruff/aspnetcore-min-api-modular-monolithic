@@ -266,8 +266,34 @@ internal sealed partial class InMemoryUserStoreDiagnosticsHostedService(
             }
         }
 
+        // A shell paste can join the next command to a password value ("...pw dotnet user-secrets --project ...");
+        // login then fails with 401 and nothing says why. Warn without printing the value.
+        foreach (var validUser in validUsers)
+        {
+            var reason = SuspiciousPasswordReason(validUser.User.Password);
+            if (reason is not null)
+            {
+                LogSuspiciousPassword(logger, validUser.Index, validUser.User.Password.Length, reason);
+            }
+        }
+
         LogLoadedInMemoryUsers(logger, validCount, environment.EnvironmentName);
         return Task.CompletedTask;
+    }
+
+    private static readonly string[] CommandFragments = ["user-secrets", "dotnet ", "--project"];
+
+    /// <returns>Why the password looks like it swallowed a pasted command, or null; never the value itself.</returns>
+    internal static string? SuspiciousPasswordReason(string password)
+    {
+        var fragment = CommandFragments.FirstOrDefault(text => password.Contains(text, StringComparison.OrdinalIgnoreCase));
+        if (fragment is not null)
+        {
+            return $"contains command text ('{fragment.Trim()}')";
+        }
+
+        var whitespace = password.Count(char.IsWhiteSpace);
+        return whitespace > 0 ? $"contains {whitespace} whitespace character(s)" : null;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
@@ -350,6 +376,13 @@ internal sealed partial class InMemoryUserStoreDiagnosticsHostedService(
         ILogger logger,
         int index,
         string missingRequiredFields);
+
+    [LoggerMessage(
+        EventId = 2008,
+        Level = LogLevel.Warning,
+        Message =
+            "The password for Identity:InMemoryUsers:{Index} ({PasswordLength} characters) {Reason}. A shell paste may have joined the next command to the value, and login will reject the password you type. Re-set it on its own line, quoted: dotnet user-secrets --project src/ModularMonolith.Api set \"Identity:InMemoryUsers:{Index}:Password\" '<password>'")]
+    private static partial void LogSuspiciousPassword(ILogger logger, int index, int passwordLength, string reason);
 
     [LoggerMessage(
         EventId = 2005,

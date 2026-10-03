@@ -633,6 +633,16 @@ Development/Demo each loaded entry logs as:
 Effective Identity:InMemoryUsers:0 => Username='demo', UserId='user-1', Roles='User', Permissions='catalog.read', Tenant='tenant-1', PasswordLength=8.
 ```
 
+When a configured password contains whitespace or command text such as
+`user-secrets`, startup also warns, again without printing the value:
+
+```text
+The password for Identity:InMemoryUsers:0 (110 characters) contains command text ('user-secrets'). A shell paste may have joined the next command to the value, and login will reject the password you type. ...
+```
+
+A passphrase with spaces triggers the same warning; it is a hint, and the
+entry still loads.
+
 If `PasswordLength` does not match the password you are typing, re-set the
 secret and quote the value so nothing else can join the line:
 
